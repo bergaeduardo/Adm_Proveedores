@@ -1,7 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Proveedor(models.Model):
-  cod_cpa01 = models.CharField(db_column='COD_CPA01', max_length=10, unique=True)
+  cod_cpa01 = models.CharField(db_column='COD_CPA01', max_length=10, unique=True, blank=True, null=True)
   id_tipo_documento_gv = models.IntegerField(db_column='ID_TIPO_DOCUMENTO_GV', blank=True, null=True)
   n_cuit = models.CharField(db_column='N_CUIT', max_length=15, blank=True, null=True)
   nom_provee = models.CharField(db_column='NOM_PROVEE', max_length=60)
@@ -90,3 +91,8 @@ class Proveedor(models.Model):
   conceptos = models.JSONField(db_column='CONCEPTOS', blank=True, null=True)
   contactos = models.JSONField(db_column='CONTACTOS', blank=True, null=True)
   sucursales = models.JSONField(db_column='SUCURSALES', blank=True, null=True)
+  # Nuevo campo para vincular con el usuario de Django
+  username_django = models.ForeignKey(User, db_column='USERNAME_DJANGO', on_delete=models.SET_NULL, null=True, blank=True, related_name='proveedores')
+
+  def __str__(self):
+    return self.nom_provee

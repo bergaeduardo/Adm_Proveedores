@@ -14,8 +14,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from Proveedores.api import ProveedorViewSet
+
+# Registrar el router global para exponer /api/proveedores/
+router = DefaultRouter()
+router.register(r'api/listar_proveedores', ProveedorViewSet, basename='proveedor')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('Proveedores/', include('Proveedores.urls')),
+    # path('', include(router.urls)),  # Esto expone /api/proveedores/ en la raíz
 ]

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <title>Registro de Proveedor</title>
+  <style>
+    .error-message { color: #b71c1c; margin-top: 5px; }
+    .success-message { color: #2e7d32; margin-top: 5px; }
+    .modal-backdrop { opacity: 0.5 !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <h2 class="text-center">Registro de Proveedor</h2>
+        <form id="registroForm" autocomplete="off">
+          <div class="form-group">
+            <input type="text" class="form-control" id="usuario" placeholder="Usuario" required>
+            <div id="error-usuario" class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <input type="password" class="form-control" id="contrasena" placeholder="Contraseña" required>
+            <div id="error-contrasena" class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-control" id="nombreComercial" placeholder="Nombre Comercial" required>
+            <div id="error-nom_provee" class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-control" id="cuilCuit" placeholder="Número de CUIL/CUIT" required>
+            <div id="error-n_cuit" class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <input type="email" class="form-control" id="email" placeholder="Email" required>
+            <div id="error-e_mail" class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-control" id="nombreFantasia" placeholder="Nombre de Fantasía (opcional)">
+            <div id="error-nom_fant" class="error-message"></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Registrar</button>
+        </form>
+        <div id="form-messages" class="text-center mt-3"></div>
+        <p class="text-center">¿Ya tienes cuenta? <a href="../acceder/">Iniciar sesión</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de éxito -->
+  <div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="successModalLabel">¡Registro exitoso!</h5>
+        </div>
+        <div class="modal-body">
+          Tu cuenta ha sido creada correctamente. Ahora puedes iniciar sesión.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" id="closeModalBtn">Aceptar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function limpiarErrores() {
+      document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+      document.getElementById('form-messages').textContent = '';
+      document.getElementById('form-messages').className = '';
+    }
+
+    document.getElementById('registroForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      limpiarErrores();
+
+      const data = {
+        usuario: document.getElementById('usuario').value.trim(),
+        contrasena: document.getElementById('contrasena').value,
+        nom_provee: document.getElementById('nombreComercial').value.trim(),
+        n_cuit: document.getElementById('cuilCuit').value.trim(),
+        e_mail: document.getElementById('email').value.trim(),
+        nom_fant: document.getElementById('nombreFantasia').value.trim()
+      };
+
+      // Validación básica en frontend
+      let hayError = false;
+      if (!data.usuario) {
+        document.getElementById('error-usuario').textContent = 'El usuario es obligatorio.';
+        hayError = true;
+      }
+      if (!data.contrasena || data.contrasena.length < 6) {
+        document.getElementById('error-contrasena').textContent = 'La contraseña debe tener al menos 6 caracteres.';
+        hayError = true;
+      }
+      if (!data.nom_provee) {
+        document.getElementById('error-nom_provee').textContent = 'El nombre comercial es obligatorio.';
+        hayError = true;
+      }
+      if (!data.n_cuit) {
+        document.getElementById('error-n_cuit').textContent = 'El CUIL/CUIT es obligatorio.';
+        hayError = true;
+      }
+      if (!data.e_mail) {
+        document.getElementById('error-e_mail').textContent = 'El email es obligatorio.';
+        hayError = true;
+      }
+      if (hayError) return;
+
+      try {
+        const response = await fetch('/Proveedores/api/registro/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          // Mostrar modal de éxito
+          $('#successModal').modal('show');
+          document.getElementById('registroForm').reset();
+        } else {
+          // Mostrar errores de validación del backend
+          for (const campo in result) {
+            if (result.hasOwnProperty(campo)) {
+              const errorDiv = document.getElementById('error-' + campo);
+              if (errorDiv) {
+                errorDiv.textContent = Array.isArray(result[campo]) ? result[campo][0] : result[campo];
+              }
+            }
+          }
+          document.getElementById('form-messages').textContent = 'Corrige los errores e intenta nuevamente.';
+          document.getElementById('form-messages').className = 'error-message';
+        }
+      } catch (error) {
+        document.getElementById('form-messages').textContent = 'Error de conexión con el servidor.';
+        document.getElementById('form-messages').className = 'error-message';
+      }
+    });
+
+    // Redirección tras cerrar el modal
+    document.getElementById('closeModalBtn').addEventListener('click', function() {
+      $('#successModal').modal('hide');
+      setTimeout(function() {
+        window.location.href = "../acceder/";
+      }, 300);
+    });
+  </script>
+</body>
+</html>
