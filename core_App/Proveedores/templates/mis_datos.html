@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <title>Mis Datos de Proveedor</title>
+  <style>
+    .required-label::after {
+      content: " *";
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-4">
+    <h2>Mis Datos de Proveedor</h2>
+    <form id="proveedorForm" class="mt-3" novalidate>
+      <div id="formFields"></div>
+      <button type="submit" class="btn btn-success">Guardar Cambios</button>
+      <div id="formMsg" class="alert mt-2 d-none"></div>
+    </form>
+    <button class="btn btn-secondary mt-3" onclick="logout()">Cerrar sesión</button>
+  </div>
+  <script>
+    const jwt = sessionStorage.getItem('jwt');
+    if (!jwt) {
+      window.location.href = '/Proveedores/acceder/';
+    }
+
+    let proveedorId = null;
+    let userId = null;
+
+    // Campos de contacto que serán editables y visibles en el formulario
+    const camposContactoEditables = [
+      { key: "nom_provee", label: "Nombre del Proveedor" },
+      { key: "n_cuit", label: "CUIT" },
+      { key: "telefono_1", label: "Teléfono" },
+      { key: "e_mail", label: "Email" },
+      { key: "domicilio", label: "Dirección" },
+      { key: "localidad", label: "Localidad" }
+    ];
+
+    // Campos obligatorios (deben estar completos para enviar)
+    const camposContactoObligatorios = [
+      "nom_provee",
+      "n_cuit",
+      "telefono_1",
+      "e_mail",
+      "domicilio"
+    ];
+
+    // Paso 1: Obtener el user_id autenticado
+    async function obtenerUserId() {
+      const resp = await fetch('/Proveedores/api/userid/', {
+        headers: { 'Authorization': 'Bearer ' + jwt }
+      });
+      if (!resp.ok) {
+        sessionStorage.removeItem('jwt');
+        window.location.href = '/Proveedores/acceder/';
+        return null;
+      }
+      const data = await resp.json();
+      return data.user_id;
+    }
+
+    // Paso 2: Cargar datos del proveedor usando el user_id
+    async function cargarDatos() {
+      userId = await obtenerUserId();
+      if (!userId) return;
+      const resp = await fetch('/Proveedores/api/proveedores/' + userId + '/', {
+        headers: { 'Authorization': 'Bearer ' + jwt }
+      });
+      if (!resp.ok) {
+        document.getElementById('formFields').innerHTML = '<div class="alert alert-warning">No se encontraron datos de proveedor asociados.</div>';
+        return;
+      }
+      const proveedor = await resp.json();
+      proveedorId = proveedor.id;
+      // Renderizar solo los campos editables
+      let html = '';
+      for (const campo of camposContactoEditables) {
+        const esObligatorio = camposContactoObligatorios.includes(campo.key);
+        html += `
+          <div class="form-group">
+            <label class="${esObligatorio ? 'required-label' : ''}" for="${campo.key}">${campo.label}</label>
+            <input type="text" class="form-control" id="${campo.key}" name="${campo.key}" value="${proveedor[campo.key] !== null && proveedor[campo.key] !== undefined ? proveedor[campo.key] : ''}" ${esObligatorio ? 'required' : ''}>
+          </div>
+        `;
+      }
+      document.getElementById('formFields').innerHTML = html;
+    }
+
+    cargarDatos();
+
+    // Validación personalizada en el frontend
+    document.getElementById('proveedorForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if (!proveedorId) return;
+
+      // Validación de campos obligatorios
+      let valido = true;
+      let mensajes = [];
+      camposContactoObligatorios.forEach(campo => {
+        const input = document.querySelector(`[name="${campo}"]`);
+        if (input && input.value.trim() === "") {
+          valido = false;
+          mensajes.push(`El campo "${input.previousElementSibling.textContent.replace('*', '').trim()}" es obligatorio.`);
+          input.classList.add('is-invalid');
+        } else if (input) {
+          input.classList.remove('is-invalid');
+        }
+      });
+
+      const msgDiv = document.getElementById('formMsg');
+      if (!valido) {
+        msgDiv.textContent = mensajes.join(' ');
+        msgDiv.className = 'alert alert-danger mt-2';
+        msgDiv.classList.remove('d-none');
+        return;
+      } else {
+        msgDiv.classList.add('d-none');
+      }
+
+      // Solo enviar campos que tienen valor (no vacíos)
+      const data = {};
+      camposContactoEditables.forEach(campo => {
+        const input = document.querySelector(`[name="${campo.key}"]`);
+        if (input && input.value.trim() !== "") {
+          data[campo.key] = input.value.trim();
+        }
+      });
+
+      const resp = await fetch('/Proveedores/api/proveedores/' + proveedorId + '/', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + jwt
+        },
+        body: JSON.stringify(data)
+      });
+      if (resp.ok) {
+        msgDiv.textContent = 'Datos actualizados correctamente.';
+        msgDiv.className = 'alert alert-success mt-2';
+        msgDiv.classList.remove('d-none');
+      } else {
+        const err = await resp.json();
+        msgDiv.textContent = 'Error: ' + JSON.stringify(err);
+        msgDiv.className = 'alert alert-danger mt-2';
+        msgDiv.classList.remove('d-none');
+      }
+    });
+
+    function logout() {
+      sessionStorage.removeItem('jwt');
+      window.location.href = '/Proveedores/acceder/';
+    }
+  </script>
+</body>
+</html>

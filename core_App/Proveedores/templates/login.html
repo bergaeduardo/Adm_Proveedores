@@ -1,28 +1,59 @@
 <!DOCTYPE html>
-    <html lang="es">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-      <title>Inicio de Sesión</title>
-    </head>
-    <body>
-      <div class="container">
-        <div class="row justify-content-center">
-          <div class="col-md-6">
-            <h2 class="text-center">Inicio de sesión</h2>
-            <form id="loginForm">
-              <div class="form-group">
-                <input type="text" class="form-control" placeholder="Username" required>
-              </div>
-              <div class="form-group">
-                <input type="password" class="form-control" placeholder="Password" required>
-              </div>
-              <button type="submit" class="btn btn-primary btn-block">Iniciar</button>
-            </form>
-            <p class="text-center">No eres miembro? <a href="../registro">Regístrate</a></p>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <title>Inicio de Sesión</title>
+</head>
+<body>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <h2 class="text-center">Inicio de sesión</h2>
+        <form id="loginForm">
+          <div class="form-group">
+            <input type="text" class="form-control" id="username" placeholder="Username" required>
           </div>
-        </div>
+          <div class="form-group">
+            <input type="password" class="form-control" id="password" placeholder="Password" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Iniciar</button>
+        </form>
+        <div id="loginError" class="alert alert-danger mt-2 d-none"></div>
+        <p class="text-center">No eres miembro? <a href="../registro">Regístrate</a></p>
       </div>
-    </body>
-    </html>
+    </div>
+  </div>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('loginError');
+      errorDiv.classList.add('d-none');
+      try {
+        const resp = await fetch('/Proveedores/api/token/', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({username, password})
+        });
+        if (!resp.ok) {
+          const data = await resp.json();
+          errorDiv.textContent = data.detail || 'Credenciales inválidas';
+          errorDiv.classList.remove('d-none');
+          return;
+        }
+        const data = await resp.json();
+        // Guardar el token en sessionStorage (más seguro que localStorage)
+        sessionStorage.setItem('jwt', data.access);
+        // Redirigir a la página de datos del proveedor
+        window.location.href = '/Proveedores/mis-datos/';
+      } catch (err) {
+        errorDiv.textContent = 'Error de red o servidor.';
+        errorDiv.classList.remove('d-none');
+      }
+    });
+  </script>
+</body>
+</html>

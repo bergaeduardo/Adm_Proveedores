@@ -58,6 +58,8 @@ class ProveedorRegistroSerializer(serializers.ModelSerializer):
     user = User.objects.create_user(username=usuario, password=contrasena)
     # Crear proveedor y asociar el usuario
     proveedor = Proveedor.objects.create(username_django=user, **validated_data)
+     # DEBUG: imprime la relación
+    print(f"Proveedor creado: {proveedor.id}, username_django={proveedor.username_django_id}, user.id={user.id}")
     return {'user': user, 'proveedor': proveedor}
 
 # --- AGREGADO: Serializador clásico para el CRUD de proveedores ---

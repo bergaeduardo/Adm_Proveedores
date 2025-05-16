@@ -9,6 +9,13 @@ def register(request):
   return render(request, 'registro.html')
 
 def login_view(request):
+  return render(request, 'login.html')
+
+def mis_datos_view(request):
+  # Solo renderiza el template, los datos se obtienen vía JS usando JWT
+  return render(request, 'mis_datos.html')
+
+def login_view(request):
   if request.method == 'POST':
     username = request.POST['username']
     password = request.POST['password']

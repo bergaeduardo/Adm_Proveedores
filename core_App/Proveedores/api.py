@@ -3,35 +3,61 @@ Vistas API RESTful para el modelo Proveedor y registro de usuario.
 Permite operaciones CRUD y registro conjunto.
 """
 
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status,permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from .models import Proveedor
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from .serializers import ProveedorRegistroSerializer, ProveedorSerializer
-
-# Importar JWT
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.models import User
+
+class ProveedorViewSet(viewsets.ModelViewSet):
+  serializer_class = ProveedorSerializer
+  permission_classes = [IsAuthenticated]
+
+  def get_queryset(self):
+    user = self.request.user
+    # DEBUG: imprime el usuario autenticado y el queryset
+    print(f"Usuario autenticado: {user} (id={user.id})")
+    qs = Proveedor.objects.filter(username_django_id=user.id)
+    print(f"Proveedores encontrados para user.id={user.id}: {[p.id for p in qs]}")
+    return qs
+
+  def list(self, request, *args, **kwargs):
+    # DEBUG extra: muestra el usuario y el queryset en la respuesta
+    queryset = self.get_queryset()
+    serializer = self.get_serializer(queryset, many=True)
+    return Response({
+      "user_id": request.user.id,
+      "proveedores": serializer.data
+    })
+
+  def update(self, request, *args, **kwargs):
+    instance = self.get_object()
+    if instance.username_django_id != request.user.id:
+      return Response({'detail': 'No autorizado.'}, status=status.HTTP_403_FORBIDDEN)
+    return super().update(request, *args, **kwargs)
 
 class ProveedorRegistroView(APIView):
-  """
-  API para registrar usuario, proveedor y generar token JWT.
-  """
-  
-  def post(self, request, *args, **kwargs):
+  permission_classes = [permissions.AllowAny]
+
+  def post(self, request):
     serializer = ProveedorRegistroSerializer(data=request.data)
     if serializer.is_valid():
-      resultado = serializer.save()
-      user = resultado['user']
-      proveedor = resultado['proveedor']
-      # Generar JWT
-      refresh = RefreshToken.for_user(user)
-      return Response({
-        'mensaje': '¡Registro exitoso!',
-        'refresh': str(refresh),
-        'access': str(refresh.access_token)
-      }, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+      result = serializer.save()
+      # DEBUG: muestra el id del usuario y del proveedor creado
+      print(f"Usuario creado: {result['user'].id}, Proveedor creado: {result['proveedor'].id}, username_django={result['proveedor'].username_django_id}")
+      return Response({'msg': 'Proveedor y usuario creados correctamente.'}, status=201)
+    return Response(serializer.errors, status=400)
+  
+  # Endpoint para obtener el user_id autenticado
+class UserIdView(APIView):
+  permission_classes = [IsAuthenticated]
+
+  def get(self, request):
+    return Response({'user_id': request.user.id})
 
 # CRUD clásico (opcional, para otros endpoints)
 class ProveedorViewSet(viewsets.ModelViewSet):
