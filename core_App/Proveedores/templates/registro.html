@@ -75,6 +75,25 @@
       document.getElementById('form-messages').className = '';
     }
 
+    // Validación de formato CUIT
+    function validarFormatoCuit(cuit) {
+      const cuitPattern = /^\d{2}-\d{8}-\d{1}$/;
+      return cuitPattern.test(cuit);
+    }
+
+    // Consulta al backend si el CUIT ya existe
+    async function cuitYaExiste(cuit) {
+      try {
+        const resp = await fetch(`/Proveedores/api/proveedores/?n_cuit=${encodeURIComponent(cuit)}`);
+        if (!resp.ok) return false;
+        const data = await resp.json();
+        // Si hay algún resultado, el CUIT ya existe
+        return Array.isArray(data) && data.length > 0;
+      } catch (e) {
+        return false;
+      }
+    }
+
     document.getElementById('registroForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       limpiarErrores();
@@ -105,6 +124,19 @@
       if (!data.n_cuit) {
         document.getElementById('error-n_cuit').textContent = 'El CUIL/CUIT es obligatorio.';
         hayError = true;
+      } else if (!validarFormatoCuit(data.n_cuit)) {
+        document.getElementById('error-n_cuit').textContent = 'El CUIL/CUIT debe tener el formato XX-XXXXXXXX-X (ejemplo: 20-31441849-3).';
+        hayError = true;
+      } else {
+        // Validación de unicidad CUIT (consulta al backend)
+        document.getElementById('error-n_cuit').textContent = 'Verificando CUIT...';
+        const existe = await cuitYaExiste(data.n_cuit);
+        if (existe) {
+          document.getElementById('error-n_cuit').textContent = 'El CUIL/CUIT ya está registrado.';
+          hayError = true;
+        } else {
+          document.getElementById('error-n_cuit').textContent = '';
+        }
       }
       if (!data.e_mail) {
         document.getElementById('error-e_mail').textContent = 'El email es obligatorio.';

@@ -6,6 +6,7 @@ Incluye validaciones personalizadas y mensajes en español.
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Proveedor
+import re
 
 class ProveedorRegistroSerializer(serializers.ModelSerializer):
   usuario = serializers.CharField(write_only=True, required=True)
@@ -42,8 +43,10 @@ class ProveedorRegistroSerializer(serializers.ModelSerializer):
   def validate_n_cuit(self, value):
     if not value or len(value.strip()) == 0:
       raise serializers.ValidationError("El CUIL/CUIT es obligatorio.")
-    if not value.isdigit() or len(value) != 11:
-      raise serializers.ValidationError("El CUIL/CUIT debe tener 11 dígitos numéricos.")
+    # Validar formato: XX-XXXXXXXX-X (ej: 20-31441849-3)
+    cuit_pattern = r'^\d{2}-\d{8}-\d{1}$'
+    if not re.match(cuit_pattern, value):
+      raise serializers.ValidationError("El CUIL/CUIT debe tener el formato XX-XXXXXXXX-X (ejemplo: 20-31441849-3).")
     return value
 
   def validate_e_mail(self, value):
