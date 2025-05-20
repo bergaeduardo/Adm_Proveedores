@@ -12,6 +12,7 @@ from drf_spectacular.utils import extend_schema, OpenApiExample
 from .serializers import ProveedorRegistroSerializer, ProveedorSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
+from rest_framework.decorators import api_view
 
 class ProveedorViewSet(viewsets.ModelViewSet):
   serializer_class = ProveedorSerializer
@@ -58,6 +59,18 @@ class UserIdView(APIView):
 
   def get(self, request):
     return Response({'user_id': request.user.id})
+
+@api_view(['GET'])
+def validar_cuit(request):
+  """
+  Endpoint para validar si un CUIT ya existe.
+  Recibe ?n_cuit=XX-XXXXXXXX-X y responde {"exists": true/false}
+  """
+  n_cuit = request.GET.get('n_cuit')
+  exists = False
+  if n_cuit:
+    exists = Proveedor.objects.filter(n_cuit=n_cuit).exists()
+  return Response({'exists': exists})
 
 # CRUD clásico (opcional, para otros endpoints)
 class ProveedorViewSet(viewsets.ModelViewSet):

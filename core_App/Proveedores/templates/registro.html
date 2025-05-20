@@ -81,14 +81,13 @@
       return cuitPattern.test(cuit);
     }
 
-    // Consulta al backend si el CUIT ya existe
+    // Consulta al backend si el CUIT ya existe (nuevo endpoint)
     async function cuitYaExiste(cuit) {
       try {
-        const resp = await fetch(`/Proveedores/api/proveedores/?n_cuit=${encodeURIComponent(cuit)}`);
+        const resp = await fetch(`/Proveedores/api/validar-cuit/?n_cuit=${encodeURIComponent(cuit)}`);
         if (!resp.ok) return false;
         const data = await resp.json();
-        // Si hay algún resultado, el CUIT ya existe
-        return Array.isArray(data) && data.length > 0;
+        return data.exists === true;
       } catch (e) {
         return false;
       }
