@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .models import Proveedor
+from consultasTango.models import Cpa57
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from .serializers import ProveedorRegistroSerializer, ProveedorSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -60,6 +61,12 @@ class UserIdView(APIView):
   def get(self, request):
     return Response({'user_id': request.user.id})
 
+class ProvinciaListView(APIView):
+  def get(self, request):
+    query = request.GET.get('q', '')
+    provincias = Cpa57.objects.filter(nom_provin__icontains=query).values('id_cpa57', 'cod_provin', 'nom_provin')
+    data = [{'id': p['id_cpa57'], 'display': f"{p['cod_provin']} – {p['nom_provin']}"} for p in provincias]
+    return Response(data, status=status.HTTP_200_OK)
 @api_view(['GET'])
 def validar_cuit(request):
   """

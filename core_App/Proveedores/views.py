@@ -9,7 +9,18 @@ def register(request):
   return render(request, 'registro.html')
 
 def login_view(request):
-  return render(request, 'login.html')
+  if request.method == 'POST':
+    username = request.POST['username']
+    password = request.POST['password']
+    user = authenticate(request, username=username, password=password)
+    if user is not None:
+      login(request, user)
+      return redirect('dashboard')  # Redirigir al tablero de control
+    else:
+      return render(request, 'login.html', {'error': 'Credenciales inválidas'})
+    
+def dashboard_view(request):
+  return render(request, 'dashboard.html')
 
 def mis_datos_view(request):
   # Solo renderiza el template, los datos se obtienen vía JS usando JWT

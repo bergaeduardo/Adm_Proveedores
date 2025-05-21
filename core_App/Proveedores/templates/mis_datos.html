@@ -17,6 +17,12 @@
     <h2>Mis Datos de Proveedor</h2>
     <form id="proveedorForm" class="mt-3" novalidate>
       <div id="formFields"></div>
+      <div class="form-group">
+        <label for="provincia">Provincia</label>
+        <input type="text" class="form-control" id="provincia" name="provincia" placeholder="Buscar provincia...">
+        <input type="hidden" id="id_cpa57" name="id_cpa57">
+        <div class="list-group" id="provinciaList"></div>
+      </div>
       <button type="submit" class="btn btn-success">Guardar Cambios</button>
       <div id="formMsg" class="alert mt-2 d-none"></div>
     </form>
@@ -32,7 +38,6 @@
     let userId = null;
     let codCpa01Value = null;
 
-    // Campos de contacto que serán editables y visibles en el formulario
     const camposContactoEditables = [
       { key: "nom_fant", label: "Nombre comercial" },
       { key: "nom_provee", label: "Razon social" },
@@ -43,21 +48,17 @@
       { key: "localidad", label: "Localidad" }
     ];
 
-    // Campos obligatorios (deben estar completos para enviar)
     const camposContactoObligatorios = [
       "nom_provee",
       "n_cuit",
       "telefono_1",
       "e_mail",
-      "domicilio"
+      "domicilio",
+      "id_cpa57"
     ];
 
-    // Campos a bloquear si COD_CPA01 no está vacío
     const camposBloquear = ["nom_provee","nom_fant","n_cuit"];
-    // Si tienes un campo "razon_social", agrégalo aquí y en camposContactoEditables
-    // const camposBloquear = ["nom_provee", "razon_social", "n_cuit"];
 
-    // Paso 1: Obtener el user_id autenticado
     async function obtenerUserId() {
       const resp = await fetch('/Proveedores/api/userid/', {
         headers: { 'Authorization': 'Bearer ' + jwt }
@@ -71,7 +72,6 @@
       return data.user_id;
     }
 
-    // Paso 2: Cargar datos del proveedor usando el user_id
     async function cargarDatos() {
       userId = await obtenerUserId();
       if (!userId) return;
@@ -86,11 +86,9 @@
       proveedorId = proveedor.id;
       codCpa01Value = proveedor.cod_cpa01;
 
-      // Renderizar solo los campos editables
       let html = '';
       for (const campo of camposContactoEditables) {
         const esObligatorio = camposContactoObligatorios.includes(campo.key);
-        // Si el campo debe bloquearse y COD_CPA01 no está vacío, lo deshabilitamos
         const disabled = (codCpa01Value && codCpa01Value.trim() !== "" && camposBloquear.includes(campo.key)) ? 'disabled' : '';
         html += `
           <div class="form-group">
@@ -106,12 +104,10 @@
 
     cargarDatos();
 
-    // Validación personalizada en el frontend
     document.getElementById('proveedorForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       if (!proveedorId) return;
 
-      // Validación de campos obligatorios
       let valido = true;
       let mensajes = [];
       camposContactoObligatorios.forEach(campo => {
@@ -127,7 +123,6 @@
         }
       });
 
-      // Validación de formato CUIT en frontend
       const cuitInput = document.querySelector('[name="n_cuit"]');
       if (cuitInput && cuitInput.value.trim() !== "") {
         const cuitPattern = /^\d{2}-\d{8}-\d{1}$/;
@@ -152,7 +147,6 @@
         msgDiv.classList.add('d-none');
       }
 
-      // Solo enviar campos que tienen valor (no vacíos) y que no están deshabilitados
       const data = {};
       camposContactoEditables.forEach(campo => {
         const input = document.querySelector(`[name="${campo.key}"]`);
@@ -160,6 +154,11 @@
           data[campo.key] = input.value.trim();
         }
       });
+
+      const idCpa57Input = document.getElementById('id_cpa57');
+      if (idCpa57Input && idCpa57Input.value.trim() !== "") {
+        data['id_cpa57'] = idCpa57Input.value.trim();
+      }
 
       const resp = await fetch('/Proveedores/api/proveedores/' + proveedorId + '/', {
         method: 'PATCH',
@@ -181,7 +180,6 @@
       }
     });
 
-    // Validación en tiempo real para el campo CUIT
     function agregarValidacionCuitFrontend() {
       const cuitInput = document.querySelector('[name="n_cuit"]');
       if (cuitInput) {
@@ -202,6 +200,32 @@
       sessionStorage.removeItem('jwt');
       window.location.href = '/Proveedores/acceder/';
     }
+
+    document.getElementById('provincia').addEventListener('input', async function() {
+      const query = this.value;
+      if (query.length < 2) {
+        document.getElementById('provinciaList').innerHTML = '';
+        return;
+      }
+      const resp = await fetch(`/Proveedores/api/provincias/?q=${query}`, {
+        headers: { 'Authorization': 'Bearer ' + jwt }
+      });
+      if (resp.ok) {
+        const provincias = await resp.json();
+        const list = provincias.map(p => `<button type="button" class="list-group-item list-group-item-action" data-id="${p.id}">${p.display}</button>`).join('');
+        document.getElementById('provinciaList').innerHTML = list;
+      }
+    });
+
+    document.getElementById('provinciaList').addEventListener('click', function(e) {
+      if (e.target && e.target.matches('button.list-group-item')) {
+        const selectedText = e.target.textContent;
+        const selectedId = e.target.getAttribute('data-id');
+        document.getElementById('provincia').value = selectedText;
+        document.getElementById('id_cpa57').value = selectedId;
+        document.getElementById('provinciaList').innerHTML = '';
+      }
+    });
   </script>
 </body>
 </html>

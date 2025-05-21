@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <title>Tablero de Control</title>
+  <style>
+    .btn-app {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 150px;
+      height: 150px;
+      margin: 10px;
+      padding: 20px;
+      font-size: 18px;
+      text-align: center;
+      color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .btn-app.disabled {
+      background-color: #ccc;
+      pointer-events: none;
+    }
+    .btn-mis-datos { background-color: #007bff; }
+    .btn-comprobantes, .btn-resumen, .btn-boton4, .btn-boton5, .btn-boton6 {
+      background-color: #6c757d;
+    }
+    .icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    @media (min-width: 768px) {
+      .btn-group {
+        justify-content: space-between;
+      }
+      .btn-group > div {
+        flex: 1 1 30%;
+        max-width: 30%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container text-center mt-5">
+    <h2>Tablero de Control</h2>
+    <div class="btn-group">
+      <a href="/Proveedores/mis-datos/" class="btn-app btn-mis-datos">
+        <i class="fas fa-user icon"></i>
+        Mis Datos
+      </a>
+      <div class="btn-app btn-comprobantes disabled">
+        <i class="fas fa-file-invoice icon"></i>
+        Comprobantes
+      </div>
+      <div class="btn-app btn-resumen disabled">
+        <i class="fas fa-chart-line icon"></i>
+        Resumen de Cuenta
+      </div>
+      <div class="btn-app btn-boton4 disabled">
+        <i class="fas fa-cogs icon"></i>
+        Botón 4
+      </div>
+      <div class="btn-app btn-boton5 disabled">
+        <i class="fas fa-envelope icon"></i>
+        Botón 5
+      </div>
+      <div class="btn-app btn-boton6 disabled">
+        <i class="fas fa-question-circle icon"></i>
+        Botón 6
+      </div>
+    </div>
+  </div>
+</body>
+</html>
