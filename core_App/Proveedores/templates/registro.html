@@ -41,6 +41,15 @@
             <input type="text" class="form-control" id="nombreFantasia" placeholder="Nombre de Fantasía (opcional)">
             <div id="error-nom_fant" class="error-message"></div>
           </div>
+          <!-- Nuevo campo de selección de país -->
+          <div class="form-group">
+            <select class="form-control" id="pais" required>
+              <option value="">Seleccione un país</option>
+              <option value="AR">Argentina</option>
+              <option value="UR">Uruguay</option>
+            </select>
+            <div id="error-pais" class="error-message"></div>
+          </div>
           <button type="submit" class="btn btn-primary btn-block">Registrar</button>
         </form>
         <div id="form-messages" class="text-center mt-3"></div>
@@ -103,7 +112,9 @@
         nom_provee: document.getElementById('nombreComercial').value.trim(),
         n_cuit: document.getElementById('cuilCuit').value.trim(),
         e_mail: document.getElementById('email').value.trim(),
-        nom_fant: document.getElementById('nombreFantasia').value.trim()
+        nom_fant: document.getElementById('nombreFantasia').value.trim(),
+        cod_pais: document.getElementById('pais').value,
+        nom_pais: document.getElementById('pais').options[document.getElementById('pais').selectedIndex].text
       };
 
       // Validación básica en frontend
@@ -139,6 +150,10 @@
       }
       if (!data.e_mail) {
         document.getElementById('error-e_mail').textContent = 'El email es obligatorio.';
+        hayError = true;
+      }
+      if (!data.cod_pais) {
+        document.getElementById('error-pais').textContent = 'El país es obligatorio.';
         hayError = true;
       }
       if (hayError) return;

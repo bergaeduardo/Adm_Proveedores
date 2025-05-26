@@ -20,7 +20,9 @@ class ProveedorRegistroSerializer(serializers.ModelSerializer):
       'nom_provee',
       'n_cuit',
       'e_mail',
-      'nom_fant'
+      'nom_fant',
+      'cod_pais',
+      'nom_pais'
     ]
 
   def validate_usuario(self, value):

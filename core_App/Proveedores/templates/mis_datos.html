@@ -10,6 +10,10 @@
       content: " *";
       color: red;
     }
+    .btn-save {
+      display: none;
+      float: right;
+    }
   </style>
 </head>
 <body>
@@ -21,9 +25,11 @@
         <label for="provincia">Provincia</label>
         <input type="text" class="form-control" id="provincia" name="provincia" placeholder="Buscar provincia...">
         <input type="hidden" id="id_cpa57" name="id_cpa57">
+        <input type="hidden" id="nom_prov" name="nom_prov">
         <div class="list-group" id="provinciaList"></div>
       </div>
-      <button type="submit" class="btn btn-success">Guardar Cambios</button>
+      <button type="button" class="btn btn-secondary" onclick="goToDashboard()">Volver al Inicio</button>
+      <button type="submit" class="btn btn-success btn-save">Guardar Cambios</button>
       <div id="formMsg" class="alert mt-2 d-none"></div>
     </form>
     <button class="btn btn-secondary mt-3" onclick="logout()">Cerrar sesión</button>
@@ -37,6 +43,8 @@
     let proveedorId = null;
     let userId = null;
     let codCpa01Value = null;
+    let initialData = {};
+    let codPais = null; // Variable para almacenar el código de país
 
     const camposContactoEditables = [
       { key: "nom_fant", label: "Nombre comercial" },
@@ -53,8 +61,7 @@
       "n_cuit",
       "telefono_1",
       "e_mail",
-      "domicilio",
-      "id_cpa57"
+      "domicilio"
     ];
 
     const camposBloquear = ["nom_provee","nom_fant","n_cuit"];
@@ -85,6 +92,18 @@
       const proveedor = await resp.json();
       proveedorId = proveedor.id;
       codCpa01Value = proveedor.cod_cpa01;
+      initialData = { ...proveedor };
+      codPais = proveedor.cod_pais; // Asignar el código de país
+
+      // Llamar a la API para cambiar la conexión
+      await cambiarConexion(codPais);
+
+      if (proveedor.id_cpa57) {
+          document.getElementById('provincia').value = proveedor.nom_prov;
+          document.getElementById('id_cpa57').value = proveedor.id_cpa57;
+          document.getElementById('nom_prov').value = proveedor.nom_prov;
+        
+      }
 
       let html = '';
       for (const campo of camposContactoEditables) {
@@ -100,6 +119,31 @@
       }
       document.getElementById('formFields').innerHTML = html;
       agregarValidacionCuitFrontend();
+      monitorChanges();
+    }
+
+    async function cambiarConexion(codPais) {
+      const resp = await fetch('/Proveedores/api/cambiar-conexion/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + jwt
+        },
+        body: JSON.stringify({ cod_pais: codPais })
+      });
+      if (!resp.ok) {
+        console.error('Error al cambiar la conexión');
+      }
+    }
+
+    function monitorChanges() {
+      const inputs = document.querySelectorAll('#proveedorForm input');
+      inputs.forEach(input => {
+        input.addEventListener('input', () => {
+          const hasChanges = Array.from(inputs).some(input => input.value !== initialData[input.name]);
+          document.querySelector('.btn-save').style.display = hasChanges ? 'block' : 'none';
+        });
+      });
     }
 
     cargarDatos();
@@ -156,8 +200,12 @@
       });
 
       const idCpa57Input = document.getElementById('id_cpa57');
+      const nomProvInput = document.getElementById('nom_prov');
       if (idCpa57Input && idCpa57Input.value.trim() !== "") {
         data['id_cpa57'] = idCpa57Input.value.trim();
+      }
+      if (nomProvInput && nomProvInput.value.trim() !== "") {
+        data['nom_prov'] = nomProvInput.value.trim();
       }
 
       const resp = await fetch('/Proveedores/api/proveedores/' + proveedorId + '/', {
@@ -172,6 +220,7 @@
         msgDiv.textContent = 'Datos actualizados correctamente.';
         msgDiv.className = 'alert alert-success mt-2';
         msgDiv.classList.remove('d-none');
+        document.querySelector('.btn-save').style.display = 'none';
       } else {
         const err = await resp.json();
         msgDiv.textContent = 'Error: ' + JSON.stringify(err);
@@ -201,18 +250,22 @@
       window.location.href = '/Proveedores/acceder/';
     }
 
+    function goToDashboard() {
+      window.location.href = '/Proveedores/dashboard/';
+    }
+
     document.getElementById('provincia').addEventListener('input', async function() {
       const query = this.value;
       if (query.length < 2) {
         document.getElementById('provinciaList').innerHTML = '';
         return;
       }
-      const resp = await fetch(`/Proveedores/api/provincias/?q=${query}`, {
+      const resp = await fetch(`/Proveedores/api/provincias/?q=${query}&cod_pais=${codPais}`, {
         headers: { 'Authorization': 'Bearer ' + jwt }
       });
       if (resp.ok) {
         const provincias = await resp.json();
-        const list = provincias.map(p => `<button type="button" class="list-group-item list-group-item-action" data-id="${p.id}">${p.display}</button>`).join('');
+        const list = provincias.map(p => `<button type="button" class="list-group-item list-group-item-action" data-id="${p.id}" data-nom="${p.display}">${p.display}</button>`).join('');
         document.getElementById('provinciaList').innerHTML = list;
       }
     });
@@ -221,8 +274,10 @@
       if (e.target && e.target.matches('button.list-group-item')) {
         const selectedText = e.target.textContent;
         const selectedId = e.target.getAttribute('data-id');
+        const selectedNom = e.target.getAttribute('data-nom');
         document.getElementById('provincia').value = selectedText;
         document.getElementById('id_cpa57').value = selectedId;
+        document.getElementById('nom_prov').value = selectedNom;
         document.getElementById('provinciaList').innerHTML = '';
       }
     });

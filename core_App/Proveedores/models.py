@@ -10,6 +10,7 @@ class Proveedor(models.Model):
   localidad = models.CharField(db_column='LOCALIDAD', max_length=20, blank=True, null=True)
   c_postal = models.CharField(db_column='C_POSTAL', max_length=8, blank=True, null=True)
   id_cpa57 = models.IntegerField(db_column='ID_CPA57', blank=True, null=True)
+  nom_prov = models.CharField(db_column='NOM_PROV', max_length=100, blank=True, null=True)
   telefono_1 = models.CharField(db_column='TELEFONO_1', max_length=30, blank=True, null=True)
   telefono_2 = models.CharField(db_column='TELEFONO_2', max_length=30, blank=True, null=True)
   telefono_movil = models.CharField(db_column='TELEFONO_MOVIL', max_length=30, blank=True, null=True)
@@ -93,6 +94,9 @@ class Proveedor(models.Model):
   sucursales = models.JSONField(db_column='SUCURSALES', blank=True, null=True)
   # Nuevo campo para vincular con el usuario de Django
   username_django = models.ForeignKey(User, db_column='USERNAME_DJANGO', on_delete=models.SET_NULL, null=True, blank=True, related_name='proveedores')
+  # Nuevos campos para país
+  cod_pais = models.CharField(db_column='COD_PAIS', max_length=2, blank=True, null=True)
+  nom_pais = models.CharField(db_column='NOM_PAIS', max_length=60, blank=True, null=True)
 
   def __str__(self):
     return self.nom_provee

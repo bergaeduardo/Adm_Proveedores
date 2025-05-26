@@ -13,6 +13,7 @@ from drf_spectacular.utils import extend_schema, OpenApiExample
 from .serializers import ProveedorRegistroSerializer, ProveedorSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
+from django.conf import settings
 from rest_framework.decorators import api_view
 
 class ProveedorViewSet(viewsets.ModelViewSet):
@@ -63,10 +64,39 @@ class UserIdView(APIView):
 
 class ProvinciaListView(APIView):
   def get(self, request):
+    # cod_pais=''
+    # conection='sqlserver'
     query = request.GET.get('q', '')
+    # cod_pais = request.GET.get('cod_pais')
+    # if cod_pais == 'UR':
+    #   cambiar_conexion(conection, 'TASKY_SA')
+
     provincias = Cpa57.objects.filter(nom_provin__icontains=query).values('id_cpa57', 'cod_provin', 'nom_provin')
-    data = [{'id': p['id_cpa57'], 'display': f"{p['cod_provin']} – {p['nom_provin']}"} for p in provincias]
+    data = [{'id': p['id_cpa57'], 'display': f"{p['nom_provin']}"} for p in provincias]
     return Response(data, status=status.HTTP_200_OK)
+  
+def cambiar_conexion(conection, nombre_db):
+  if conection == 'sqlserver':
+      settings.DATABASES[conection]['NAME'] = nombre_db
+      print('Cambiando base de datos a ' + conection + '.'+ nombre_db)
+  elif conection == 'mi_db_4':
+      settings.DATABASES[conection]['NAME'] = nombre_db
+      print('Cambiando base de datos a ' + conection + '.'+ nombre_db)
+
+
+class CambiarConexionView(APIView):
+  def post(self, request):
+    cod_pais = request.data.get('cod_pais', 'AR')  # Valor por defecto AR
+    connection = 'sqlserver'
+    
+    if cod_pais == 'UR':
+      cambiar_conexion(connection, 'TASKY_SA')
+    else:
+      cambiar_conexion(connection, 'Empresa_Ejemplo')
+    
+    return Response({'msg': 'Conexión cambiada correctamente.'}, status=status.HTTP_200_OK)
+
+
 @api_view(['GET'])
 def validar_cuit(request):
   """
