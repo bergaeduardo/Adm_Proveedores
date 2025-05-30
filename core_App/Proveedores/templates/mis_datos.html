@@ -12,22 +12,101 @@
     }
     .btn-save {
       display: none;
-      /* float: right; /* Replaced by flex alignment */
     }
-    /* Optional: Add a bit more distinction for card-header-tabs if desired */
     .card-header-tabs {
-      margin-bottom: -0.75rem; /* Default card-body padding is 1.25rem, this pulls tabs "into" the header border */
+      margin-bottom: -0.75rem; 
     }
     #provinciaList .list-group-item {
       cursor: pointer;
+    }
+    .document-card {
+      border: 1px solid #dee2e6; 
+      border-radius: 0.375rem; 
+      background-color: #fff;
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); 
+      display: flex;
+      flex-direction: column;
+      height: 100%; 
+    }
+    .document-card-body {
+      padding: 1.25rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between; 
+      flex-grow: 1; 
+    }
+    .document-icon-area {
+      font-size: 2rem; 
+      margin-bottom: 0.75rem;
+    }
+    .document-title {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      color: #333;
+    }
+    .required-asterisk {
+      color: var(--bs-danger, #dc3545); 
+      font-weight: bold;
+    }
+    .document-status-text {
+      font-size: 0.8rem;
+      color: #6c757d; 
+      margin-bottom: 1rem;
+      min-height: 30px; 
+    }
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%; 
+      padding: 0.5rem 0.75rem;
+    }
+    .action-btn svg {
+        vertical-align: middle;
+    }
+    .document-card.status-present {
+      border-left: 5px solid var(--bs-success, #198754); 
+    }
+    .document-card.status-present .status-icon {
+      color: var(--bs-success, #198754);
+    }
+    .document-card.status-required-missing {
+      border-left: 5px solid var(--bs-danger, #dc3545); 
+    }
+    .document-card.status-required-missing .status-icon {
+      color: var(--bs-danger, #dc3545);
+    }
+    .document-card.status-required-missing .document-title .required-asterisk {
+      animation: pulse-danger 2s infinite; 
+    }
+    .document-card.status-optional-missing {
+      border-left: 5px solid var(--bs-secondary, #6c757d); 
+    }
+    .document-card.status-optional-missing .status-icon {
+      color: var(--bs-secondary, #6c757d);
+    }
+    .document-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    }
+    @keyframes pulse-danger {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    .file-input {
+      display: none;
     }
   </style>
 </head>
 <body>
   <div class="container mt-4">
     <h2 class="mb-3">Mis Datos de Proveedor</h2>
-    <div class="card">
-      <div class="card-header">
+    <div class="card card-primary card-outline card-outline-tabs">
+      <div class="card-header border-bottom-0">
         <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
           <li class="nav-item" role="presentation">
             <button class="nav-link active" id="home-tab-btn" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Home</button>
@@ -38,12 +117,16 @@
           <li class="nav-item" role="presentation">
             <button class="nav-link" id="messages-tab-btn" data-bs-toggle="tab" data-bs-target="#messages-tab-pane" type="button" role="tab" aria-controls="messages-tab-pane" aria-selected="false">Mensajes</button>
           </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="documents-tab-btn" data-bs-toggle="tab" data-bs-target="#documents-tab-pane" type="button" role="tab" aria-controls="documents-tab-pane" aria-selected="false">Documentos</button>
+          </li>
         </ul>
       </div>
       <div class="card-body">
         <div class="tab-content" id="myTabContent">
           <!-- Home Tab Pane -->
           <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab-btn" tabindex="0">
+            <!-- El formulario principal ahora engloba el contenido de Home y los botones de acción -->
             <form id="proveedorForm" class="mt-3" novalidate>
               <h5>Datos de empresa</h5>
               <div class="row">
@@ -124,10 +207,12 @@
                 <label for="n_iva">Actividad</label>
                 <input type="text" class="form-control" id="n_iva" name="n_iva">
               </div>
-
               
-              <div id="formMsg" class="alert mt-3 d-none"></div>
-            </form>
+              
+
+              <!-- CORRECCIÓN ESTRUCTURAL: Botones de acción movidos DENTRO del proveedorForm -->
+              
+            </form> <!-- Fin de proveedorForm -->
           </div>
 
           <!-- Configuración Tab Pane -->
@@ -178,10 +263,6 @@
                   <input type="text" class="form-control" id="descripcion_cbu_3" name="descripcion_cbu_3">
                 </div>
               </div>
-              <!-- Add a Save button for this form if its data is saved separately,
-                   or ensure the main Save button handles these fields.
-                   Currently, the script's main Save button only processes `proveedorForm`.
-              -->
             </form>
           </div>
 
@@ -240,22 +321,111 @@
                 <label for="observaciones">Observaciones</label>
                 <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
               </div>
-              <!-- Add a Save button for this form if its data is saved separately -->
             </form>
           </div>
+
+          <!-- Documentos Tab Pane -->
+          <div class="tab-pane fade" id="documents-tab-pane" role="tabpanel" aria-labelledby="documents-tab-btn" tabindex="0">
+            <h5 class="mt-3 mb-4">Documentos Adjuntos</h5>
+            <div class="row">
+              <div class="col-md-6 col-lg-4 mb-4">
+                <div class="document-card status-required-missing" id="card-cuitFile">
+                  <div class="document-card-body">
+                    <div class="document-icon-area">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill status-icon" viewBox="0 0 16 16">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+                      </svg>
+                    </div>
+                    <h6 class="document-title">Constancia de CUIT/CUIL <span class="required-asterisk">*</span></h6>
+                    <p class="document-status-text">Pendiente de carga</p>
+                    <button type="button" class="btn btn-primary btn-sm action-btn" onclick="triggerUpload('cuitFile')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                        <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
+                      </svg>
+                      Cargar Archivo
+                    </button>
+                    <input type="file" id="cuitFile" name="cuitFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg">
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 col-lg-4 mb-4">
+                <div class="document-card status-required-missing" id="card-ingBrutosFile"> <!-- Asumiendo que este es requerido -->
+                  <div class="document-card-body">
+                    <div class="document-icon-area">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill status-icon" viewBox="0 0 16 16">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+                      </svg>
+                    </div>
+                    <h6 class="document-title">Inscripción Ing. Brutos <span class="required-asterisk">*</span></h6>
+                    <p class="document-status-text">Pendiente de carga</p>
+                    <button type="button" class="btn btn-primary btn-sm action-btn" onclick="triggerUpload('ingBrutosFile')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      Cargar Archivo
+                    </button>
+                    <input type="file" id="ingBrutosFile" name="ingBrutosFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg">
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 col-lg-4 mb-4">
+                <div class="document-card status-optional-missing" id="card-exclGananciasFile">
+                  <div class="document-card-body">
+                    <div class="document-icon-area">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16">
+                          <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/>
+                      </svg>
+                    </div>
+                    <h6 class="document-title">Cert. Exclusión Ganancias</h6>
+                    <p class="document-status-text">Opcional, no cargado</p>
+                    <button type="button" class="btn btn-outline-primary btn-sm action-btn" onclick="triggerUpload('exclGananciasFile')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      Cargar (Opcional)
+                    </button>
+                    <input type="file" id="exclGananciasFile" name="exclGananciasFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg">
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 col-lg-4 mb-4">
+                <div class="document-card status-optional-missing" id="card-cm05File">
+                  <div class="document-card-body">
+                    <div class="document-icon-area">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
+                    </div>
+                    <h6 class="document-title">Constancia CM05</h6>
+                    <p class="document-status-text">Opcional, no cargado</p>
+                    <button type="button" class="btn btn-outline-primary btn-sm action-btn" onclick="triggerUpload('cm05File')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      Cargar (Opcional)
+                    </button>
+                    <input type="file" id="cm05File" name="cm05File" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg">
+                  </div>
+                </div>
+              </div>
+              <!-- Faltan:
+                Certificado de No Retención de ganancias
+                Certificado de Exclusión de Ingresos Brutos
+                Certificado de No Retención de Ingresos Brutos
+              -->
+            </div>
+            <div id="documentUploadStatus" class="mt-3"></div>
+          </div> 
+        </div>
+      </div>
+      <div class="card-footer bg-light">
+        <div id="formMsg" class="alert mt-0 mb-3 d-none"></div> <!-- Mensaje global -->
+        <div class="d-flex justify-content-between">
+          <button type="button" class="btn btn-secondary" onclick="goToDashboard()">Volver al Inicio</button>
+          <button type="submit" class="btn btn-success btn-save" form="proveedorForm">Guardar Cambios</button>
         </div>
       </div>
     </div>
-    <div class="d-flex justify-content-between mt-4">
-      <button type="button" class="btn btn-secondary" onclick="goToDashboard()">Volver al Inicio</button>
-      <button type="submit" class="btn btn-success btn-save">Guardar Cambios</button>
-    </div>
-    <div class="text-center"> <!-- Centering the logout button -->
+    <!-- Botón de cerrar sesión, fuera de la estructura de la tarjeta y formularios -->
+    <div class="text-center">
         <button class="btn btn-outline-danger mt-4 mb-4" onclick="logout()">Cerrar sesión</button>
     </div>
   </div>
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Updated jQuery for compatibility, slim might miss ajax -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -269,248 +439,160 @@
     let proveedorId = null;
     let userId = null;
     let codCpa01Value = null;
-    let initialData = {}; // Will store initial values of ALL relevant fields
+    let initialData = {}; 
     let codPais = null;
 
-    // Fields primarily in proveedorForm (Home tab) and some from Configuración tab
-    // This array helps in structured population and applying 'disabled' or 'required' logic.
-    const camposPrincipalesEditables = [ // Renamed for clarity
-      { key: "nom_provee", label: "Razon social" },
-      { key: "n_cuit", label: "CUIT" },
-      { key: "domicilio", label: "Domicilio" },
-      { key: "localidad", label: "Localidad" },
-      { key: "c_postal", label: "Código postal" },
-      { key: "telefono_1", label: "Teléfono" },
-      { key: "telefono_2", label: "Teléfono 2" },
-      { key: "telefono_movil", label: "Teléfono móvil" },
-      { key: "e_mail", label: "Email" },
-      { key: "web", label: "Pagina Web" },
-      { key: "nom_fant", label: "Nombre comercial" },
-      { key: "domicilio_comercial", label: "Domicilio comercial" },
-      { key: "n_iva", label: "Actividad" },
-      { key: "n_ing_brut", label: "Nro. de ingresos brutos" },
-      { key: "cbu", label: "Clave bancaria única (CBU)" },
-      { key: "descripcion_cbu", label: "Descripción" },
-      { key: "cbu_2", label: "Clave bancaria única 2 (CBU)" },
-      { key: "descripcion_cbu_2", label: "Descripción" },
-      { key: "cbu_3", label: "Clave bancaria única 3 (CBU)" },
-      { key: "descripcion_cbu_3", label: "Descripción" },
+    const camposPrincipalesEditables = [ 
+      { key: "nom_provee", label: "Razon social" }, { key: "n_cuit", label: "CUIT" },
+      { key: "domicilio", label: "Domicilio" }, { key: "localidad", label: "Localidad" },
+      { key: "c_postal", label: "Código postal" }, { key: "telefono_1", label: "Teléfono" },
+      { key: "telefono_2", label: "Teléfono 2" }, { key: "telefono_movil", label: "Teléfono móvil" },
+      { key: "e_mail", label: "Email" }, { key: "web", label: "Pagina Web" },
+      { key: "nom_fant", label: "Nombre comercial" }, { key: "domicilio_comercial", label: "Domicilio comercial" },
+      { key: "n_iva", label: "Actividad" }, { key: "n_ing_brut", label: "Nro. de ingresos brutos" },
+      { key: "cbu", label: "Clave bancaria única (CBU)" }, { key: "descripcion_cbu", label: "Descripción" },
+      { key: "cbu_2", label: "Clave bancaria única 2 (CBU)" }, { key: "descripcion_cbu_2", label: "Descripción" },
+      { key: "cbu_3", label: "Clave bancaria única 3 (CBU)" }, { key: "descripcion_cbu_3", label: "Descripción" },
     ];
-
-    const camposContactoObligatorios = [ // These are primarily in proveedorForm
-      "nom_provee",
-      "n_cuit",
-      "telefono_1",
-      "e_mail",
-      "domicilio"
-    ];
-
+    const camposContactoObligatorios = ["nom_provee", "n_cuit", "telefono_1", "e_mail", "domicilio"];
+    const documentosRequeridosIds = ['cuitFile', 'ingBrutosFile']; 
     const camposBloquear = ["nom_provee","nom_fant","n_cuit"];
 
     async function obtenerUserId() {
       try {
-        const resp = await fetch('/Proveedores/api/userid/', {
-          headers: { 'Authorization': 'Bearer ' + jwt }
-        });
+        const resp = await fetch('/Proveedores/api/userid/', { headers: { 'Authorization': 'Bearer ' + jwt }});
         if (!resp.ok) {
-          if (resp.status === 401 || resp.status === 403) {
-            sessionStorage.removeItem('jwt');
-            window.location.href = '/Proveedores/acceder/';
-          }
-          console.error('Error fetching user ID:', resp.statusText);
-          return null;
+          if (resp.status === 401 || resp.status === 403) { sessionStorage.removeItem('jwt'); window.location.href = '/Proveedores/acceder/'; }
+          console.error('Error fetching user ID:', resp.statusText); return null;
         }
-        const data = await resp.json();
-        return data.user_id;
+        const data = await resp.json(); return data.user_id;
       } catch (error) {
-        console.error('Network error fetching user ID:', error);
-        sessionStorage.removeItem('jwt');
-        window.location.href = '/Proveedores/acceder/';
-        return null;
+        console.error('Network error fetching user ID:', error); sessionStorage.removeItem('jwt'); window.location.href = '/Proveedores/acceder/'; return null;
       }
     }
 
     async function cargarDatos() {
       userId = await obtenerUserId();
-      if (!userId) {
-        $('#formMsg').text('No se pudo verificar el usuario. Redirigiendo...').removeClass('d-none alert-success').addClass('alert-danger');
-        return;
-      }
-
-      let proveedor = {}; // Initialize proveedor object
-
+      if (!userId) { $('#formMsg').text('No se pudo verificar el usuario. Redirigiendo...').removeClass('d-none alert-success').addClass('alert-danger'); return; }
+      let proveedor = {};
       try {
-        const resp = await fetch('/Proveedores/api/proveedores/' + userId + '/', {
-          headers: { 'Authorization': 'Bearer ' + jwt }
-        });
-
+        const resp = await fetch('/Proveedores/api/proveedores/' + userId + '/', { headers: { 'Authorization': 'Bearer ' + jwt }});
         if (!resp.ok) {
-          if (resp.status === 404) {
-             $('#formMsg').text('No se encontraron datos de proveedor asociados. Puede completar el formulario y guardar.').removeClass('d-none alert-danger').addClass('alert-warning');
-          } else {
-            $('#formMsg').text('Error al cargar datos del proveedor: ' + resp.statusText).removeClass('d-none alert-success').addClass('alert-danger');
-          }
-          // Continue to populate form with defaults and set up monitoring even if no data found
+          if (resp.status === 404) { $('#formMsg').text('No se encontraron datos de proveedor asociados. Puede completar el formulario y guardar.').removeClass('d-none alert-danger').addClass('alert-warning');
+          } else { $('#formMsg').text('Error al cargar datos del proveedor: ' + resp.statusText).removeClass('d-none alert-success').addClass('alert-danger');}
         } else {
-            proveedor = await resp.json(); // Assign fetched data
-            proveedorId = proveedor.id;
-            codCpa01Value = proveedor.cod_cpa01;
-            codPais = proveedor.cod_pais;
+            proveedor = await resp.json(); proveedorId = proveedor.id; codCpa01Value = proveedor.cod_cpa01; codPais = proveedor.cod_pais;
         }
 
-        // --- Populate initialData and form fields for ALL tabs ---
-
-        // 1. Populate fields in proveedorForm (Home) and some from Config (n_ing_brut, CBUs)
         camposPrincipalesEditables.forEach(campo => {
           const inputElement = document.getElementById(campo.key);
           if (inputElement) {
-            const value = proveedor[campo.key];
-            inputElement.value = (value !== null && value !== undefined) ? value : '';
+            const value = proveedor[campo.key]; inputElement.value = (value !== null && value !== undefined) ? value : '';
             initialData[campo.key] = inputElement.value; 
-
-            if (codCpa01Value && codCpa01Value.trim() !== "" && camposBloquear.includes(campo.key)) {
-              inputElement.disabled = true;
-            }
+            if (codCpa01Value && codCpa01Value.trim() !== "" && camposBloquear.includes(campo.key)) { inputElement.disabled = true; }
           }
         });
         
-        // 2. Provincia (Home tab)
         const provinciaDisplayInput = document.getElementById('provincia');
         const idCpa57Input = document.getElementById('id_cpa57');
         const nomProvInput = document.getElementById('nom_prov');
-        
-        provinciaDisplayInput.value = proveedor.nom_prov || '';
-        idCpa57Input.value = proveedor.id_cpa57 || '';
-        nomProvInput.value = proveedor.nom_prov || '';
-        initialData['provincia'] = provinciaDisplayInput.value; // Using 'provincia' as key for display field
-        initialData['id_cpa57'] = idCpa57Input.value;
-        initialData['nom_prov'] = nomProvInput.value;
+        provinciaDisplayInput.value = proveedor.nom_prov || ''; idCpa57Input.value = proveedor.id_cpa57 || ''; nomProvInput.value = proveedor.nom_prov || '';
+        initialData['provincia'] = provinciaDisplayInput.value; initialData['id_cpa57'] = idCpa57Input.value; initialData['nom_prov'] = nomProvInput.value;
 
+        if (codPais) { await cambiarConexion(codPais); }
 
-        if (codPais) {
-            await cambiarConexion(codPais);
-        }
-
-        // 3. Dropdowns in Configuración tab
         await cargarCondicionIva(proveedor.id_categoria_iva_cond_iva);
         initialData['condicionIva'] = proveedor.id_categoria_iva_cond_iva || (document.getElementById('condicionIva').options.length > 0 ? document.getElementById('condicionIva').options[0].value : '');
-
         await cargarIngresosBrutos(proveedor.tipo);
         initialData['ingresosBrutos'] = proveedor.tipo || (document.getElementById('ingresosBrutos').options.length > 0 ? document.getElementById('ingresosBrutos').options[0].value : '');
         
-        // 4. Populate initialData for remaining fields in configForm (if any not covered by camposPrincipalesEditables)
-        //    Currently, n_ing_brut, cbu fields are in camposPrincipalesEditables.
-        //    condicionIva and ingresosBrutos (selects) are handled above.
-
-        // 5. Populate initialData for fields in messagesForm (Mensajes tab)
         const messagesFormElements = document.querySelectorAll('#messagesForm input, #messagesForm select, #messagesForm textarea');
         messagesFormElements.forEach(el => {
             if (el.name || el.id) {
-                const key = el.name || el.id;
-                const value = proveedor[key]; 
-                
-                if (el.tagName.toLowerCase() === 'select') {
-                    el.value = (value !== null && value !== undefined) ? value : (el.options.length > 0 ? el.options[0].value : '');
+                const key = el.name || el.id; const value = proveedor[key]; 
+                if (el.tagName.toLowerCase() === 'select') { el.value = (value !== null && value !== undefined) ? value : (el.options.length > 0 ? el.options[0].value : '');
+                } else { el.value = (value !== null && value !== undefined) ? value : ''; }
+                initialData[key] = el.value;
+            }
+        });
+
+        const fileInputsDocumentos = document.querySelectorAll('#documents-tab-pane .file-input');
+        fileInputsDocumentos.forEach(input => {
+            if (input.id) {
+                // AJUSTE: Si el backend provee info de archivos, actualizar UI y initialData aquí.
+                const fileInfo = proveedor.documentos ? proveedor.documentos[input.id] : null;
+                if (fileInfo && fileInfo.name) {
+                    initialData[input.id] = fileInfo.name;
+                    // Actualizar UI de la tarjeta de documento
+                    const cardBody = input.closest('.document-card-body');
+                    if (cardBody) {
+                        cardBody.querySelector('.document-status-text').textContent = 'Archivo cargado: ' + fileInfo.name;
+                        const actionButton = cardBody.querySelector('.action-btn');
+                        actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-1" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg> Ver Documento`;
+                        actionButton.onclick = () => viewDocument(fileInfo.url || '#'); // Usar URL del backend
+                        actionButton.classList.remove('btn-primary');
+                        actionButton.classList.add('btn-outline-secondary');
+                        
+                        const documentCard = input.closest('.document-card');
+                        const statusIconArea = cardBody.querySelector('.document-icon-area');
+                        documentCard.classList.remove('status-required-missing', 'status-optional-missing');
+                        documentCard.classList.add('status-present');
+                        statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill status-icon" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`;
+                    }
                 } else {
-                    el.value = (value !== null && value !== undefined) ? value : '';
+                    initialData[input.id] = ''; // No hay archivo inicialmente desde el backend
                 }
-                initialData[key] = el.value; // Store initial value
             }
         });
 
         agregarValidacionCuitFrontend();
-        monitorChanges(); // Start monitoring AFTER all initial data is set
-
+        monitorChanges(); 
       } catch (error) {
         console.error('Error processing proveedor data:', error);
         $('#formMsg').text('Error al procesar datos del proveedor.').removeClass('d-none').addClass('alert-danger');
-        // Still good to set up monitoring for new input if initial load failed mid-way
-        monitorChanges();
-        agregarValidacionCuitFrontend();
+        monitorChanges(); agregarValidacionCuitFrontend();
       }
     }
 
     async function cargarCondicionIva(selectedId) {
       try {
-        const resp = await fetch('/Proveedores/api/categoria-iva/', {
-          headers: { 'Authorization': 'Bearer ' + jwt }
-        });
-        const select = document.getElementById('condicionIva');
-        select.innerHTML = '<option value="">Seleccione...</option>';
+        const resp = await fetch('/Proveedores/api/categoria-iva/', { headers: { 'Authorization': 'Bearer ' + jwt }});
+        const select = document.getElementById('condicionIva'); select.innerHTML = '<option value="">Seleccione...</option>';
         if (resp.ok) {
           const categorias = await resp.json();
-          categorias.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat.id_categoria_iva;
-            option.textContent = cat.desc_categoria_iva;
-            option.setAttribute('data-cod', cat.cod_categoria_iva);
-            select.appendChild(option);
-          });
-        } else {
-          console.error("Error cargando Condicion IVA:", resp.statusText);
-        }
-        // Set selected value after populating
-        if (selectedId !== null && selectedId !== undefined) {
-            select.value = selectedId;
-        }
-      } catch (error) {
-        console.error("Network error cargando Condicion IVA:", error);
-      }
+          categorias.forEach(cat => { const option = document.createElement('option'); option.value = cat.id_categoria_iva; option.textContent = cat.desc_categoria_iva; option.setAttribute('data-cod', cat.cod_categoria_iva); select.appendChild(option); });
+        } else { console.error("Error cargando Condicion IVA:", resp.statusText); }
+        if (selectedId !== null && selectedId !== undefined) { select.value = selectedId; }
+      } catch (error) { console.error("Network error cargando Condicion IVA:", error); }
     }
 
     async function cargarIngresosBrutos(selectedTipo) {
        try {
-        const resp = await fetch('/Proveedores/api/ingresos-brutos/', {
-          headers: { 'Authorization': 'Bearer ' + jwt }
-        });
-        const select = document.getElementById('ingresosBrutos');
-        select.innerHTML = '<option value="">Seleccione...</option>';
+        const resp = await fetch('/Proveedores/api/ingresos-brutos/', { headers: { 'Authorization': 'Bearer ' + jwt }});
+        const select = document.getElementById('ingresosBrutos'); select.innerHTML = '<option value="">Seleccione...</option>';
         if (resp.ok) {
           const ingresosBrutos = await resp.json();
-          ingresosBrutos.forEach(ib => {
-            const option = document.createElement('option');
-            option.value = ib.Cod_Ingresos_brutos;
-            option.textContent = ib.Desc_Ingresos_brutos;
-            select.appendChild(option);
-          });
-        } else {
-          console.error("Error cargando Ingresos Brutos:", resp.statusText);
-        }
-        // Set selected value after populating
-        if (selectedTipo !== null && selectedTipo !== undefined) {
-            select.value = selectedTipo;
-        }
-      } catch (error) {
-        console.error("Network error cargando Ingresos Brutos:", error);
-      }
+          ingresosBrutos.forEach(ib => { const option = document.createElement('option'); option.value = ib.Cod_Ingresos_brutos; option.textContent = ib.Desc_Ingresos_brutos; select.appendChild(option); });
+        } else { console.error("Error cargando Ingresos Brutos:", resp.statusText); }
+        if (selectedTipo !== null && selectedTipo !== undefined) { select.value = selectedTipo; }
+      } catch (error) { console.error("Network error cargando Ingresos Brutos:", error); }
     }
 
     async function cambiarConexion(pais) {
-      // ... (same as before)
       if (!pais) return;
       try {
-        const resp = await fetch('/Proveedores/api/cambiar-conexion/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + jwt
-          },
-          body: JSON.stringify({ cod_pais: pais })
-        });
-        if (!resp.ok) {
-          console.error('Error al cambiar la conexión de país:', await resp.text());
-        }
-      } catch (error) {
-        console.error('Network error al cambiar la conexión de país:', error);
-      }
+        const resp = await fetch('/Proveedores/api/cambiar-conexion/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt }, body: JSON.stringify({ cod_pais: pais }) });
+        if (!resp.ok) { console.error('Error al cambiar la conexión de país:', await resp.text()); }
+      } catch (error) { console.error('Network error al cambiar la conexión de país:', error); }
     }
 
     function monitorChanges() {
-      // Monitor inputs across ALL forms that contribute to the single save button
+      // CORRECCIÓN: Selector arreglado para incluir todos los inputs correctamente
       const inputs = document.querySelectorAll(
-        '#proveedorForm input, #proveedorForm select, ' +
-        '#configForm input, #configForm select, ' +
-        '#messagesForm input, #messagesForm select, #messagesForm textarea'
+        '#proveedorForm input, #proveedorForm select, #proveedorForm textarea, ' +
+        '#configForm input, #configForm select, #configForm textarea, ' +
+        '#messagesForm input, #messagesForm select, #messagesForm textarea, ' + // Coma y espacio añadidos
+        '#documents-tab-pane .file-input' // Selector para los inputs de archivo
       );
       const saveButton = document.querySelector('.btn-save');
 
@@ -518,16 +600,21 @@
         let hasChanges = false;
         inputs.forEach(input => {
           const key = input.name || input.id;
-          // For provincia display field, its key in initialData might be 'provincia' or 'provincia_display'
-          // Ensure consistency. Let's use input.id for provincia display.
           const dataKey = (input.id === 'provincia' && initialData.hasOwnProperty('provincia')) ? 'provincia' : key;
-
-
-          const currentValue = (input.type === 'checkbox') ? input.checked.toString() : (input.type === 'radio' && !input.checked ? initialData[dataKey] : input.value) ;
-          const initialValue = initialData[dataKey] !== undefined ? initialData[dataKey] : '';
+          let currentValue;
+          if (input.type === 'file') {
+            currentValue = input.files && input.files.length > 0 ? input.files[0].name : '';
+          } else if (input.type === 'checkbox') {
+            currentValue = input.checked.toString();
+          } else if (input.type === 'radio' && !input.checked) {
+            currentValue = initialData[dataKey]; 
+          } else {
+            currentValue = input.value;
+          }
+          const initialValue = initialData[dataKey] !== undefined ? String(initialData[dataKey]) : ''; // Asegurar que initialValue sea string
           
-          if (String(currentValue) !== String(initialValue)) {
-            // console.log(`Change detected in ${dataKey}: initial='${initialValue}', current='${currentValue}'`);
+          if (String(currentValue) !== initialValue) { // Comparar strings
+            // console.log(`Change detected in ${dataKey}: initial='${initialValue}', current='${String(currentValue)}'`);
             hasChanges = true;
           }
         });
@@ -535,291 +622,287 @@
       };
 
       inputs.forEach(input => {
-        input.addEventListener('input', checkChanges);
-        input.addEventListener('change', checkChanges); // For selects, checkboxes, radios
+        if (input.type === 'file' || input.tagName.toLowerCase() === 'select' || input.type === 'checkbox' || input.type === 'radio') {
+            input.addEventListener('change', checkChanges);
+        } else {
+            input.addEventListener('input', checkChanges);
+            input.addEventListener('change', checkChanges); 
+        }
       });
-      
-      // Special handling for provincia text input if its id is 'provincia'
-      // const provinciaInput = document.getElementById('provincia');
-      // if(provinciaInput) {
-      //     provinciaInput.addEventListener('input', checkChanges); // Already covered by the main selector if it's an input
-      // }
     }
 
     cargarDatos(); 
 
     function gatherFormDataFromAllTabs() {
-        const data = {};
-        const forms = ['#proveedorForm', '#configForm', '#messagesForm'];
-
-        forms.forEach(formSelector => {
-            const formElements = document.querySelectorAll(`${formSelector} input, ${formSelector} select, ${formSelector} textarea`);
+        const formData = new FormData(); 
+        const formsToProcess = ['#proveedorForm', '#configForm', '#messagesForm'];
+        formsToProcess.forEach(formSelector => {
+            const formElements = document.querySelectorAll(`${formSelector} input:not([type="file"]), ${formSelector} select, ${formSelector} textarea`); // Excluir file inputs aquí
             formElements.forEach(el => {
                 if ((el.name || el.id) && !el.disabled) {
                     const key = el.name || el.id;
-                    if (el.type === 'checkbox') {
-                        data[key] = el.checked;
-                    } else if (el.type === 'radio') {
-                        if (el.checked) {
-                            data[key] = el.value.trim() === "" ? null : el.value.trim();
-                        }
-                    } else {
-                        data[key] = el.value.trim() === "" ? null : el.value.trim();
-                    }
+                    if (el.type === 'checkbox') { formData.append(key, el.checked);
+                    } else if (el.type === 'radio') { if (el.checked) { formData.append(key, el.value.trim() === "" ? '' : el.value.trim()); }
+                    } else { formData.append(key, el.value.trim() === "" ? '' : el.value.trim()); }
                 }
             });
         });
-        
-        // Specific re-mapping or additions if needed:
-        // Provincia hidden fields are directly named and should be picked up.
-        // The display field for provincia (id="provincia") will be picked up but is not usually sent.
-        // We send id_cpa57 and nom_prov.
-        delete data['provincia']; // Remove the display field if it was picked up by its id.
+        if (formData.has('provincia')) { formData.delete('provincia'); }
+        const idCpa57Val = document.getElementById('id_cpa57').value; const nomProvVal = document.getElementById('nom_prov').value;
+        formData.set('id_cpa57', idCpa57Val || ''); formData.set('nom_prov', nomProvVal || '');
+        formData.set('id_categoria_iva_cond_iva', document.getElementById('condicionIva').value || '');
+        if (formData.has('condicionIva')) formData.delete('condicionIva');
+        formData.set('tipo', document.getElementById('ingresosBrutos').value || '');
+        if (formData.has('ingresosBrutos')) formData.delete('ingresosBrutos');
 
-        // Map select values if their element 'name'/'id' is different from API field name
-        data['id_categoria_iva_cond_iva'] = data['condicionIva'] || null;
-        delete data['condicionIva'];
-
-        data['tipo'] = data['ingresosBrutos'] || null; // 'tipo' is the field for Ingresos Brutos Cod
-        delete data['ingresosBrutos'];
-
-        return data;
+        const fileInputsDocumentos = document.querySelectorAll('#documents-tab-pane .file-input');
+        fileInputsDocumentos.forEach(input => {
+            if (input.id && input.files && input.files.length > 0) {
+                formData.append(input.id, input.files[0], input.files[0].name);
+            }
+        });
+        return formData;
     }
-
 
     document.getElementById('proveedorForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
       let valido = true;
-      let mensajes = [];
-      // Validation still focuses on camposContactoObligatorios, assuming they are the most critical
+      let mensajes = []; // Array para acumular todos los mensajes de error
+
+      // --- Validación existente para campos de contacto obligatorios (pestaña Home) ---
       camposContactoObligatorios.forEach(campoKey => {
-        const campoConfig = camposPrincipalesEditables.find(c => c.key === campoKey);
-        const input = document.getElementById(campoKey);
-        if (input && input.value.trim() === "") {
-          valido = false;
-          const labelText = campoConfig ? campoConfig.label : (input.previousElementSibling ? input.previousElementSibling.textContent.replace('*', '').trim() : campoKey);
-          mensajes.push(`El campo "${labelText}" es obligatorio.`);
-          input.classList.add('is-invalid');
-          const feedbackEl = document.getElementById(`${campoKey}-invalid`);
-          if (feedbackEl) feedbackEl.textContent = `Este campo es obligatorio.`;
-        } else if (input) {
-          input.classList.remove('is-invalid');
-          const feedbackEl = document.getElementById(`${campoKey}-invalid`);
-          if (feedbackEl) feedbackEl.textContent = "";
-        }
+          const campoConfig = camposPrincipalesEditables.find(c => c.key === campoKey);
+          const input = document.getElementById(campoKey);
+          if (input && input.value.trim() === "") {
+              valido = false;
+              const labelText = campoConfig ? campoConfig.label : (input.previousElementSibling ? input.previousElementSibling.textContent.replace('*', '').trim() : campoKey);
+              mensajes.push(`El campo "${labelText}" (en pestaña Home) es obligatorio.`);
+              input.classList.add('is-invalid');
+              const feedbackEl = document.getElementById(`${campoKey}-invalid`);
+              if (feedbackEl) feedbackEl.textContent = `Este campo es obligatorio.`;
+          } else if (input) {
+              input.classList.remove('is-invalid');
+              const feedbackEl = document.getElementById(`${campoKey}-invalid`);
+              if (feedbackEl) feedbackEl.textContent = "";
+          }
       });
 
       const cuitInput = document.getElementById('n_cuit');
       if (cuitInput && cuitInput.value.trim() !== "") {
-        const cuitPattern = /^\d{2}-\d{8}-\d{1}$/;
-        if (!cuitPattern.test(cuitInput.value.trim())) {
-          valido = false;
-          mensajes.push('El CUIT debe tener el formato XX-XXXXXXXX-X (ejemplo: 20-31441849-3).');
-          cuitInput.classList.add('is-invalid');
-          const feedbackEl = document.getElementById('n_cuit-invalid');
-          if (feedbackEl) feedbackEl.textContent = 'Formato inválido. Ejemplo: 20-31441849-3';
-        } else {
-          if (cuitInput.classList.contains('is-invalid') && cuitPattern.test(cuitInput.value.trim())) {
-             cuitInput.classList.remove('is-invalid');
-             const feedbackEl = document.getElementById('n_cuit-invalid');
-             if (feedbackEl) feedbackEl.textContent = "";
+          const cuitPattern = /^\d{2}-\d{8}-\d{1}$/;
+          if (!cuitPattern.test(cuitInput.value.trim())) {
+              valido = false;
+              mensajes.push('El CUIT (en pestaña Home) debe tener el formato XX-XXXXXXXX-X.');
+              cuitInput.classList.add('is-invalid');
+              const feedbackEl = document.getElementById('n_cuit-invalid');
+              if (feedbackEl) feedbackEl.textContent = 'Formato inválido. Ejemplo: 20-31441849-3';
+          } else {
+              if (cuitInput.classList.contains('is-invalid') && cuitPattern.test(cuitInput.value.trim())) {
+                  cuitInput.classList.remove('is-invalid');
+                  const feedbackEl = document.getElementById('n_cuit-invalid');
+                  if (feedbackEl) feedbackEl.textContent = "";
+              }
           }
-        }
       }
+      // --- Fin de la Validación existente ---
+
+      // --- NUEVA VALIDACIÓN para Documentos Requeridos ---
+      let primerDocumentoFaltante = null;
+      documentosRequeridosIds.forEach(fileInputId => {
+          const fileInput = document.getElementById(fileInputId);
+          const documentCard = document.getElementById(`card-${fileInputId}`); // Asumiendo que la tarjeta tiene id="card-fileInputId"
+          const documentTitleElement = documentCard ? documentCard.querySelector('.document-title') : null;
+          const documentName = documentTitleElement ? documentTitleElement.textContent.replace('*','').trim() : `Documento ${fileInputId}`;
+
+          // Se considera no cargado si no hay archivo seleccionado Y si no había uno previamente cargado (ver initialData)
+          // Para la validación en submit, nos enfocamos en si hay un archivo AHORA.
+          // Si initialData[fileInputId] tiene un nombre de archivo (cargado previamente) Y el input.files.length es 0,
+          // significa que el usuario NO ha seleccionado un nuevo archivo para reemplazarlo, y el archivo original sigue "vigente".
+          // El problema es si initialData[fileInputId] está vacío Y input.files.length es 0.
+          
+          const yaCargadoPreviamente = initialData[fileInputId] && initialData[fileInputId] !== '';
+          const nuevoArchivoSeleccionado = fileInput && fileInput.files && fileInput.files.length > 0;
+
+          if (!nuevoArchivoSeleccionado && !yaCargadoPreviamente) {
+              valido = false;
+              mensajes.push(`El documento "${documentName}" es requerido.`);
+              if (documentCard) {
+                  documentCard.classList.add('border', 'border-danger'); // Resaltar la tarjeta
+              }
+              if (!primerDocumentoFaltante) {
+                  primerDocumentoFaltante = fileInputId;
+              }
+          } else if (documentCard) {
+              documentCard.classList.remove('border', 'border-danger'); // Quitar resaltado si está OK
+          }
+      });
+      // --- Fin de la NUEVA VALIDACIÓN ---
 
       const msgDiv = document.getElementById('formMsg');
       if (!valido) {
-        msgDiv.innerHTML = mensajes.join('<br>');
-        msgDiv.className = 'alert alert-danger mt-3';
-        msgDiv.classList.remove('d-none');
-        return;
+          msgDiv.innerHTML = mensajes.join('<br>');
+          msgDiv.className = 'alert alert-danger mt-0 mb-3'; // Ajustado para footer
+          msgDiv.classList.remove('d-none');
+
+          // Opcional: Cambiar a la pestaña de Documentos si hay un error allí y no en otras
+          if (primerDocumentoFaltante && mensajes.length === documentosRequeridosIds.filter(id => !initialData[id] && !document.getElementById(id).files.length).length) { // Si SOLO faltan documentos
+              const documentsTabButton = document.getElementById('documents-tab-btn');
+              if (documentsTabButton) {
+                  var tab = new bootstrap.Tab(documentsTabButton);
+                  tab.show();
+              }
+          }
+          return; // Detener el envío del formulario
       } else {
-        msgDiv.classList.add('d-none');
-        msgDiv.textContent = '';
+          msgDiv.classList.add('d-none');
+          msgDiv.textContent = '';
       }
 
-      const dataToSave = gatherFormDataFromAllTabs();
-      
+      // Si todo es válido, continuar con el envío...
+      // ... (resto del código de gatherFormDataFromAllTabs, fetch, etc. SIN CAMBIOS) ...
+      const formDataToSave = gatherFormDataFromAllTabs(); 
       const method = proveedorId ? 'PATCH' : 'POST';
       let url = proveedorId ? `/Proveedores/api/proveedores/${proveedorId}/` : `/Proveedores/api/proveedores/`;
+      if (method === 'POST') { if (userId) formDataToSave.append('user', userId); if (codPais) formDataToSave.append('cod_pais', codPais); }
       
-      if (method === 'POST' && userId) { // If creating a new provider
-          dataToSave['user'] = userId; // Assuming backend expects 'user' field for user_id
-          if (codPais) dataToSave['cod_pais'] = codPais; // Send country code if available
-      }
-
+      msgDiv.textContent = 'Guardando datos...'; msgDiv.className = 'alert alert-info mt-0 mb-3'; msgDiv.classList.remove('d-none');
+      document.querySelector('.btn-save').disabled = true;
 
       try {
-        const resp = await fetch(url, {
-          method: method,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + jwt,
-            'X-CSRFToken': getCookie('csrftoken') 
-          },
-          body: JSON.stringify(dataToSave)
-        });
-
+        const resp = await fetch(url, { method: method, headers: { 'Authorization': 'Bearer ' + jwt, 'X-CSRFToken': getCookie('csrftoken') }, body: formDataToSave });
         if (resp.ok) {
-          const responseData = await resp.json();
+          const responseData = await resp.json(); 
           if (method === 'POST' && responseData.id) {
-            proveedorId = responseData.id;
-            // If new provider was created and backend returns cod_cpa01, update and disable fields
+            proveedorId = responseData.id; 
             if (responseData.cod_cpa01) {
                 codCpa01Value = responseData.cod_cpa01;
-                camposBloquear.forEach(keyToBlock => {
-                    const inputToBlock = document.getElementById(keyToBlock);
-                    if (inputToBlock && codCpa01Value && codCpa01Value.trim() !== "") {
-                        inputToBlock.disabled = true;
-                    }
-                });
+                camposBloquear.forEach(keyToBlock => { const inputToBlock = document.getElementById(keyToBlock); if (inputToBlock && codCpa01Value && codCpa01Value.trim() !== "") { inputToBlock.disabled = true; }});
             }
+            if (responseData.cod_pais) { codPais = responseData.cod_pais; }
           }
           
-          // Update initialData with the successfully saved values from ALL tabs
-          Object.keys(initialData).forEach(key => {
-            // Check if the key exists in dataToSave (after remapping)
-            // or if it's one of the remapped keys like 'condicionIva'
-            if (key === 'condicionIva') {
-                initialData[key] = dataToSave['id_categoria_iva_cond_iva'];
-            } else if (key === 'ingresosBrutos') {
-                initialData[key] = dataToSave['tipo'];
-            } else if (key === 'provincia') { // The display field for provincia
-                initialData[key] = dataToSave['nom_prov'] || '';
-            } else if (dataToSave.hasOwnProperty(key)) {
-                 initialData[key] = dataToSave[key] === null ? '' : dataToSave[key];
-            }
-            // If dataToSave doesn't have the key (e.g. a display-only field that wasn't sent),
-            // initialData[key] remains unchanged (which is correct).
+          // Actualizar initialData para todos los campos, incluyendo archivos
+          for (const [key, value] of formDataToSave.entries()) {
+            if (typeof value === 'object' && value instanceof File) continue; 
+            if (key === 'id_categoria_iva_cond_iva') { initialData['condicionIva'] = String(value);
+            } else if (key === 'tipo') { initialData['ingresosBrutos'] = String(value);
+            } else if (initialData.hasOwnProperty(key)) { initialData[key] = value === null ? '' : String(value); }
+          }
+          initialData['provincia'] = formDataToSave.get('nom_prov') || '';
+
+          const fileInputsDocumentos = document.querySelectorAll('#documents-tab-pane .file-input');
+          fileInputsDocumentos.forEach(input => {
+              if (input.id) {
+                  const backendFileStatus = responseData.documentos ? responseData.documentos[input.id] : null;
+                  if (backendFileStatus && backendFileStatus.name) {
+                      initialData[input.id] = backendFileStatus.name;
+                      // Limpiar el input.files para que no quede "seleccionado" en el navegador después de guardar
+                      input.value = ''; // Esto resetea el input de archivo
+                  } else if (formDataToSave.has(input.id)) { 
+                      initialData[input.id] = input.files[0].name; 
+                      input.value = '';
+                  } else {
+                      // Si el archivo no se envió y el backend no dice nada, el initialData no cambia
+                      // a menos que el backend indique que se borró (lógica no implementada aquí para borrado)
+                      if (initialData[input.id] && !backendFileStatus) { 
+                          // Se mantuvo el archivo anterior (no se tocó el input file)
+                      } else {
+                          initialData[input.id] = ''; // Si no había nada y sigue sin haber nada
+                      }
+                  }
+              }
           });
 
-
-          msgDiv.textContent = 'Datos actualizados correctamente.';
-          msgDiv.className = 'alert alert-success mt-3';
-          msgDiv.classList.remove('d-none');
-          document.querySelector('.btn-save').style.display = 'none';
-        } else {
-          const err = await resp.json();
+          msgDiv.textContent = 'Datos actualizados correctamente.'; msgDiv.className = 'alert alert-success mt-0 mb-3'; msgDiv.classList.remove('d-none');
+          document.querySelector('.btn-save').style.display = 'none'; 
+        
+        } else { 
+          const errText = await resp.text(); 
+          let err; try { err = JSON.parse(errText); } catch (e) { err = errText; }
           let errorMessages = 'Error al guardar los datos.';
           if (typeof err === 'object' && err !== null) {
             errorMessages = Object.entries(err).map(([key, value]) => {
-              const fieldLabel = camposPrincipalesEditables.find(c => c.key === key)?.label || 
-                                 document.querySelector(`label[for="${key}"]`)?.textContent.replace('*', '').trim() ||
-                                 key;
+              const fieldLabel = camposPrincipalesEditables.find(c => c.key === key)?.label || document.querySelector(`label[for="${key}"]`)?.textContent.replace('*', '').trim() || key;
               return `${fieldLabel}: ${Array.isArray(value) ? value.join(', ') : value}`;
             }).join('<br>');
-          } else if (typeof err === 'string') {
-            errorMessages = err;
-          }
-          msgDiv.innerHTML = errorMessages;
-          msgDiv.className = 'alert alert-danger mt-3';
-          msgDiv.classList.remove('d-none');
+          } else if (typeof err === 'string') { errorMessages = err; }
+          msgDiv.innerHTML = errorMessages; msgDiv.className = 'alert alert-danger mt-0 mb-3'; msgDiv.classList.remove('d-none');
         }
-      } catch (error) {
-        console.error("Network error during save:", error);
-        msgDiv.textContent = 'Error de red al guardar los datos.';
-        msgDiv.className = 'alert alert-danger mt-3';
-        msgDiv.classList.remove('d-none');
+      } catch (error) { 
+        console.error("Error durante el guardado:", error); msgDiv.textContent = 'Error de red o problema al procesar la solicitud de guardado.';
+        msgDiv.className = 'alert alert-danger mt-0 mb-3'; msgDiv.classList.remove('d-none');
+      } finally {
+        document.querySelector('.btn-save').disabled = false; 
       }
-    });
+  });
 
     function agregarValidacionCuitFrontend() {
-      // ... (same as before)
       const cuitInput = document.getElementById('n_cuit');
       if (cuitInput) {
         cuitInput.addEventListener('input', function() {
-          const cuitPattern = /^\d{2}-\d{8}-\d{1}$/;
-          const feedbackEl = document.getElementById('n_cuit-invalid');
-          if (cuitInput.value.trim() !== "" && !cuitPattern.test(cuitInput.value.trim())) {
-            cuitInput.classList.add('is-invalid');
-            if (feedbackEl) feedbackEl.textContent = 'Formato inválido. Ejemplo: 20-31441849-3';
-          } else {
-            cuitInput.classList.remove('is-invalid');
-            if (feedbackEl) feedbackEl.textContent = "";
-          }
+          const cuitPattern = /^\d{2}-\d{8}-\d{1}$/; const feedbackEl = document.getElementById('n_cuit-invalid');
+          if (cuitInput.value.trim() !== "" && !cuitPattern.test(cuitInput.value.trim())) { cuitInput.classList.add('is-invalid'); if (feedbackEl) feedbackEl.textContent = 'Formato inválido. Ejemplo: 20-31441849-3';
+          } else { cuitInput.classList.remove('is-invalid'); if (feedbackEl) feedbackEl.textContent = ""; }
         });
       }
     }
     
     function getCookie(name) {
-        // ... (same as before)
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
+        let cookieValue = null; if (document.cookie && document.cookie !== '') { const cookies = document.cookie.split(';'); for (let i = 0; i < cookies.length; i++) { const cookie = cookies[i].trim(); if (cookie.substring(0, name.length + 1) === (name + '=')) { cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break; }}} return cookieValue;
     }
 
     document.getElementById('provincia').addEventListener('input', async function() {
-      // ... (same as before, ensure 'codPais' is available and used)
-      const query = this.value;
-      const provinciaListDiv = document.getElementById('provinciaList');
-      if (query.length < 2) {
-        provinciaListDiv.innerHTML = '';
-        return;
-      }
-      if (!codPais) {
-        console.warn("Código de país no establecido. Búsqueda de provincia podría fallar o ser incorrecta.");
-      }
+      const query = this.value; const provinciaListDiv = document.getElementById('provinciaList');
+      if (query.length < 2) { provinciaListDiv.innerHTML = ''; return; }
+      if (!codPais) { console.warn("Código de país no establecido. Búsqueda de provincia podría fallar o ser incorrecta."); }
       try {
-        const resp = await fetch(`/Proveedores/api/provincias/?q=${encodeURIComponent(query)}&cod_pais=${codPais || ''}`, {
-          headers: { 'Authorization': 'Bearer ' + jwt }
-        });
-        if (resp.ok) {
-          const provincias = await resp.json();
-          const list = provincias.map(p => `<button type="button" class="list-group-item list-group-item-action" data-id="${p.id}" data-nom="${p.display}">${p.display}</button>`).join('');
-          provinciaListDiv.innerHTML = list;
-        } else {
-          console.error("Error buscando provincias:", resp.statusText);
-          provinciaListDiv.innerHTML = '<div class="list-group-item text-danger">Error al buscar</div>';
-        }
-      } catch (error) {
-        console.error("Network error buscando provincias:", error);
-        provinciaListDiv.innerHTML = '<div class="list-group-item text-danger">Error de red</div>';
-      }
+        const resp = await fetch(`/Proveedores/api/provincias/?q=${encodeURIComponent(query)}&cod_pais=${codPais || ''}`, { headers: { 'Authorization': 'Bearer ' + jwt }});
+        if (resp.ok) { const provincias = await resp.json(); const list = provincias.map(p => `<button type="button" class="list-group-item list-group-item-action" data-id="${p.id}" data-nom="${p.display}">${p.display}</button>`).join(''); provinciaListDiv.innerHTML = list;
+        } else { console.error("Error buscando provincias:", resp.statusText); provinciaListDiv.innerHTML = '<div class="list-group-item text-danger">Error al buscar</div>'; }
+      } catch (error) { console.error("Network error buscando provincias:", error); provinciaListDiv.innerHTML = '<div class="list-group-item text-danger">Error de red</div>';}
     });
 
     document.getElementById('provinciaList').addEventListener('click', function(e) {
-      // ... (same as before, ensure 'input' event is triggered on 'provincia' field to update save button state)
       if (e.target && e.target.matches('button.list-group-item')) {
-        const selectedText = e.target.textContent;
-        const selectedId = e.target.getAttribute('data-id');
-        const selectedNom = e.target.getAttribute('data-nom'); 
-        
-        const provinciaInput = document.getElementById('provincia');
-        provinciaInput.value = selectedText;
-        document.getElementById('id_cpa57').value = selectedId;
-        document.getElementById('nom_prov').value = selectedNom; 
-        
+        const selectedText = e.target.textContent; const selectedId = e.target.getAttribute('data-id'); const selectedNom = e.target.getAttribute('data-nom'); 
+        const provinciaInput = document.getElementById('provincia'); provinciaInput.value = selectedText;
+        document.getElementById('id_cpa57').value = selectedId; document.getElementById('nom_prov').value = selectedNom; 
         document.getElementById('provinciaList').innerHTML = ''; 
-
-        // Manually trigger input/change events for all affected fields to ensure monitorChanges picks it up
-        $(provinciaInput).trigger('input').trigger('change'); 
-        $(document.getElementById('id_cpa57')).trigger('input').trigger('change');
-        $(document.getElementById('nom_prov')).trigger('input').trigger('change');
+        $(provinciaInput).trigger('input').trigger('change'); $(document.getElementById('id_cpa57')).trigger('input').trigger('change'); $(document.getElementById('nom_prov')).trigger('input').trigger('change');
       }
     });
-
   });
 
-  // Global scope functions for buttons
-  function logout() {
-    sessionStorage.removeItem('jwt');
-    window.location.href = '/Proveedores/acceder/';
-  }
-
-  function goToDashboard() {
-    window.location.href = '/Proveedores/dashboard/';
-  }
+  function logout() { sessionStorage.removeItem('jwt'); window.location.href = '/Proveedores/acceder/'; }
+  function goToDashboard() { window.location.href = '/Proveedores/dashboard/'; }
   </script>
+  <script>
+    function triggerUpload(fileInputId) { document.getElementById(fileInputId).click(); }
 
+    document.querySelectorAll('.file-input').forEach(input => {
+      input.addEventListener('change', function() { // Este 'change' listener es importante para la UI y también será detectado por monitorChanges
+        const fileName = this.files[0] ? this.files[0].name : 'Ningún archivo seleccionado';
+        const cardBody = this.closest('.document-card-body');
+        const statusTextElement = cardBody.querySelector('.document-status-text');
+        const actionButton = cardBody.querySelector('.action-btn');
+        const documentCard = this.closest('.document-card');
+        const statusIconArea = cardBody.querySelector('.document-icon-area');
+
+        if (this.files[0]) {
+          statusTextElement.textContent = 'Archivo seleccionado: ' + fileName;
+          actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square me-1" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.813z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/></svg> Cambiar Archivo`;
+          actionButton.classList.remove('btn-primary'); actionButton.classList.add('btn-outline-secondary');
+          documentCard.classList.remove('status-required-missing', 'status-optional-missing');
+          documentCard.classList.add('status-present');
+          statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill status-icon" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`;
+        } else {
+          // Aquí podrías revertir la UI si el usuario cancela la selección
+          // y no había un archivo cargado previamente.
+        }
+      });
+    });
+    function viewDocument(path) { if (path && path !== '#') { window.open(path, '_blank'); } else { alert('Documento no disponible para visualización o ruta no especificada.');}}
+  </script>
 </body>
 </html>
