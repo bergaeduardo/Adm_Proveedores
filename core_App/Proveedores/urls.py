@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .api import ProveedorViewSet, ProveedorRegistroView,UserIdView,validar_cuit,ProvinciaListView,CambiarConexionView
+from .api import ProveedorViewSet, ProveedorRegistroView,UserIdView,validar_cuit,ProvinciaListView,CambiarConexionView,CategoriaIVAListView, IngresosBrutosListView
 from .views import register,login_view,mis_datos_view,dashboard_view  # Importar la vista que renderiza el formulario
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -22,5 +22,7 @@ urlpatterns = [
   path('api/userid/', UserIdView.as_view(), name='user_id'),
   path('api/validar-cuit/', validar_cuit, name='validar_cuit'),
   path('api/provincias/', ProvinciaListView.as_view(), name='provincia_list'),  
-  path('api/cambiar-conexion/', CambiarConexionView.as_view(), name='cambiar-conexion'), # Nuevo endpoint
+  path('api/cambiar-conexion/', CambiarConexionView.as_view(), name='cambiar-conexion'),
+  path('api/categoria-iva/', CategoriaIVAListView.as_view(), name='categoria_iva_list'),
+  path('api/ingresos-brutos/', IngresosBrutosListView.as_view(), name='ingresos_brutos_list'),
 ]

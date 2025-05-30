@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <title>Mis Datos de Proveedor</title>
   <style>
     .required-label::after {
@@ -12,51 +12,292 @@
     }
     .btn-save {
       display: none;
-      float: right;
+      /* float: right; /* Replaced by flex alignment */
+    }
+    /* Optional: Add a bit more distinction for card-header-tabs if desired */
+    .card-header-tabs {
+      margin-bottom: -0.75rem; /* Default card-body padding is 1.25rem, this pulls tabs "into" the header border */
+    }
+    #provinciaList .list-group-item {
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div class="container mt-4">
-    <h2>Mis Datos de Proveedor</h2>
-    <form id="proveedorForm" class="mt-3" novalidate>
-      <div id="formFields"></div>
-      <div class="form-group">
-        <label for="provincia">Provincia</label>
-        <input type="text" class="form-control" id="provincia" name="provincia" placeholder="Buscar provincia...">
-        <input type="hidden" id="id_cpa57" name="id_cpa57">
-        <input type="hidden" id="nom_prov" name="nom_prov">
-        <div class="list-group" id="provinciaList"></div>
+    <h2 class="mb-3">Mis Datos de Proveedor</h2>
+    <div class="card">
+      <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="home-tab-btn" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Home</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="config-tab-btn" data-bs-toggle="tab" data-bs-target="#config-tab-pane" type="button" role="tab" aria-controls="config-tab-pane" aria-selected="false">Configuración</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="messages-tab-btn" data-bs-toggle="tab" data-bs-target="#messages-tab-pane" type="button" role="tab" aria-controls="messages-tab-pane" aria-selected="false">Mensajes</button>
+          </li>
+        </ul>
       </div>
+      <div class="card-body">
+        <div class="tab-content" id="myTabContent">
+          <!-- Home Tab Pane -->
+          <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab-btn" tabindex="0">
+            <form id="proveedorForm" class="mt-3" novalidate>
+              <h5>Datos de empresa</h5>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="required-label" for="nom_provee">Razón social</label>
+                  <input type="text" class="form-control" id="nom_provee" name="nom_provee" required>
+                  <div class="invalid-feedback" id="nom_provee-invalid"></div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="required-label" for="n_cuit">CUIT</label>
+                  <input type="text" class="form-control" id="n_cuit" name="n_cuit" required>
+                  <div class="invalid-feedback" id="n_cuit-invalid"></div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="required-label" for="domicilio">Domicilio</label>
+                <input type="text" class="form-control" id="domicilio" name="domicilio" required>
+                <div class="invalid-feedback" id="domicilio-invalid"></div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="localidad">Localidad</label>
+                  <input type="text" class="form-control" id="localidad" name="localidad">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="c_postal">Código postal</label>
+                  <input type="text" class="form-control" id="c_postal" name="c_postal">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="provincia">Provincia</label>
+                <input type="text" class="form-control" id="provincia" name="provincia_display" placeholder="Buscar provincia...">
+                <input type="hidden" id="id_cpa57" name="id_cpa57">
+                <input type="hidden" id="nom_prov" name="nom_prov">
+                <div class="list-group mt-1" id="provinciaList"></div>
+              </div>
+
+              <h5 class="mt-4">Datos de contacto</h5>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="required-label" for="telefono_1">Teléfono</label>
+                  <input type="text" class="form-control" id="telefono_1" name="telefono_1" required>
+                  <div class="invalid-feedback" id="telefono_1-invalid"></div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="telefono_2">Teléfono 2</label>
+                  <input type="text" class="form-control" id="telefono_2" name="telefono_2">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="telefono_movil">Teléfono Móvil</label>
+                  <input type="text" class="form-control" id="telefono_movil" name="telefono_movil">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="required-label" for="e_mail">Email</label>
+                  <input type="email" class="form-control" id="e_mail" name="e_mail" required>
+                  <div class="invalid-feedback" id="e_mail-invalid"></div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="web">Página web</label>
+                <input type="text" class="form-control" id="web" name="web">
+              </div>
+
+              <h5 class="mt-4">Información comercial</h5>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="nom_fant">Nombre comercial</label>
+                  <input type="text" class="form-control" id="nom_fant" name="nom_fant">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="domicilio_comercial">Domicilio comercial</label>
+                  <input type="text" class="form-control" id="domicilio_comercial" name="domicilio_comercial">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="n_iva">Actividad</label>
+                <input type="text" class="form-control" id="n_iva" name="n_iva">
+              </div>
+
+              
+              <div id="formMsg" class="alert mt-3 d-none"></div>
+            </form>
+          </div>
+
+          <!-- Configuración Tab Pane -->
+          <div class="tab-pane fade" id="config-tab-pane" role="tabpanel" aria-labelledby="config-tab-btn" tabindex="0">
+            <h5 class="mt-3">Configuración</h5>
+            <form id="configForm" class="mt-3" novalidate>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="condicionIva">Condición de IVA</label>
+                  <select class="form-select" id="condicionIva" name="condicionIva"></select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="ingresosBrutos">Régimen de Ingresos Brutos</label>
+                  <select class="form-select" id="ingresosBrutos" name="ingresosBrutos"></select>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="n_ing_brut">Nro. de ingresos brutos</label>
+                <input type="text" class="form-control" id="n_ing_brut" name="n_ing_brut">
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="cbu">Clave bancaria única (CBU)</label>
+                  <input type="text" class="form-control" id="cbu" name="cbu">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="descripcion_cbu">Descripción</label>
+                  <input type="text" class="form-control" id="descripcion_cbu" name="descripcion_cbu">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="cbu_2">Clave bancaria única 2 (CBU)</label>
+                  <input type="text" class="form-control" id="cbu_2" name="cbu_2">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="descripcion_cbu_2">Descripción</label>
+                  <input type="text" class="form-control" id="descripcion_cbu_2" name="descripcion_cbu_2">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="cbu_3">Clave bancaria única 3 (CBU)</label>
+                  <input type="text" class="form-control" id="cbu_3" name="cbu_3">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="descripcion_cbu_3">Descripción</label>
+                  <input type="text" class="form-control" id="descripcion_cbu_3" name="descripcion_cbu_3">
+                </div>
+              </div>
+              <!-- Add a Save button for this form if its data is saved separately,
+                   or ensure the main Save button handles these fields.
+                   Currently, the script's main Save button only processes `proveedorForm`.
+              -->
+            </form>
+          </div>
+
+          <!-- Mensajes Tab Pane -->
+          <div class="tab-pane fade" id="messages-tab-pane" role="tabpanel" aria-labelledby="messages-tab-btn" tabindex="0">
+            <h5 class="mt-3">Mensajes</h5>
+            <form id="messagesForm" class="mt-3" novalidate>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="nombre">Nombre</label>
+                  <input type="text" class="form-control" id="nombre" name="nombre">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="cargo">Cargo</label>
+                  <input type="text" class="form-control" id="cargo" name="cargo">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="telefono">Teléfono</label>
+                  <input type="text" class="form-control" id="telefono" name="telefono">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="movil">Móvil</label>
+                  <input type="text" class="form-control" id="movil" name="movil">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" name="email">
+              </div>
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label for="contacto_habitual">Contacto habitual</label>
+                  <select class="form-select" id="contacto_habitual" name="contacto_habitual">
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="recibe_ordenes_compra">Recibe ordenes de compra</label>
+                  <select class="form-select" id="recibe_ordenes_compra" name="recibe_ordenes_compra">
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="recibe_ordenes_pago">Recibe ordenes de pago</label>
+                  <select class="form-select" id="recibe_ordenes_pago" name="recibe_ordenes_pago">
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="observaciones">Observaciones</label>
+                <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+              </div>
+              <!-- Add a Save button for this form if its data is saved separately -->
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex justify-content-between mt-4">
       <button type="button" class="btn btn-secondary" onclick="goToDashboard()">Volver al Inicio</button>
       <button type="submit" class="btn btn-success btn-save">Guardar Cambios</button>
-      <div id="formMsg" class="alert mt-2 d-none"></div>
-    </form>
-    <button class="btn btn-secondary mt-3" onclick="logout()">Cerrar sesión</button>
+    </div>
+    <div class="text-center"> <!-- Centering the logout button -->
+        <button class="btn btn-outline-danger mt-4 mb-4" onclick="logout()">Cerrar sesión</button>
+    </div>
   </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Updated jQuery for compatibility, slim might miss ajax -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+  $(document).ready(function() {
     const jwt = sessionStorage.getItem('jwt');
     if (!jwt) {
       window.location.href = '/Proveedores/acceder/';
+      return; 
     }
 
     let proveedorId = null;
     let userId = null;
     let codCpa01Value = null;
-    let initialData = {};
-    let codPais = null; // Variable para almacenar el código de país
+    let initialData = {}; // Will store initial values of ALL relevant fields
+    let codPais = null;
 
-    const camposContactoEditables = [
-      { key: "nom_fant", label: "Nombre comercial" },
+    // Fields primarily in proveedorForm (Home tab) and some from Configuración tab
+    // This array helps in structured population and applying 'disabled' or 'required' logic.
+    const camposPrincipalesEditables = [ // Renamed for clarity
       { key: "nom_provee", label: "Razon social" },
       { key: "n_cuit", label: "CUIT" },
+      { key: "domicilio", label: "Domicilio" },
+      { key: "localidad", label: "Localidad" },
+      { key: "c_postal", label: "Código postal" },
       { key: "telefono_1", label: "Teléfono" },
+      { key: "telefono_2", label: "Teléfono 2" },
+      { key: "telefono_movil", label: "Teléfono móvil" },
       { key: "e_mail", label: "Email" },
-      { key: "domicilio", label: "Dirección" },
-      { key: "localidad", label: "Localidad" }
+      { key: "web", label: "Pagina Web" },
+      { key: "nom_fant", label: "Nombre comercial" },
+      { key: "domicilio_comercial", label: "Domicilio comercial" },
+      { key: "n_iva", label: "Actividad" },
+      { key: "n_ing_brut", label: "Nro. de ingresos brutos" },
+      { key: "cbu", label: "Clave bancaria única (CBU)" },
+      { key: "descripcion_cbu", label: "Descripción" },
+      { key: "cbu_2", label: "Clave bancaria única 2 (CBU)" },
+      { key: "descripcion_cbu_2", label: "Descripción" },
+      { key: "cbu_3", label: "Clave bancaria única 3 (CBU)" },
+      { key: "descripcion_cbu_3", label: "Descripción" },
     ];
 
-    const camposContactoObligatorios = [
+    const camposContactoObligatorios = [ // These are primarily in proveedorForm
       "nom_provee",
       "n_cuit",
       "telefono_1",
@@ -67,220 +308,518 @@
     const camposBloquear = ["nom_provee","nom_fant","n_cuit"];
 
     async function obtenerUserId() {
-      const resp = await fetch('/Proveedores/api/userid/', {
-        headers: { 'Authorization': 'Bearer ' + jwt }
-      });
-      if (!resp.ok) {
+      try {
+        const resp = await fetch('/Proveedores/api/userid/', {
+          headers: { 'Authorization': 'Bearer ' + jwt }
+        });
+        if (!resp.ok) {
+          if (resp.status === 401 || resp.status === 403) {
+            sessionStorage.removeItem('jwt');
+            window.location.href = '/Proveedores/acceder/';
+          }
+          console.error('Error fetching user ID:', resp.statusText);
+          return null;
+        }
+        const data = await resp.json();
+        return data.user_id;
+      } catch (error) {
+        console.error('Network error fetching user ID:', error);
         sessionStorage.removeItem('jwt');
         window.location.href = '/Proveedores/acceder/';
         return null;
       }
-      const data = await resp.json();
-      return data.user_id;
     }
 
     async function cargarDatos() {
       userId = await obtenerUserId();
-      if (!userId) return;
-      const resp = await fetch('/Proveedores/api/proveedores/' + userId + '/', {
-        headers: { 'Authorization': 'Bearer ' + jwt }
-      });
-      if (!resp.ok) {
-        document.getElementById('formFields').innerHTML = '<div class="alert alert-warning">No se encontraron datos de proveedor asociados.</div>';
+      if (!userId) {
+        $('#formMsg').text('No se pudo verificar el usuario. Redirigiendo...').removeClass('d-none alert-success').addClass('alert-danger');
         return;
       }
-      const proveedor = await resp.json();
-      proveedorId = proveedor.id;
-      codCpa01Value = proveedor.cod_cpa01;
-      initialData = { ...proveedor };
-      codPais = proveedor.cod_pais; // Asignar el código de país
 
-      // Llamar a la API para cambiar la conexión
-      await cambiarConexion(codPais);
+      let proveedor = {}; // Initialize proveedor object
 
-      if (proveedor.id_cpa57) {
-          document.getElementById('provincia').value = proveedor.nom_prov;
-          document.getElementById('id_cpa57').value = proveedor.id_cpa57;
-          document.getElementById('nom_prov').value = proveedor.nom_prov;
+      try {
+        const resp = await fetch('/Proveedores/api/proveedores/' + userId + '/', {
+          headers: { 'Authorization': 'Bearer ' + jwt }
+        });
+
+        if (!resp.ok) {
+          if (resp.status === 404) {
+             $('#formMsg').text('No se encontraron datos de proveedor asociados. Puede completar el formulario y guardar.').removeClass('d-none alert-danger').addClass('alert-warning');
+          } else {
+            $('#formMsg').text('Error al cargar datos del proveedor: ' + resp.statusText).removeClass('d-none alert-success').addClass('alert-danger');
+          }
+          // Continue to populate form with defaults and set up monitoring even if no data found
+        } else {
+            proveedor = await resp.json(); // Assign fetched data
+            proveedorId = proveedor.id;
+            codCpa01Value = proveedor.cod_cpa01;
+            codPais = proveedor.cod_pais;
+        }
+
+        // --- Populate initialData and form fields for ALL tabs ---
+
+        // 1. Populate fields in proveedorForm (Home) and some from Config (n_ing_brut, CBUs)
+        camposPrincipalesEditables.forEach(campo => {
+          const inputElement = document.getElementById(campo.key);
+          if (inputElement) {
+            const value = proveedor[campo.key];
+            inputElement.value = (value !== null && value !== undefined) ? value : '';
+            initialData[campo.key] = inputElement.value; 
+
+            if (codCpa01Value && codCpa01Value.trim() !== "" && camposBloquear.includes(campo.key)) {
+              inputElement.disabled = true;
+            }
+          }
+        });
         
-      }
+        // 2. Provincia (Home tab)
+        const provinciaDisplayInput = document.getElementById('provincia');
+        const idCpa57Input = document.getElementById('id_cpa57');
+        const nomProvInput = document.getElementById('nom_prov');
+        
+        provinciaDisplayInput.value = proveedor.nom_prov || '';
+        idCpa57Input.value = proveedor.id_cpa57 || '';
+        nomProvInput.value = proveedor.nom_prov || '';
+        initialData['provincia'] = provinciaDisplayInput.value; // Using 'provincia' as key for display field
+        initialData['id_cpa57'] = idCpa57Input.value;
+        initialData['nom_prov'] = nomProvInput.value;
 
-      let html = '';
-      for (const campo of camposContactoEditables) {
-        const esObligatorio = camposContactoObligatorios.includes(campo.key);
-        const disabled = (codCpa01Value && codCpa01Value.trim() !== "" && camposBloquear.includes(campo.key)) ? 'disabled' : '';
-        html += `
-          <div class="form-group">
-            <label class="${esObligatorio ? 'required-label' : ''}" for="${campo.key}">${campo.label}</label>
-            <input type="text" class="form-control" id="${campo.key}" name="${campo.key}" value="${proveedor[campo.key] !== null && proveedor[campo.key] !== undefined ? proveedor[campo.key] : ''}" ${esObligatorio ? 'required' : ''} ${disabled}>
-            <div class="invalid-feedback" id="${campo.key}-invalid"></div>
-          </div>
-        `;
+
+        if (codPais) {
+            await cambiarConexion(codPais);
+        }
+
+        // 3. Dropdowns in Configuración tab
+        await cargarCondicionIva(proveedor.id_categoria_iva_cond_iva);
+        initialData['condicionIva'] = proveedor.id_categoria_iva_cond_iva || (document.getElementById('condicionIva').options.length > 0 ? document.getElementById('condicionIva').options[0].value : '');
+
+        await cargarIngresosBrutos(proveedor.tipo);
+        initialData['ingresosBrutos'] = proveedor.tipo || (document.getElementById('ingresosBrutos').options.length > 0 ? document.getElementById('ingresosBrutos').options[0].value : '');
+        
+        // 4. Populate initialData for remaining fields in configForm (if any not covered by camposPrincipalesEditables)
+        //    Currently, n_ing_brut, cbu fields are in camposPrincipalesEditables.
+        //    condicionIva and ingresosBrutos (selects) are handled above.
+
+        // 5. Populate initialData for fields in messagesForm (Mensajes tab)
+        const messagesFormElements = document.querySelectorAll('#messagesForm input, #messagesForm select, #messagesForm textarea');
+        messagesFormElements.forEach(el => {
+            if (el.name || el.id) {
+                const key = el.name || el.id;
+                const value = proveedor[key]; 
+                
+                if (el.tagName.toLowerCase() === 'select') {
+                    el.value = (value !== null && value !== undefined) ? value : (el.options.length > 0 ? el.options[0].value : '');
+                } else {
+                    el.value = (value !== null && value !== undefined) ? value : '';
+                }
+                initialData[key] = el.value; // Store initial value
+            }
+        });
+
+        agregarValidacionCuitFrontend();
+        monitorChanges(); // Start monitoring AFTER all initial data is set
+
+      } catch (error) {
+        console.error('Error processing proveedor data:', error);
+        $('#formMsg').text('Error al procesar datos del proveedor.').removeClass('d-none').addClass('alert-danger');
+        // Still good to set up monitoring for new input if initial load failed mid-way
+        monitorChanges();
+        agregarValidacionCuitFrontend();
       }
-      document.getElementById('formFields').innerHTML = html;
-      agregarValidacionCuitFrontend();
-      monitorChanges();
     }
 
-    async function cambiarConexion(codPais) {
-      const resp = await fetch('/Proveedores/api/cambiar-conexion/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + jwt
-        },
-        body: JSON.stringify({ cod_pais: codPais })
-      });
-      if (!resp.ok) {
-        console.error('Error al cambiar la conexión');
+    async function cargarCondicionIva(selectedId) {
+      try {
+        const resp = await fetch('/Proveedores/api/categoria-iva/', {
+          headers: { 'Authorization': 'Bearer ' + jwt }
+        });
+        const select = document.getElementById('condicionIva');
+        select.innerHTML = '<option value="">Seleccione...</option>';
+        if (resp.ok) {
+          const categorias = await resp.json();
+          categorias.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id_categoria_iva;
+            option.textContent = cat.desc_categoria_iva;
+            option.setAttribute('data-cod', cat.cod_categoria_iva);
+            select.appendChild(option);
+          });
+        } else {
+          console.error("Error cargando Condicion IVA:", resp.statusText);
+        }
+        // Set selected value after populating
+        if (selectedId !== null && selectedId !== undefined) {
+            select.value = selectedId;
+        }
+      } catch (error) {
+        console.error("Network error cargando Condicion IVA:", error);
+      }
+    }
+
+    async function cargarIngresosBrutos(selectedTipo) {
+       try {
+        const resp = await fetch('/Proveedores/api/ingresos-brutos/', {
+          headers: { 'Authorization': 'Bearer ' + jwt }
+        });
+        const select = document.getElementById('ingresosBrutos');
+        select.innerHTML = '<option value="">Seleccione...</option>';
+        if (resp.ok) {
+          const ingresosBrutos = await resp.json();
+          ingresosBrutos.forEach(ib => {
+            const option = document.createElement('option');
+            option.value = ib.Cod_Ingresos_brutos;
+            option.textContent = ib.Desc_Ingresos_brutos;
+            select.appendChild(option);
+          });
+        } else {
+          console.error("Error cargando Ingresos Brutos:", resp.statusText);
+        }
+        // Set selected value after populating
+        if (selectedTipo !== null && selectedTipo !== undefined) {
+            select.value = selectedTipo;
+        }
+      } catch (error) {
+        console.error("Network error cargando Ingresos Brutos:", error);
+      }
+    }
+
+    async function cambiarConexion(pais) {
+      // ... (same as before)
+      if (!pais) return;
+      try {
+        const resp = await fetch('/Proveedores/api/cambiar-conexion/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + jwt
+          },
+          body: JSON.stringify({ cod_pais: pais })
+        });
+        if (!resp.ok) {
+          console.error('Error al cambiar la conexión de país:', await resp.text());
+        }
+      } catch (error) {
+        console.error('Network error al cambiar la conexión de país:', error);
       }
     }
 
     function monitorChanges() {
-      const inputs = document.querySelectorAll('#proveedorForm input');
-      inputs.forEach(input => {
-        input.addEventListener('input', () => {
-          const hasChanges = Array.from(inputs).some(input => input.value !== initialData[input.name]);
-          document.querySelector('.btn-save').style.display = hasChanges ? 'block' : 'none';
+      // Monitor inputs across ALL forms that contribute to the single save button
+      const inputs = document.querySelectorAll(
+        '#proveedorForm input, #proveedorForm select, ' +
+        '#configForm input, #configForm select, ' +
+        '#messagesForm input, #messagesForm select, #messagesForm textarea'
+      );
+      const saveButton = document.querySelector('.btn-save');
+
+      const checkChanges = () => {
+        let hasChanges = false;
+        inputs.forEach(input => {
+          const key = input.name || input.id;
+          // For provincia display field, its key in initialData might be 'provincia' or 'provincia_display'
+          // Ensure consistency. Let's use input.id for provincia display.
+          const dataKey = (input.id === 'provincia' && initialData.hasOwnProperty('provincia')) ? 'provincia' : key;
+
+
+          const currentValue = (input.type === 'checkbox') ? input.checked.toString() : (input.type === 'radio' && !input.checked ? initialData[dataKey] : input.value) ;
+          const initialValue = initialData[dataKey] !== undefined ? initialData[dataKey] : '';
+          
+          if (String(currentValue) !== String(initialValue)) {
+            // console.log(`Change detected in ${dataKey}: initial='${initialValue}', current='${currentValue}'`);
+            hasChanges = true;
+          }
         });
+        saveButton.style.display = hasChanges ? 'block' : 'none';
+      };
+
+      inputs.forEach(input => {
+        input.addEventListener('input', checkChanges);
+        input.addEventListener('change', checkChanges); // For selects, checkboxes, radios
       });
+      
+      // Special handling for provincia text input if its id is 'provincia'
+      // const provinciaInput = document.getElementById('provincia');
+      // if(provinciaInput) {
+      //     provinciaInput.addEventListener('input', checkChanges); // Already covered by the main selector if it's an input
+      // }
     }
 
-    cargarDatos();
+    cargarDatos(); 
+
+    function gatherFormDataFromAllTabs() {
+        const data = {};
+        const forms = ['#proveedorForm', '#configForm', '#messagesForm'];
+
+        forms.forEach(formSelector => {
+            const formElements = document.querySelectorAll(`${formSelector} input, ${formSelector} select, ${formSelector} textarea`);
+            formElements.forEach(el => {
+                if ((el.name || el.id) && !el.disabled) {
+                    const key = el.name || el.id;
+                    if (el.type === 'checkbox') {
+                        data[key] = el.checked;
+                    } else if (el.type === 'radio') {
+                        if (el.checked) {
+                            data[key] = el.value.trim() === "" ? null : el.value.trim();
+                        }
+                    } else {
+                        data[key] = el.value.trim() === "" ? null : el.value.trim();
+                    }
+                }
+            });
+        });
+        
+        // Specific re-mapping or additions if needed:
+        // Provincia hidden fields are directly named and should be picked up.
+        // The display field for provincia (id="provincia") will be picked up but is not usually sent.
+        // We send id_cpa57 and nom_prov.
+        delete data['provincia']; // Remove the display field if it was picked up by its id.
+
+        // Map select values if their element 'name'/'id' is different from API field name
+        data['id_categoria_iva_cond_iva'] = data['condicionIva'] || null;
+        delete data['condicionIva'];
+
+        data['tipo'] = data['ingresosBrutos'] || null; // 'tipo' is the field for Ingresos Brutos Cod
+        delete data['ingresosBrutos'];
+
+        return data;
+    }
+
 
     document.getElementById('proveedorForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      if (!proveedorId) return;
-
+      
       let valido = true;
       let mensajes = [];
-      camposContactoObligatorios.forEach(campo => {
-        const input = document.querySelector(`[name="${campo}"]`);
+      // Validation still focuses on camposContactoObligatorios, assuming they are the most critical
+      camposContactoObligatorios.forEach(campoKey => {
+        const campoConfig = camposPrincipalesEditables.find(c => c.key === campoKey);
+        const input = document.getElementById(campoKey);
         if (input && input.value.trim() === "") {
           valido = false;
-          mensajes.push(`El campo "${input.previousElementSibling.textContent.replace('*', '').trim()}" es obligatorio.`);
+          const labelText = campoConfig ? campoConfig.label : (input.previousElementSibling ? input.previousElementSibling.textContent.replace('*', '').trim() : campoKey);
+          mensajes.push(`El campo "${labelText}" es obligatorio.`);
           input.classList.add('is-invalid');
-          document.getElementById(`${campo}-invalid`).textContent = `Este campo es obligatorio.`;
+          const feedbackEl = document.getElementById(`${campoKey}-invalid`);
+          if (feedbackEl) feedbackEl.textContent = `Este campo es obligatorio.`;
         } else if (input) {
           input.classList.remove('is-invalid');
-          document.getElementById(`${campo}-invalid`).textContent = "";
+          const feedbackEl = document.getElementById(`${campoKey}-invalid`);
+          if (feedbackEl) feedbackEl.textContent = "";
         }
       });
 
-      const cuitInput = document.querySelector('[name="n_cuit"]');
+      const cuitInput = document.getElementById('n_cuit');
       if (cuitInput && cuitInput.value.trim() !== "") {
         const cuitPattern = /^\d{2}-\d{8}-\d{1}$/;
         if (!cuitPattern.test(cuitInput.value.trim())) {
           valido = false;
           mensajes.push('El CUIT debe tener el formato XX-XXXXXXXX-X (ejemplo: 20-31441849-3).');
           cuitInput.classList.add('is-invalid');
-          document.getElementById('n_cuit-invalid').textContent = 'Formato inválido. Ejemplo: 20-31441849-3';
+          const feedbackEl = document.getElementById('n_cuit-invalid');
+          if (feedbackEl) feedbackEl.textContent = 'Formato inválido. Ejemplo: 20-31441849-3';
         } else {
-          cuitInput.classList.remove('is-invalid');
-          document.getElementById('n_cuit-invalid').textContent = "";
+          if (cuitInput.classList.contains('is-invalid') && cuitPattern.test(cuitInput.value.trim())) {
+             cuitInput.classList.remove('is-invalid');
+             const feedbackEl = document.getElementById('n_cuit-invalid');
+             if (feedbackEl) feedbackEl.textContent = "";
+          }
         }
       }
 
       const msgDiv = document.getElementById('formMsg');
       if (!valido) {
-        msgDiv.textContent = mensajes.join(' ');
-        msgDiv.className = 'alert alert-danger mt-2';
+        msgDiv.innerHTML = mensajes.join('<br>');
+        msgDiv.className = 'alert alert-danger mt-3';
         msgDiv.classList.remove('d-none');
         return;
       } else {
         msgDiv.classList.add('d-none');
+        msgDiv.textContent = '';
       }
 
-      const data = {};
-      camposContactoEditables.forEach(campo => {
-        const input = document.querySelector(`[name="${campo.key}"]`);
-        if (input && !input.disabled && input.value.trim() !== "") {
-          data[campo.key] = input.value.trim();
+      const dataToSave = gatherFormDataFromAllTabs();
+      
+      const method = proveedorId ? 'PATCH' : 'POST';
+      let url = proveedorId ? `/Proveedores/api/proveedores/${proveedorId}/` : `/Proveedores/api/proveedores/`;
+      
+      if (method === 'POST' && userId) { // If creating a new provider
+          dataToSave['user'] = userId; // Assuming backend expects 'user' field for user_id
+          if (codPais) dataToSave['cod_pais'] = codPais; // Send country code if available
+      }
+
+
+      try {
+        const resp = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + jwt,
+            'X-CSRFToken': getCookie('csrftoken') 
+          },
+          body: JSON.stringify(dataToSave)
+        });
+
+        if (resp.ok) {
+          const responseData = await resp.json();
+          if (method === 'POST' && responseData.id) {
+            proveedorId = responseData.id;
+            // If new provider was created and backend returns cod_cpa01, update and disable fields
+            if (responseData.cod_cpa01) {
+                codCpa01Value = responseData.cod_cpa01;
+                camposBloquear.forEach(keyToBlock => {
+                    const inputToBlock = document.getElementById(keyToBlock);
+                    if (inputToBlock && codCpa01Value && codCpa01Value.trim() !== "") {
+                        inputToBlock.disabled = true;
+                    }
+                });
+            }
+          }
+          
+          // Update initialData with the successfully saved values from ALL tabs
+          Object.keys(initialData).forEach(key => {
+            // Check if the key exists in dataToSave (after remapping)
+            // or if it's one of the remapped keys like 'condicionIva'
+            if (key === 'condicionIva') {
+                initialData[key] = dataToSave['id_categoria_iva_cond_iva'];
+            } else if (key === 'ingresosBrutos') {
+                initialData[key] = dataToSave['tipo'];
+            } else if (key === 'provincia') { // The display field for provincia
+                initialData[key] = dataToSave['nom_prov'] || '';
+            } else if (dataToSave.hasOwnProperty(key)) {
+                 initialData[key] = dataToSave[key] === null ? '' : dataToSave[key];
+            }
+            // If dataToSave doesn't have the key (e.g. a display-only field that wasn't sent),
+            // initialData[key] remains unchanged (which is correct).
+          });
+
+
+          msgDiv.textContent = 'Datos actualizados correctamente.';
+          msgDiv.className = 'alert alert-success mt-3';
+          msgDiv.classList.remove('d-none');
+          document.querySelector('.btn-save').style.display = 'none';
+        } else {
+          const err = await resp.json();
+          let errorMessages = 'Error al guardar los datos.';
+          if (typeof err === 'object' && err !== null) {
+            errorMessages = Object.entries(err).map(([key, value]) => {
+              const fieldLabel = camposPrincipalesEditables.find(c => c.key === key)?.label || 
+                                 document.querySelector(`label[for="${key}"]`)?.textContent.replace('*', '').trim() ||
+                                 key;
+              return `${fieldLabel}: ${Array.isArray(value) ? value.join(', ') : value}`;
+            }).join('<br>');
+          } else if (typeof err === 'string') {
+            errorMessages = err;
+          }
+          msgDiv.innerHTML = errorMessages;
+          msgDiv.className = 'alert alert-danger mt-3';
+          msgDiv.classList.remove('d-none');
         }
-      });
-
-      const idCpa57Input = document.getElementById('id_cpa57');
-      const nomProvInput = document.getElementById('nom_prov');
-      if (idCpa57Input && idCpa57Input.value.trim() !== "") {
-        data['id_cpa57'] = idCpa57Input.value.trim();
-      }
-      if (nomProvInput && nomProvInput.value.trim() !== "") {
-        data['nom_prov'] = nomProvInput.value.trim();
-      }
-
-      const resp = await fetch('/Proveedores/api/proveedores/' + proveedorId + '/', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + jwt
-        },
-        body: JSON.stringify(data)
-      });
-      if (resp.ok) {
-        msgDiv.textContent = 'Datos actualizados correctamente.';
-        msgDiv.className = 'alert alert-success mt-2';
-        msgDiv.classList.remove('d-none');
-        document.querySelector('.btn-save').style.display = 'none';
-      } else {
-        const err = await resp.json();
-        msgDiv.textContent = 'Error: ' + JSON.stringify(err);
-        msgDiv.className = 'alert alert-danger mt-2';
+      } catch (error) {
+        console.error("Network error during save:", error);
+        msgDiv.textContent = 'Error de red al guardar los datos.';
+        msgDiv.className = 'alert alert-danger mt-3';
         msgDiv.classList.remove('d-none');
       }
     });
 
     function agregarValidacionCuitFrontend() {
-      const cuitInput = document.querySelector('[name="n_cuit"]');
+      // ... (same as before)
+      const cuitInput = document.getElementById('n_cuit');
       if (cuitInput) {
         cuitInput.addEventListener('input', function() {
           const cuitPattern = /^\d{2}-\d{8}-\d{1}$/;
+          const feedbackEl = document.getElementById('n_cuit-invalid');
           if (cuitInput.value.trim() !== "" && !cuitPattern.test(cuitInput.value.trim())) {
             cuitInput.classList.add('is-invalid');
-            document.getElementById('n_cuit-invalid').textContent = 'Formato inválido. Ejemplo: 20-31441849-3';
+            if (feedbackEl) feedbackEl.textContent = 'Formato inválido. Ejemplo: 20-31441849-3';
           } else {
             cuitInput.classList.remove('is-invalid');
-            document.getElementById('n_cuit-invalid').textContent = "";
+            if (feedbackEl) feedbackEl.textContent = "";
           }
         });
       }
     }
-
-    function logout() {
-      sessionStorage.removeItem('jwt');
-      window.location.href = '/Proveedores/acceder/';
-    }
-
-    function goToDashboard() {
-      window.location.href = '/Proveedores/dashboard/';
+    
+    function getCookie(name) {
+        // ... (same as before)
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 
     document.getElementById('provincia').addEventListener('input', async function() {
+      // ... (same as before, ensure 'codPais' is available and used)
       const query = this.value;
+      const provinciaListDiv = document.getElementById('provinciaList');
       if (query.length < 2) {
-        document.getElementById('provinciaList').innerHTML = '';
+        provinciaListDiv.innerHTML = '';
         return;
       }
-      const resp = await fetch(`/Proveedores/api/provincias/?q=${query}&cod_pais=${codPais}`, {
-        headers: { 'Authorization': 'Bearer ' + jwt }
-      });
-      if (resp.ok) {
-        const provincias = await resp.json();
-        const list = provincias.map(p => `<button type="button" class="list-group-item list-group-item-action" data-id="${p.id}" data-nom="${p.display}">${p.display}</button>`).join('');
-        document.getElementById('provinciaList').innerHTML = list;
+      if (!codPais) {
+        console.warn("Código de país no establecido. Búsqueda de provincia podría fallar o ser incorrecta.");
+      }
+      try {
+        const resp = await fetch(`/Proveedores/api/provincias/?q=${encodeURIComponent(query)}&cod_pais=${codPais || ''}`, {
+          headers: { 'Authorization': 'Bearer ' + jwt }
+        });
+        if (resp.ok) {
+          const provincias = await resp.json();
+          const list = provincias.map(p => `<button type="button" class="list-group-item list-group-item-action" data-id="${p.id}" data-nom="${p.display}">${p.display}</button>`).join('');
+          provinciaListDiv.innerHTML = list;
+        } else {
+          console.error("Error buscando provincias:", resp.statusText);
+          provinciaListDiv.innerHTML = '<div class="list-group-item text-danger">Error al buscar</div>';
+        }
+      } catch (error) {
+        console.error("Network error buscando provincias:", error);
+        provinciaListDiv.innerHTML = '<div class="list-group-item text-danger">Error de red</div>';
       }
     });
 
     document.getElementById('provinciaList').addEventListener('click', function(e) {
+      // ... (same as before, ensure 'input' event is triggered on 'provincia' field to update save button state)
       if (e.target && e.target.matches('button.list-group-item')) {
         const selectedText = e.target.textContent;
         const selectedId = e.target.getAttribute('data-id');
-        const selectedNom = e.target.getAttribute('data-nom');
-        document.getElementById('provincia').value = selectedText;
+        const selectedNom = e.target.getAttribute('data-nom'); 
+        
+        const provinciaInput = document.getElementById('provincia');
+        provinciaInput.value = selectedText;
         document.getElementById('id_cpa57').value = selectedId;
-        document.getElementById('nom_prov').value = selectedNom;
-        document.getElementById('provinciaList').innerHTML = '';
+        document.getElementById('nom_prov').value = selectedNom; 
+        
+        document.getElementById('provinciaList').innerHTML = ''; 
+
+        // Manually trigger input/change events for all affected fields to ensure monitorChanges picks it up
+        $(provinciaInput).trigger('input').trigger('change'); 
+        $(document.getElementById('id_cpa57')).trigger('input').trigger('change');
+        $(document.getElementById('nom_prov')).trigger('input').trigger('change');
       }
     });
+
+  });
+
+  // Global scope functions for buttons
+  function logout() {
+    sessionStorage.removeItem('jwt');
+    window.location.href = '/Proveedores/acceder/';
+  }
+
+  function goToDashboard() {
+    window.location.href = '/Proveedores/dashboard/';
+  }
   </script>
+
 </body>
 </html>

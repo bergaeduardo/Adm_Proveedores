@@ -92,11 +92,11 @@ class Proveedor(models.Model):
   conceptos = models.JSONField(db_column='CONCEPTOS', blank=True, null=True)
   contactos = models.JSONField(db_column='CONTACTOS', blank=True, null=True)
   sucursales = models.JSONField(db_column='SUCURSALES', blank=True, null=True)
-  # Nuevo campo para vincular con el usuario de Django
   username_django = models.ForeignKey(User, db_column='USERNAME_DJANGO', on_delete=models.SET_NULL, null=True, blank=True, related_name='proveedores')
-  # Nuevos campos para país
   cod_pais = models.CharField(db_column='COD_PAIS', max_length=2, blank=True, null=True)
   nom_pais = models.CharField(db_column='NOM_PAIS', max_length=60, blank=True, null=True)
+  cond_iva = models.CharField(db_column='COND_IVA', max_length=5, blank=True, null=True)
+  desc_categoria_iva = models.CharField(db_column='DESC_CATEGORIA_IVA', max_length=50, blank=True, null=True)
 
   def __str__(self):
     return self.nom_provee

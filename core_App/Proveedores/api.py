@@ -3,7 +3,7 @@ Vistas API RESTful para el modelo Proveedor y registro de usuario.
 Permite operaciones CRUD y registro conjunto.
 """
 
-from rest_framework import viewsets, status,permissions
+from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -14,7 +14,15 @@ from .serializers import ProveedorRegistroSerializer, ProveedorSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.db import connections
 from rest_framework.decorators import api_view
+
+Ingresos_brutos = {
+  '': '',
+  'L': 'Local',
+  'M': 'Multilateral',
+  'S': 'Reg. simplificado',
+}
 
 class ProveedorViewSet(viewsets.ModelViewSet):
   serializer_class = ProveedorSerializer
@@ -64,17 +72,26 @@ class UserIdView(APIView):
 
 class ProvinciaListView(APIView):
   def get(self, request):
-    # cod_pais=''
-    # conection='sqlserver'
     query = request.GET.get('q', '')
-    # cod_pais = request.GET.get('cod_pais')
-    # if cod_pais == 'UR':
-    #   cambiar_conexion(conection, 'TASKY_SA')
-
     provincias = Cpa57.objects.filter(nom_provin__icontains=query).values('id_cpa57', 'cod_provin', 'nom_provin')
     data = [{'id': p['id_cpa57'], 'display': f"{p['nom_provin']}"} for p in provincias]
     return Response(data, status=status.HTTP_200_OK)
   
+class CategoriaIVAListView(APIView):
+  def get(self, request):
+    with connections['sqlserver'].cursor() as cursor:
+      cursor.execute("SELECT ID_CATEGORIA_IVA, COD_CATEGORIA_IVA, DESC_CATEGORIA_IVA FROM CATEGORIA_IVA")
+      rows = cursor.fetchall()
+      data = [
+        {
+          "id_categoria_iva": row[0],
+          "cod_categoria_iva": row[1],
+          "desc_categoria_iva": row[2]
+        }
+        for row in rows
+      ]
+    return Response(data)
+
 def cambiar_conexion(conection, nombre_db):
   if conection == 'sqlserver':
       settings.DATABASES[conection]['NAME'] = nombre_db
@@ -113,3 +130,8 @@ def validar_cuit(request):
 class ProveedorViewSet(viewsets.ModelViewSet):
   queryset = Proveedor.objects.all()
   serializer_class = ProveedorSerializer
+
+class IngresosBrutosListView(APIView):
+  def get(self, request):
+    data = [{'Cod_Ingresos_brutos': key, 'Desc_Ingresos_brutos': value} for key, value in Ingresos_brutos.items()]
+    return Response(data, status=status.HTTP_200_OK)
