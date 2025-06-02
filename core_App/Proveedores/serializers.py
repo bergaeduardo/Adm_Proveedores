@@ -5,8 +5,44 @@ Incluye validaciones personalizadas y mensajes en español.
 
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Proveedor
+from .models import Proveedor, Comprobante
 import re
+
+class ComprobanteSerializer(serializers.ModelSerializer):
+  archivo = serializers.FileField(write_only=True)
+  archivo_url = serializers.SerializerMethodField(read_only=True)
+
+  class Meta:
+    model = Comprobante
+    fields = ['id', 'tipo', 'numero', 'fecha_emision', 'monto_total', 'archivo', 'archivo_url', 'estado', 'creado_en']
+    read_only_fields = ['estado', 'creado_en', 'archivo_url']
+
+  def get_archivo_url(self, obj):
+    request = self.context.get('request')
+    if obj.archivo and request:
+      return request.build_absolute_uri(obj.archivo.url)
+    return None
+
+  def validate_tipo(self, value):
+    tipos_validos = [choice[0] for choice in Comprobante.TipoComprobante.choices]
+    if value not in tipos_validos:
+      raise serializers.ValidationError("Tipo de comprobante inválido.")
+    return value
+
+  def validate_archivo(self, value):
+    valid_mime_types = ['application/pdf', 'image/jpeg', 'image/png']
+    if value.content_type not in valid_mime_types:
+      raise serializers.ValidationError("Formato de archivo no permitido. Solo PDF, JPEG y PNG.")
+    if value.size > 10 * 1024 * 1024:  # 10MB max
+      raise serializers.ValidationError("El archivo es demasiado grande. Máximo 10MB.")
+    return value
+
+  def create(self, validated_data):
+    proveedor = self.context['request'].user.proveedores.first()
+    if not proveedor:
+      raise serializers.ValidationError("Proveedor no asociado al usuario.")
+    validated_data['proveedor'] = proveedor
+    return super().create(validated_data)
 
 class ProveedorRegistroSerializer(serializers.ModelSerializer):
   usuario = serializers.CharField(write_only=True, required=True)

@@ -7,15 +7,35 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .models import Proveedor
+from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser
+from .models import Proveedor, Comprobante
 from consultasTango.models import Cpa57
 from drf_spectacular.utils import extend_schema, OpenApiExample
-from .serializers import ProveedorRegistroSerializer, ProveedorSerializer
+from .serializers import ProveedorRegistroSerializer, ProveedorSerializer, ComprobanteSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.db import connections
 from rest_framework.decorators import api_view
+
+class ComprobanteViewSet(viewsets.ModelViewSet):
+  serializer_class = ComprobanteSerializer
+  permission_classes = [IsAuthenticated]
+  parser_classes = [MultiPartParser, FormParser]
+
+  def get_queryset(self):
+    # Solo comprobantes del proveedor autenticado
+    user = self.request.user
+    proveedor = getattr(user, 'proveedores', None)
+    if proveedor:
+      return Comprobante.objects.filter(proveedor=proveedor.first())
+    return Comprobante.objects.none()
+
+  def perform_create(self, serializer):
+    user = self.request.user
+    proveedor = user.proveedores.first()
+    serializer.save(proveedor=proveedor)
 
 Ingresos_brutos = {
   '': '',

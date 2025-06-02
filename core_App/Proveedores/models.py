@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.translation import gettext_lazy as _
+from django.conf import settings
+import os
+import datetime
 
 class Proveedor(models.Model):
   cod_cpa01 = models.CharField(db_column='COD_CPA01', max_length=10, unique=True, blank=True, null=True)
@@ -100,3 +104,43 @@ class Proveedor(models.Model):
 
   def __str__(self):
     return self.nom_provee
+
+# Función para construir la ruta dinámica del archivo con el nombre del proveedor
+def comprobante_upload_path(instance, filename):
+    # Limpiar el nombre del proveedor para evitar caracteres problemáticos en la ruta
+    proveedor_name = instance.proveedor.nom_provee.strip().replace(' ', '_')
+    # Opcional: eliminar caracteres no alfanuméricos para mayor seguridad
+    proveedor_name = ''.join(c for c in proveedor_name if c.isalnum() or c in ['_', '-'])
+    # Construir la ruta: comprobantes/{nom_provee}/{fecha}/{filename}
+    fecha = datetime.datetime.now().strftime('%Y/%m/%d')
+    return f'comprobantes/{proveedor_name}/{fecha}/{filename}'
+
+class Comprobante(models.Model):
+  class TipoComprobante(models.TextChoices):
+    FACTURA_A = 'Factura A', _('Factura A')
+    FACTURA_B = 'Factura B', _('Factura B')
+    FACTURA_C = 'Factura C', _('Factura C')
+    NOTA_CREDITO = 'Nota de Crédito', _('Nota de Crédito')
+    NOTA_DEBITO = 'Nota de Débito', _('Nota de Débito')
+
+  proveedor = models.ForeignKey('Proveedor', on_delete=models.CASCADE, related_name='comprobantes')
+  tipo = models.CharField(max_length=20, choices=TipoComprobante.choices)
+  numero = models.CharField(max_length=50)
+  fecha_emision = models.DateField()
+  monto_total = models.DecimalField(max_digits=14, decimal_places=2)
+  archivo = models.FileField(upload_to=comprobante_upload_path)
+  estado = models.CharField(max_length=20, default='Recibido')
+  creado_en = models.DateTimeField(auto_now_add=True)
+
+  class Meta:
+    verbose_name = 'Comprobante'
+    verbose_name_plural = 'Comprobantes'
+    ordering = ['-creado_en']
+
+  def __str__(self):
+    return f"{self.tipo} {self.numero} - {self.proveedor.nom_provee}"
+
+  def filename(self):
+    return os.path.basename(self.archivo.name)
+  
+  

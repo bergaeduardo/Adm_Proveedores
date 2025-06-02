@@ -1,20 +1,34 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .api import ProveedorViewSet, ProveedorRegistroView,UserIdView,validar_cuit,ProvinciaListView,CambiarConexionView,CategoriaIVAListView, IngresosBrutosListView
-from .views import register,login_view,mis_datos_view,dashboard_view  # Importar la vista que renderiza el formulario
+from .api import (
+  ProveedorViewSet,
+  ProveedorRegistroView,
+  UserIdView,
+  validar_cuit,
+  ProvinciaListView,
+  CambiarConexionView,
+  CategoriaIVAListView,
+  IngresosBrutosListView,
+  ComprobanteViewSet
+)
+from .views import register, login_view, mis_datos_view, dashboard_view
+from django.views.generic import TemplateView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
-# Importar la vista estándar de SimpleJWT
-from rest_framework_simplejwt.views import TokenObtainPairView
 
 router = DefaultRouter()
 router.register(r'proveedores', ProveedorViewSet, basename='proveedor')
+router.register(r'comprobantes', ComprobanteViewSet, basename='comprobante')
 
 urlpatterns = [
   path('registro/', register, name='registro-proveedor-form'),
   path('acceder/', login_view, name='acceder-proveedor-form'),
   path('mis-datos/', mis_datos_view, name='mis-datos-proveedor'),
   path('dashboard/', dashboard_view, name='dashboard'),
+
+  # Nueva ruta para la plantilla de comprobantes
+  path('comprobantes/', TemplateView.as_view(template_name='comprobantes.html'), name='comprobantes'),
+
+  # API endpoints
   path('api/registro/', ProveedorRegistroView.as_view(), name='registro-proveedor'),
   path('api/', include(router.urls)),
   path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
