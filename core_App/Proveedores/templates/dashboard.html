@@ -5,86 +5,129 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-  <title>Tablero de Control</title>
+  <title>Tablero de Control Moderno</title>
   <style>
-    .btn-app {
+    body {
+      background-color: #f8f9fa; /* Un fondo suave */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente más moderna */
+    }
+
+    .dashboard-header {
+      padding-top: 30px;
+      padding-bottom: 30px;
+      color: #343a40;
+    }
+
+    .dashboard-card {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      width: 150px;
-      height: 150px;
-      margin: 10px;
-      padding: 20px;
-      font-size: 18px;
+      min-height: 180px; /* Aumentamos un poco la altura */
+      padding: 25px;
       text-align: center;
       color: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border-radius: 15px; /* Bordes más redondeados */
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      text-decoration: none; /* Para los 'a' que son cards */
     }
-    .btn-app.disabled {
-      background-color: #ccc;
+
+    .dashboard-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      text-decoration: none; /* Mantener sin subrayado en hover */
+      color: white; /* Asegurar que el color del texto no cambie en hover si es un 'a' */
+    }
+
+    .dashboard-card.disabled {
+      background-color: #e9ecef; /* Gris más claro para deshabilitados */
+      color: #6c757d; /* Texto más oscuro para contraste en fondo claro */
       pointer-events: none;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Sombra más sutil */
     }
-    .btn-mis-datos { background-color: #007bff; }
-    .btn-comprobantes, .btn-resumen, .btn-boton4, .btn-boton5, .btn-boton6 {
-      background-color: #6c757d;
+    .dashboard-card.disabled .icon {
+      color: #adb5bd; /* Icono más claro en deshabilitados */
     }
+
+    .card-mis-datos { background: linear-gradient(45deg, #007bff, #0056b3); }
+    .card-comprobantes { background: linear-gradient(45deg, #343a40, #1d2124); } /* Un gris oscuro elegante */
+    .card-resumenCuentas { background: linear-gradient(45deg, #28a745, #1e7e34); }
+    /* Los botones deshabilitados usan .disabled, así que no necesitan color específico aquí */
+
     .icon {
-      font-size: 40px;
-      margin-bottom: 10px;
+      font-size: 48px; /* Iconos más grandes */
+      margin-bottom: 15px;
     }
-    .btn-group {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
+
+    .dashboard-card h5 {
+        font-size: 1.1rem;
+        font-weight: 500;
     }
-    @media (min-width: 768px) {
-      .btn-group {
-        justify-content: space-between;
-      }
-      .btn-group > div {
-        flex: 1 1 30%;
-        max-width: 30%;
-      }
+
+    .btn-logout {
+        padding: 10px 25px;
+        font-size: 1rem;
     }
   </style>
 </head>
 <body>
-  <div class="container text-center mt-5">
-    <h2>Tablero de Control</h2>
-    <div class="btn-group">
-      <a href="/Proveedores/mis-datos/" class="btn-app btn-mis-datos">
-        <i class="fas fa-user icon"></i>
-        Mis Datos
-      </a>
-      <div class="btn-app btn-comprobantes disabled">
-        <i class="fas fa-file-invoice icon"></i>
-        Comprobantes
+  <div class="container mt-4 mb-5">
+    <div class="dashboard-header text-center">
+      <h1 class="display-4">Tablero de Control</h1>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-lg-4 mb-4">
+        <a href="/Proveedores/mis-datos/" class="dashboard-card card-mis-datos">
+          <i class="fas fa-user icon"></i>
+          <h5>Mis Datos</h5>
+        </a>
       </div>
-      <div class="btn-app btn-resumen disabled">
-        <i class="fas fa-chart-line icon"></i>
-        Resumen de Cuenta
+      <div class="col-md-6 col-lg-4 mb-4">
+        <a href="/Proveedores/comprobantes/" class="dashboard-card card-comprobantes">
+          <i class="fas fa-file-invoice icon"></i>
+          <h5>Comprobantes</h5>
+        </a>
       </div>
-      <div class="btn-app btn-boton4 disabled">
-        <i class="fas fa-cogs icon"></i>
-        Botón 4
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="dashboard-card card-resumenCuentas">
+          <i class="fas fa-chart-line icon"></i>
+          <h5>Resumen de Cuenta</h5>
+        </div>
       </div>
-      <div class="btn-app btn-boton5 disabled">
-        <i class="fas fa-envelope icon"></i>
-        Botón 5
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="dashboard-card disabled">
+          <i class="fas fa-cogs icon"></i>
+          <h5>Botón 4</h5>
+        </div>
       </div>
-      <div class="btn-app btn-boton6 disabled">
-        <i class="fas fa-question-circle icon"></i>
-        Botón 6
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="dashboard-card disabled">
+          <i class="fas fa-envelope icon"></i>
+          <h5>Botón 5</h5>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="dashboard-card disabled">
+          <i class="fas fa-question-circle icon"></i>
+          <h5>Botón 6</h5>
+        </div>
       </div>
     </div>
+
+    <div class="text-center mt-4 mb-4">
+        <button class="btn btn-outline-danger btn-logout" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+        </button>
+    </div>
   </div>
-  <div class="text-center">
-      <button class="btn btn-outline-danger mt-4 mb-4" onclick="logout()">Cerrar sesión</button>
-  </div>
+
+  <script>
+    function logout() {
+      sessionStorage.removeItem('jwt');
+      window.location.href = '/Proveedores/acceder/';
+    }
+  </script>
 </body>
-<script>
-  function logout() { sessionStorage.removeItem('jwt'); window.location.href = '/Proveedores/acceder/'; }
-</script>
 </html>

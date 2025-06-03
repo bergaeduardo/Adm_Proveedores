@@ -5,6 +5,28 @@ from django.conf import settings
 import os
 import datetime
 
+def documentos_upload_path(instance, filename):
+    # Limpiar el nombre del proveedor para evitar caracteres problemáticos en la ruta
+    # Usar username_django.username que es único y más predecible que nom_provee
+    proveedor_identifier = instance.username_django.username if instance.username_django else 'sin_usuario'
+    
+    # Obtener el nombre del campo que está llamando a esta función
+    # Esto requiere un pequeño truco o pasar el field_name explícitamente si es necesario diferenciar subcarpetas por tipo de doc.
+    # Para este caso, todos van a una carpeta general de documentos del proveedor.
+    # Opcional: crear subcarpetas por tipo de documento si es necesario
+    # field_name = '' # Determinar el field_name si se necesita
+    # subfolder = field_name.replace('_file', '') # ej: cuit, ingBrutos
+
+    fecha_hoy = datetime.date.today()
+    # Ruta: documentos/{username_proveedor}/{YYYY}/{MM}/{DD}/{filename}
+    return f'documentos/{proveedor_identifier}/{fecha_hoy.year}/{fecha_hoy.month:02d}/{fecha_hoy.day:02d}/{filename}'
+
+def comprobante_upload_path(instance, filename):
+    proveedor_identifier = instance.proveedor.username_django.username if instance.proveedor.username_django else 'sin_usuario'
+    fecha_hoy = datetime.date.today()
+    return f'comprobantes/{proveedor_identifier}/{fecha_hoy.year}/{fecha_hoy.month:02d}/{fecha_hoy.day:02d}/{filename}'
+
+
 class Proveedor(models.Model):
   cod_cpa01 = models.CharField(db_column='COD_CPA01', max_length=10, unique=True, blank=True, null=True)
   id_tipo_documento_gv = models.IntegerField(db_column='ID_TIPO_DOCUMENTO_GV', blank=True, null=True)
@@ -102,18 +124,26 @@ class Proveedor(models.Model):
   cond_iva = models.CharField(db_column='COND_IVA', max_length=5, blank=True, null=True)
   desc_categoria_iva = models.CharField(db_column='DESC_CATEGORIA_IVA', max_length=50, blank=True, null=True)
 
+  # Documentos adjuntos
+  cuit_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
+  ing_brutos_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
+  excl_ganancias_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
+  cm05_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
+  no_ret_ganancias_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True) # Certificado de No Retención de ganancias
+  excl_iibb_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)        # Certificado de Exclusión de Ingresos Brutos
+  no_ret_iibb_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)      # Certificado de No Retención de Ingresos Brutos
+
+  # Fechas de actualización de cada archivo
+  cuit_file_updated_at = models.DateTimeField(blank=True, null=True)
+  ing_brutos_file_updated_at = models.DateTimeField(blank=True, null=True)
+  excl_ganancias_file_updated_at = models.DateTimeField(blank=True, null=True)
+  cm05_file_updated_at = models.DateTimeField(blank=True, null=True)
+  no_ret_ganancias_file_updated_at = models.DateTimeField(blank=True, null=True)
+  excl_iibb_file_updated_at = models.DateTimeField(blank=True, null=True)
+  no_ret_iibb_file_updated_at = models.DateTimeField(blank=True, null=True)
+
   def __str__(self):
     return self.nom_provee
-
-# Función para construir la ruta dinámica del archivo con el nombre del proveedor
-def comprobante_upload_path(instance, filename):
-    # Limpiar el nombre del proveedor para evitar caracteres problemáticos en la ruta
-    proveedor_name = instance.proveedor.nom_provee.strip().replace(' ', '_')
-    # Opcional: eliminar caracteres no alfanuméricos para mayor seguridad
-    proveedor_name = ''.join(c for c in proveedor_name if c.isalnum() or c in ['_', '-'])
-    # Construir la ruta: comprobantes/{nom_provee}/{fecha}/{filename}
-    fecha = datetime.datetime.now().strftime('%Y/%m/%d')
-    return f'comprobantes/{proveedor_name}/{fecha}/{filename}'
 
 class Comprobante(models.Model):
   class TipoComprobante(models.TextChoices):
@@ -143,4 +173,25 @@ class Comprobante(models.Model):
   def filename(self):
     return os.path.basename(self.archivo.name)
   
-  
+
+class CpaContactosProveedorHabitual(models.Model):
+    id_cpa_contactos_proveedor_habitual = models.IntegerField(db_column='ID_CPA_CONTACTOS_PROVEEDOR_HABITUAL', primary_key=True)  # Field name made lowercase.
+    cargo = models.CharField(db_column='CARGO', max_length=20, blank=True, null=True)  # Field name made lowercase.       
+    defecto = models.CharField(db_column='DEFECTO', max_length=1, blank=True, null=True)  # Field name made lowercase.    
+    cod_provee = models.CharField(db_column='COD_PROVEE', max_length=6)  # Field name made lowercase.
+    nombre = models.CharField(db_column='NOMBRE', max_length=30, blank=True, null=True)  # Field name made lowercase.     
+    telefono = models.CharField(db_column='TELEFONO', max_length=30, blank=True, null=True)  # Field name made lowercase. 
+    telefono_movil = models.CharField(db_column='TELEFONO_MOVIL', max_length=30, blank=True, null=True)  # Field name made lowercase.
+    email = models.CharField(db_column='EMAIL', max_length=255, blank=True, null=True)  # Field name made lowercase.      
+    direccion = models.CharField(db_column='DIRECCION', max_length=30, blank=True, null=True)  # Field name made lowercase.
+    observacion = models.CharField(db_column='OBSERVACION', max_length=60, blank=True, null=True)  # Field name made lowercase.
+    tipo_documento = models.SmallIntegerField(db_column='TIPO_DOCUMENTO', blank=True, null=True)  # Field name made lowercase.
+    numero_documento = models.CharField(db_column='NUMERO_DOCUMENTO', max_length=20, blank=True, null=True)  # Field name made lowercase.
+    envia_pdf_oc = models.CharField(db_column='ENVIA_PDF_OC', max_length=1)  # Field name made lowercase.
+    envia_pdf_op = models.CharField(db_column='ENVIA_PDF_OP', max_length=1)  # Field name made lowercase.
+    username_django = models.ForeignKey(User, on_delete=models.CASCADE, db_column='USERNAME_DJANGO')
+
+    class Meta:
+        managed = False
+        db_table = 'CPA_CONTACTOS_PROVEEDOR_HABITUAL'
+        unique_together = (('cod_provee', 'nombre'),)

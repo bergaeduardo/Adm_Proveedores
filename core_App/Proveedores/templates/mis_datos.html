@@ -296,25 +296,31 @@
               </div>
               <div class="row">
                 <div class="col-md-4 mb-3">
-                  <label for="contacto_habitual">Contacto habitual</label>
-                  <select class="form-select" id="contacto_habitual" name="contacto_habitual">
-                    <option value="si">Si</option>
-                    <option value="no">No</option>
-                  </select>
+                  <!-- Contacto habitual -->
+                  <div class="form-check" style="margin-top: 1.8rem;">
+                    <input class="form-check-input" type="checkbox" id="contacto_habitual" name="contacto_habitual">
+                    <label class="form-check-label" for="contacto_habitual">
+                      Contacto habitual
+                    </label>
+                  </div>
                 </div>
                 <div class="col-md-4 mb-3">
-                  <label for="recibe_ordenes_compra">Recibe ordenes de compra</label>
-                  <select class="form-select" id="recibe_ordenes_compra" name="recibe_ordenes_compra">
-                    <option value="si">Si</option>
-                    <option value="no">No</option>
-                  </select>
+                  <!-- Recibe ordenes de compra -->
+                  <div class="form-check" style="margin-top: 1.8rem;">
+                    <input class="form-check-input" type="checkbox" id="recibe_ordenes_compra" name="recibe_ordenes_compra">
+                    <label class="form-check-label" for="recibe_ordenes_compra">
+                      Recibe órdenes de compra
+                    </label>
+                  </div>
                 </div>
                 <div class="col-md-4 mb-3">
-                  <label for="recibe_ordenes_pago">Recibe ordenes de pago</label>
-                  <select class="form-select" id="recibe_ordenes_pago" name="recibe_ordenes_pago">
-                    <option value="si">Si</option>
-                    <option value="no">No</option>
-                  </select>
+                  <!-- Recibe ordenes de pago -->
+                  <div class="form-check" style="margin-top: 1.8rem;">
+                    <input class="form-check-input" type="checkbox" id="recibe_ordenes_pago" name="recibe_ordenes_pago">
+                    <label class="form-check-label" for="recibe_ordenes_pago">
+                      Recibe órdenes de pago
+                    </label>
+                  </div>
                 </div>
               </div>
               <div class="mb-3">
@@ -401,11 +407,58 @@
                   </div>
                 </div>
               </div>
-              <!-- Faltan:
-                Certificado de No Retención de ganancias
-                Certificado de Exclusión de Ingresos Brutos
-                Certificado de No Retención de Ingresos Brutos
-              -->
+              <div class="col-md-6 col-lg-4 mb-4">
+                <div class="document-card status-optional-missing" id="card-noRetGananciasFile">
+                  <div class="document-card-body">
+                    <div class="document-icon-area">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
+                    </div>
+                    <h6 class="document-title">Cert. No Ret. Ganancias</h6>
+                    <p class="document-status-text">Opcional, no cargado</p>
+                    <button type="button" class="btn btn-outline-primary btn-sm action-btn" onclick="triggerUpload('noRetGananciasFile')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      Cargar (Opcional)
+                    </button>
+                    <input type="file" id="noRetGananciasFile" name="noRetGananciasFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg,.doc,.docx">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Documento: Certificado de Exclusión de Ingresos Brutos (Opcional) -->
+              <div class="col-md-6 col-lg-4 mb-4">
+                <div class="document-card status-optional-missing" id="card-exclIIBBFile">
+                  <div class="document-card-body">
+                    <div class="document-icon-area">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
+                    </div>
+                    <h6 class="document-title">Cert. Exclusión IIBB</h6>
+                    <p class="document-status-text">Opcional, no cargado</p>
+                    <button type="button" class="btn btn-outline-primary btn-sm action-btn" onclick="triggerUpload('exclIIBBFile')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      Cargar (Opcional)
+                    </button>
+                    <input type="file" id="exclIIBBFile" name="exclIIBBFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg,.doc,.docx">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Documento: Certificado de No Retención de Ingresos Brutos (Opcional) -->
+              <div class="col-md-6 col-lg-4 mb-4">
+                <div class="document-card status-optional-missing" id="card-noRetIIBBFile">
+                  <div class="document-card-body">
+                    <div class="document-icon-area">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
+                    </div>
+                    <h6 class="document-title">Cert. No Ret. IIBB</h6>
+                    <p class="document-status-text">Opcional, no cargado</p>
+                    <button type="button" class="btn btn-outline-primary btn-sm action-btn" onclick="triggerUpload('noRetIIBBFile')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      Cargar (Opcional)
+                    </button>
+                    <input type="file" id="noRetIIBBFile" name="noRetIIBBFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg,.doc,.docx">
+                  </div>
+                </div>
+              </div>
             </div>
             <div id="documentUploadStatus" class="mt-3"></div>
           </div> 
@@ -429,12 +482,53 @@
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-  $(document).ready(function() {
-    const jwt = sessionStorage.getItem('jwt');
-    if (!jwt) {
-      window.location.href = '/Proveedores/acceder/';
-      return; 
+  let documentosRequeridosIds = ['cuitFile', 'ingBrutosFile']; 
+
+  // Helper para actualizar UI de tarjeta de documento
+    // Esta función debe estar definida ANTES de ser llamada en cargarDatos o en los listeners de file-input
+    function actualizarUICardDocumento(fileInputId, fileName, fileUrl, esRequerido) {
+        const input = document.getElementById(fileInputId);
+        if (!input) { /* console.warn(`Input ${fileInputId} no encontrado para UI update`);*/ return; }
+        const cardBody = input.closest('.document-card-body');
+        if (!cardBody) { /* console.warn(`Card body para ${fileInputId} no encontrado`);*/ return; }
+
+        const statusTextElement = cardBody.querySelector('.document-status-text');
+        const actionButton = cardBody.querySelector('.action-btn');
+        const documentCard = input.closest('.document-card');
+        const statusIconArea = cardBody.querySelector('.document-icon-area');
+
+        if(!statusTextElement || !actionButton || !documentCard || !statusIconArea) {
+            // console.warn(`Uno o más elementos UI no encontrados para la tarjeta ${fileInputId}`);
+            return;
+        }
+
+        documentCard.classList.remove('border', 'border-danger'); 
+
+        if (fileName && fileUrl) { 
+            statusTextElement.textContent = 'Archivo cargado: ' + fileName;
+            actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-1" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg> Ver Documento`;
+            actionButton.onclick = () => viewDocument(fileUrl);
+            actionButton.classList.remove('btn-primary', 'btn-outline-primary'); actionButton.classList.add('btn-outline-secondary');
+            documentCard.classList.remove('status-required-missing', 'status-optional-missing'); documentCard.classList.add('status-present');
+            statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill status-icon" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`;
+        } else { 
+            statusTextElement.textContent = esRequerido ? 'Pendiente de carga' : 'Opcional, no cargado';
+            actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg> ${esRequerido ? 'Cargar Archivo' : 'Cargar (Opcional)'}`;
+            actionButton.onclick = () => triggerUpload(fileInputId);
+            actionButton.classList.remove('btn-outline-secondary'); actionButton.classList.add(esRequerido ? 'btn-primary' : 'btn-outline-primary');
+            documentCard.classList.remove('status-present'); documentCard.classList.add(esRequerido ? 'status-required-missing' : 'status-optional-missing');
+            const iconClass = esRequerido ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill';
+            const iconPath = esRequerido ? "M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2" : "M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2";
+            statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi ${iconClass} status-icon" viewBox="0 0 16 16"><path d="${iconPath}"/></svg>`;
+        }
     }
+  
+  $(document).ready(function() {
+    // const jwt = sessionStorage.getItem('jwt'); // Se obtiene dentro de obtenerUserId
+    // if (!jwt) { // Esta verificación también se hace en obtenerUserId
+    //   window.location.href = '/Proveedores/acceder/';
+    //   return; 
+    // }
 
     let proveedorId = null;
     let userId = null;
@@ -455,33 +549,83 @@
       { key: "cbu_3", label: "Clave bancaria única 3 (CBU)" }, { key: "descripcion_cbu_3", label: "Descripción" },
     ];
     const camposContactoObligatorios = ["nom_provee", "n_cuit", "telefono_1", "e_mail", "domicilio"];
-    const documentosRequeridosIds = ['cuitFile', 'ingBrutosFile']; 
+    
     const camposBloquear = ["nom_provee","nom_fant","n_cuit"];
 
+    
+
     async function obtenerUserId() {
+      const JW_TOKEN = sessionStorage.getItem('jwt');
+      if (!JW_TOKEN) {
+          console.warn('No se encontró JWT en sessionStorage. Redirigiendo a la página de acceso.');
+          window.location.href = '/Proveedores/acceder/';
+          return null; 
+      }
       try {
-        const resp = await fetch('/Proveedores/api/userid/', { headers: { 'Authorization': 'Bearer ' + jwt }});
+        const resp = await fetch('/Proveedores/api/userid/', { headers: { 'Authorization': 'Bearer ' + JW_TOKEN }});
         if (!resp.ok) {
-          if (resp.status === 401 || resp.status === 403) { sessionStorage.removeItem('jwt'); window.location.href = '/Proveedores/acceder/'; }
-          console.error('Error fetching user ID:', resp.statusText); return null;
+          console.error(`Error al obtener User ID. Estado: ${resp.status}, Texto: ${resp.statusText}`);
+          if (resp.status === 401 || resp.status === 403) {
+            console.log('Error de autenticación (401/403). Limpiando JWT y redirigiendo a la página de acceso.');
+            sessionStorage.removeItem('jwt');
+            window.location.href = '/Proveedores/acceder/';
+          }
+          return null;
         }
-        const data = await resp.json(); return data.user_id;
-      } catch (error) {
-        console.error('Network error fetching user ID:', error); sessionStorage.removeItem('jwt'); window.location.href = '/Proveedores/acceder/'; return null;
+        const data = await resp.json();
+        if (!data || data.user_id === undefined) {
+            console.error('User ID no encontrado en la respuesta de /api/userid/. Respuesta:', data);
+            return null;
+        }
+        console.log('User ID obtenido:', data.user_id);
+        return data.user_id;
+      } catch (error) { 
+        console.error('Error de red durante la obtención de User ID (/api/userid/):', error);
+        sessionStorage.removeItem('jwt'); 
+        window.location.href = '/Proveedores/acceder/'; 
+        return null;
       }
     }
 
     async function cargarDatos() {
       userId = await obtenerUserId();
-      if (!userId) { $('#formMsg').text('No se pudo verificar el usuario. Redirigiendo...').removeClass('d-none alert-success').addClass('alert-danger'); return; }
+      const msgDivCarga = $('#formMsg');
+
+      if (!userId) {
+        msgDivCarga.text('No se pudo verificar el usuario. Redirigiendo a la página de acceso...')
+                   .removeClass('d-none alert-success alert-info')
+                   .addClass('alert-danger');
+        if (!window.location.href.endsWith('/Proveedores/acceder/')) { 
+            setTimeout(() => {
+                if (!sessionStorage.getItem('jwt')) { 
+                     window.location.href = '/Proveedores/acceder/';
+                } else {
+                    console.error("UserID es null, pero el token JWT aún existe. Podría ser un error temporal del API /api/userid/.");
+                    msgDivCarga.text('Hubo un problema al obtener los datos del usuario. Por favor, intente recargar la página o contacte a soporte si el problema persiste.');
+                }
+            }, 2500);
+        }
+        return; 
+      }
+      msgDivCarga.addClass('d-none').removeClass('alert-danger alert-info');
+
       let proveedor = {};
       try {
-        const resp = await fetch('/Proveedores/api/proveedores/' + userId + '/', { headers: { 'Authorization': 'Bearer ' + jwt }});
+        const resp = await fetch('/Proveedores/api/proveedores/' + userId + '/', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }});
         if (!resp.ok) {
-          if (resp.status === 404) { $('#formMsg').text('No se encontraron datos de proveedor asociados. Puede completar el formulario y guardar.').removeClass('d-none alert-danger').addClass('alert-warning');
-          } else { $('#formMsg').text('Error al cargar datos del proveedor: ' + resp.statusText).removeClass('d-none alert-success').addClass('alert-danger');}
+          if (resp.status === 404) { 
+            console.warn('No se encontraron datos de proveedor para el usuario. Se puede completar el formulario.');
+          } else { 
+            console.error('Error al cargar datos del proveedor: ' + resp.statusText, resp.status); 
+            msgDivCarga.text(`Error al cargar datos del proveedor (${resp.status}). Por favor, intente más tarde.`)
+                      .removeClass('d-none').addClass('alert-danger');
+          }
         } else {
-            proveedor = await resp.json(); proveedorId = proveedor.id; codCpa01Value = proveedor.cod_cpa01; codPais = proveedor.cod_pais;
+            proveedor = await resp.json(); 
+            proveedorId = proveedor.id; 
+            codCpa01Value = proveedor.cod_cpa01; 
+            codPais = proveedor.cod_pais;
+            console.log('Datos del proveedor cargados:', proveedor);
         }
 
         camposPrincipalesEditables.forEach(campo => {
@@ -496,51 +640,51 @@
         const provinciaDisplayInput = document.getElementById('provincia');
         const idCpa57Input = document.getElementById('id_cpa57');
         const nomProvInput = document.getElementById('nom_prov');
-        provinciaDisplayInput.value = proveedor.nom_prov || ''; idCpa57Input.value = proveedor.id_cpa57 || ''; nomProvInput.value = proveedor.nom_prov || '';
-        initialData['provincia'] = provinciaDisplayInput.value; initialData['id_cpa57'] = idCpa57Input.value; initialData['nom_prov'] = nomProvInput.value;
+        provinciaDisplayInput.value = proveedor.nom_prov || ''; 
+        idCpa57Input.value = proveedor.id_cpa57 || ''; 
+        nomProvInput.value = proveedor.nom_prov || '';
+        initialData[provinciaDisplayInput.name || provinciaDisplayInput.id] = provinciaDisplayInput.value; 
+        initialData[idCpa57Input.name || idCpa57Input.id] = idCpa57Input.value; 
+        initialData[nomProvInput.name || nomProvInput.id] = nomProvInput.value;
 
-        if (codPais) { await cambiarConexion(codPais); }
+        if (codPais) { await cambiarConexion(codPais); } 
 
         await cargarCondicionIva(proveedor.id_categoria_iva_cond_iva);
-        initialData['condicionIva'] = proveedor.id_categoria_iva_cond_iva || (document.getElementById('condicionIva').options.length > 0 ? document.getElementById('condicionIva').options[0].value : '');
+        initialData['condicionIva'] = document.getElementById('condicionIva').value;
+        
         await cargarIngresosBrutos(proveedor.tipo);
-        initialData['ingresosBrutos'] = proveedor.tipo || (document.getElementById('ingresosBrutos').options.length > 0 ? document.getElementById('ingresosBrutos').options[0].value : '');
+        initialData['ingresosBrutos'] = document.getElementById('ingresosBrutos').value;
         
         const messagesFormElements = document.querySelectorAll('#messagesForm input, #messagesForm select, #messagesForm textarea');
         messagesFormElements.forEach(el => {
             if (el.name || el.id) {
-                const key = el.name || el.id; const value = proveedor[key]; 
-                if (el.tagName.toLowerCase() === 'select') { el.value = (value !== null && value !== undefined) ? value : (el.options.length > 0 ? el.options[0].value : '');
-                } else { el.value = (value !== null && value !== undefined) ? value : ''; }
-                initialData[key] = el.value;
+                const key = el.name || el.id;
+                const value = proveedor[key];
+
+                if (el.type === 'checkbox' && (key === 'contacto_habitual' || key === 'recibe_ordenes_compra' || key === 'recibe_ordenes_pago')) {
+                    el.checked = (value === 'S'); // Marcar si el valor es "S"
+                    initialData[key] = el.checked ? 'S' : 'N'; // Guardar 'S' o 'N' en initialData
+                } else if (el.tagName.toLowerCase() === 'select') {
+                    el.value = (value !== null && value !== undefined) ? String(value) : (el.options.length > 0 ? el.options[0].value : '');
+                    initialData[key] = el.value;
+                } else { // Para inputs de texto, email, textarea, etc.
+                    el.value = (value !== null && value !== undefined) ? value : '';
+                    initialData[key] = el.value;
+                }
             }
         });
 
         const fileInputsDocumentos = document.querySelectorAll('#documents-tab-pane .file-input');
         fileInputsDocumentos.forEach(input => {
             if (input.id) {
-                // AJUSTE: Si el backend provee info de archivos, actualizar UI y initialData aquí.
-                const fileInfo = proveedor.documentos ? proveedor.documentos[input.id] : null;
+                const fileInfo = proveedor.documentos_data ? proveedor.documentos_data[input.id] : null;
+                const esRequerido = documentosRequeridosIds.includes(input.id);
                 if (fileInfo && fileInfo.name) {
                     initialData[input.id] = fileInfo.name;
-                    // Actualizar UI de la tarjeta de documento
-                    const cardBody = input.closest('.document-card-body');
-                    if (cardBody) {
-                        cardBody.querySelector('.document-status-text').textContent = 'Archivo cargado: ' + fileInfo.name;
-                        const actionButton = cardBody.querySelector('.action-btn');
-                        actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-1" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg> Ver Documento`;
-                        actionButton.onclick = () => viewDocument(fileInfo.url || '#'); // Usar URL del backend
-                        actionButton.classList.remove('btn-primary');
-                        actionButton.classList.add('btn-outline-secondary');
-                        
-                        const documentCard = input.closest('.document-card');
-                        const statusIconArea = cardBody.querySelector('.document-icon-area');
-                        documentCard.classList.remove('status-required-missing', 'status-optional-missing');
-                        documentCard.classList.add('status-present');
-                        statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill status-icon" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`;
-                    }
+                    actualizarUICardDocumento(input.id, fileInfo.name, fileInfo.url, esRequerido);
                 } else {
-                    initialData[input.id] = ''; // No hay archivo inicialmente desde el backend
+                    initialData[input.id] = '';
+                    actualizarUICardDocumento(input.id, null, null, esRequerido);
                 }
             }
         });
@@ -548,117 +692,187 @@
         agregarValidacionCuitFrontend();
         monitorChanges(); 
       } catch (error) {
-        console.error('Error processing proveedor data:', error);
-        $('#formMsg').text('Error al procesar datos del proveedor.').removeClass('d-none').addClass('alert-danger');
-        monitorChanges(); agregarValidacionCuitFrontend();
+        console.error('Error al procesar los datos del proveedor o al cargar componentes:', error);
+        msgDivCarga.text('Ocurrió un error al cargar la información de la página. Intente recargar.')
+                   .removeClass('d-none').addClass('alert-danger');
+        monitorChanges(); 
+        agregarValidacionCuitFrontend();
       }
     }
 
     async function cargarCondicionIva(selectedId) {
+      const select = document.getElementById('condicionIva');
+      select.innerHTML = '<option value="">Seleccione...</option>';
       try {
-        const resp = await fetch('/Proveedores/api/categoria-iva/', { headers: { 'Authorization': 'Bearer ' + jwt }});
-        const select = document.getElementById('condicionIva'); select.innerHTML = '<option value="">Seleccione...</option>';
+        const resp = await fetch('/Proveedores/api/categoria-iva/', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }});
         if (resp.ok) {
           const categorias = await resp.json();
-          categorias.forEach(cat => { const option = document.createElement('option'); option.value = cat.id_categoria_iva; option.textContent = cat.desc_categoria_iva; option.setAttribute('data-cod', cat.cod_categoria_iva); select.appendChild(option); });
-        } else { console.error("Error cargando Condicion IVA:", resp.statusText); }
-        if (selectedId !== null && selectedId !== undefined) { select.value = selectedId; }
-      } catch (error) { console.error("Network error cargando Condicion IVA:", error); }
+          categorias.forEach(cat => { 
+            const option = document.createElement('option'); option.value = cat.id_categoria_iva; 
+            option.textContent = cat.desc_categoria_iva; option.setAttribute('data-cod', cat.cod_categoria_iva); 
+            select.appendChild(option); 
+          });
+          console.log('Condiciones de IVA cargadas.');
+        } else { 
+          console.error("Error cargando Condicion IVA:", resp.statusText, resp.status); 
+        }
+        let valorASeleccionar = ""; 
+        if (selectedId !== null && selectedId !== undefined && String(selectedId).trim() !== "") {
+            if (Array.from(select.options).some(opt => opt.value == String(selectedId))) {
+                valorASeleccionar = String(selectedId);
+            } else {
+                console.warn(`Opción con valor "${selectedId}" no encontrada en Condicion IVA. Se usará el valor por defecto.`);
+            }
+        }
+        select.value = valorASeleccionar;
+      } catch (error) { 
+        console.error("Network error cargando Condicion IVA:", error); 
+        select.value = ""; 
+      }
     }
 
     async function cargarIngresosBrutos(selectedTipo) {
+      const select = document.getElementById('ingresosBrutos');
+      select.innerHTML = '<option value="">Seleccione...</option>';
        try {
-        const resp = await fetch('/Proveedores/api/ingresos-brutos/', { headers: { 'Authorization': 'Bearer ' + jwt }});
-        const select = document.getElementById('ingresosBrutos'); select.innerHTML = '<option value="">Seleccione...</option>';
+        const resp = await fetch('/Proveedores/api/ingresos-brutos/', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }});
         if (resp.ok) {
           const ingresosBrutos = await resp.json();
-          ingresosBrutos.forEach(ib => { const option = document.createElement('option'); option.value = ib.Cod_Ingresos_brutos; option.textContent = ib.Desc_Ingresos_brutos; select.appendChild(option); });
-        } else { console.error("Error cargando Ingresos Brutos:", resp.statusText); }
-        if (selectedTipo !== null && selectedTipo !== undefined) { select.value = selectedTipo; }
-      } catch (error) { console.error("Network error cargando Ingresos Brutos:", error); }
+          ingresosBrutos.forEach(ib => { 
+            const option = document.createElement('option'); option.value = ib.Cod_Ingresos_brutos; 
+            option.textContent = ib.Desc_Ingresos_brutos; select.appendChild(option); 
+          });
+          console.log('Regímenes de Ingresos Brutos cargados.');
+        } else { 
+          console.error("Error cargando Ingresos Brutos:", resp.statusText, resp.status); 
+        }
+        let valorASeleccionar = ""; 
+        if (selectedTipo !== null && selectedTipo !== undefined && String(selectedTipo).trim() !== "") {
+            if (Array.from(select.options).some(opt => opt.value == String(selectedTipo))) {
+                valorASeleccionar = String(selectedTipo);
+            } else {
+                console.warn(`Opción con valor "${selectedTipo}" no encontrada en Ingresos Brutos. Se usará el valor por defecto.`);
+            }
+        }
+        select.value = valorASeleccionar;
+      } catch (error) { 
+        console.error("Network error cargando Ingresos Brutos:", error); 
+        select.value = ""; 
+      }
     }
 
     async function cambiarConexion(pais) {
-      if (!pais) return;
-      try {
-        const resp = await fetch('/Proveedores/api/cambiar-conexion/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt }, body: JSON.stringify({ cod_pais: pais }) });
-        if (!resp.ok) { console.error('Error al cambiar la conexión de país:', await resp.text()); }
-      } catch (error) { console.error('Network error al cambiar la conexión de país:', error); }
+        if (!pais) return;
+        try {
+            const resp = await fetch('/Proveedores/api/cambiar-conexion/', { 
+                method: 'POST', 
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') 
+                }, 
+                body: JSON.stringify({ cod_pais: pais }) 
+            });
+            if (!resp.ok) { 
+                console.error('Error al cambiar la conexión de país:', await resp.text()); 
+            } else {
+                console.log('Conexión de país cambiada a:', pais);
+            }
+        } catch (error) { 
+            console.error('Network error al cambiar la conexión de país:', error); 
+        }
     }
-
+    
     function monitorChanges() {
-      // CORRECCIÓN: Selector arreglado para incluir todos los inputs correctamente
       const inputs = document.querySelectorAll(
         '#proveedorForm input, #proveedorForm select, #proveedorForm textarea, ' +
         '#configForm input, #configForm select, #configForm textarea, ' +
-        '#messagesForm input, #messagesForm select, #messagesForm textarea, ' + // Coma y espacio añadidos
-        '#documents-tab-pane .file-input' // Selector para los inputs de archivo
+        '#messagesForm input, #messagesForm select, #messagesForm textarea, ' + 
+        '#documents-tab-pane .file-input' 
       );
       const saveButton = document.querySelector('.btn-save');
-
       const checkChanges = () => {
         let hasChanges = false;
         inputs.forEach(input => {
           const key = input.name || input.id;
           const dataKey = (input.id === 'provincia' && initialData.hasOwnProperty('provincia')) ? 'provincia' : key;
-          let currentValue;
           if (input.type === 'file') {
-            currentValue = input.files && input.files.length > 0 ? input.files[0].name : '';
-          } else if (input.type === 'checkbox') {
-            currentValue = input.checked.toString();
-          } else if (input.type === 'radio' && !input.checked) {
-            currentValue = initialData[dataKey]; 
+            if (input.files && input.files.length > 0) {
+              const currentFileName = input.files[0].name;
+              const initialFileName = initialData[key] || '';
+              if (currentFileName !== initialFileName) { hasChanges = true; }
+            }
+            // Considerar si un archivo fue removido como un cambio
+            // else if (initialData[key] && initialData[key] !== '') { // Si había un archivo antes y ahora no hay ninguno seleccionado
+            //    hasChanges = true; // Esto es un cambio (archivo borrado)
+            // }
           } else {
-            currentValue = input.value;
-          }
-          const initialValue = initialData[dataKey] !== undefined ? String(initialData[dataKey]) : ''; // Asegurar que initialValue sea string
-          
-          if (String(currentValue) !== initialValue) { // Comparar strings
-            // console.log(`Change detected in ${dataKey}: initial='${initialValue}', current='${String(currentValue)}'`);
-            hasChanges = true;
+            const key = input.name || input.id; // Asegúrate que 'key' esté definida aquí
+            const dataKey = (input.id === 'provincia' && initialData.hasOwnProperty('provincia')) ? 'provincia' : key;
+
+            if (input.type === 'file') {
+              if (input.files && input.files.length > 0) {
+                const currentFileName = input.files[0].name;
+                const initialFileName = initialData[key] || '';
+                if (currentFileName !== initialFileName) { hasChanges = true; }
+              }
+              // Considerar si un archivo fue removido como un cambio (opcional)
+            } else if (input.type === 'checkbox' && (key === 'contacto_habitual' || key === 'recibe_ordenes_compra' || key === 'recibe_ordenes_pago')) {
+              const currentValue = input.checked ? 'S' : 'N';
+              const initialValue = initialData[key] !== undefined ? String(initialData[key]) : 'N'; // Default a 'N' si no hay dato inicial
+              if (currentValue !== initialValue) {
+                  hasChanges = true;
+              }
+            } else { // Para otros inputs (texto, selects, otros checkboxes)
+              const currentValue = (input.type === 'checkbox') ? input.checked.toString() : input.value;
+              const initialValue = initialData[dataKey] !== undefined ? String(initialData[dataKey]) : '';
+              if (String(currentValue) !== initialValue) {
+                  hasChanges = true;
+              }
+            }
           }
         });
         saveButton.style.display = hasChanges ? 'block' : 'none';
       };
-
       inputs.forEach(input => {
         if (input.type === 'file' || input.tagName.toLowerCase() === 'select' || input.type === 'checkbox' || input.type === 'radio') {
             input.addEventListener('change', checkChanges);
         } else {
-            input.addEventListener('input', checkChanges);
-            input.addEventListener('change', checkChanges); 
+            input.addEventListener('input', checkChanges); input.addEventListener('change', checkChanges); 
         }
       });
     }
 
-    cargarDatos(); 
-
-    function gatherFormDataFromAllTabs() {
+    function gatherFormDataFromAllTabs() { 
         const formData = new FormData(); 
         const formsToProcess = ['#proveedorForm', '#configForm', '#messagesForm'];
         formsToProcess.forEach(formSelector => {
-            const formElements = document.querySelectorAll(`${formSelector} input:not([type="file"]), ${formSelector} select, ${formSelector} textarea`); // Excluir file inputs aquí
+            const formElements = document.querySelectorAll(`${formSelector} input:not([type="file"]), ${formSelector} select, ${formSelector} textarea`);
             formElements.forEach(el => {
                 if ((el.name || el.id) && !el.disabled) {
                     const key = el.name || el.id;
-                    if (el.type === 'checkbox') { formData.append(key, el.checked);
-                    } else if (el.type === 'radio') { if (el.checked) { formData.append(key, el.value.trim() === "" ? '' : el.value.trim()); }
-                    } else { formData.append(key, el.value.trim() === "" ? '' : el.value.trim()); }
+                    if (el.type === 'checkbox' && (key === 'contacto_habitual' || key === 'recibe_ordenes_compra' || key === 'recibe_ordenes_pago')) {
+                        formData.append(key, el.checked ? 'S' : 'N'); // Enviar 'S' si está marcado, 'N' si no
+                    } else if (el.type === 'checkbox') { // Para otros checkboxes (si los hubiera)
+                        formData.append(key, el.checked);
+                    } else if (el.type === 'radio') {
+                        if (el.checked) { formData.append(key, el.value.trim() === "" ? '' : el.value.trim()); }
+                    } else { // Para inputs de texto, selects, textareas
+                        formData.append(key, el.value.trim() === "" ? '' : el.value.trim());
+                    }
                 }
             });
         });
-        if (formData.has('provincia')) { formData.delete('provincia'); }
+        if (formData.has('provincia_display')) { formData.delete('provincia_display'); } // provincia_display es el input visible
         const idCpa57Val = document.getElementById('id_cpa57').value; const nomProvVal = document.getElementById('nom_prov').value;
         formData.set('id_cpa57', idCpa57Val || ''); formData.set('nom_prov', nomProvVal || '');
         formData.set('id_categoria_iva_cond_iva', document.getElementById('condicionIva').value || '');
         if (formData.has('condicionIva')) formData.delete('condicionIva');
         formData.set('tipo', document.getElementById('ingresosBrutos').value || '');
         if (formData.has('ingresosBrutos')) formData.delete('ingresosBrutos');
-
         const fileInputsDocumentos = document.querySelectorAll('#documents-tab-pane .file-input');
         fileInputsDocumentos.forEach(input => {
             if (input.id && input.files && input.files.length > 0) {
-                formData.append(input.id, input.files[0], input.files[0].name);
+                formData.append(input.id, input.files[0], input.files[0].name); 
             }
         });
         return formData;
@@ -666,175 +880,106 @@
 
     document.getElementById('proveedorForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      
-      let valido = true;
-      let mensajes = []; // Array para acumular todos los mensajes de error
-
-      // --- Validación existente para campos de contacto obligatorios (pestaña Home) ---
+      let valido = true; let mensajes = [];
       camposContactoObligatorios.forEach(campoKey => {
-          const campoConfig = camposPrincipalesEditables.find(c => c.key === campoKey);
           const input = document.getElementById(campoKey);
           if (input && input.value.trim() === "") {
-              valido = false;
-              const labelText = campoConfig ? campoConfig.label : (input.previousElementSibling ? input.previousElementSibling.textContent.replace('*', '').trim() : campoKey);
-              mensajes.push(`El campo "${labelText}" (en pestaña Home) es obligatorio.`);
-              input.classList.add('is-invalid');
-              const feedbackEl = document.getElementById(`${campoKey}-invalid`);
-              if (feedbackEl) feedbackEl.textContent = `Este campo es obligatorio.`;
-          } else if (input) {
-              input.classList.remove('is-invalid');
-              const feedbackEl = document.getElementById(`${campoKey}-invalid`);
-              if (feedbackEl) feedbackEl.textContent = "";
-          }
+              valido = false; const labelText = input.previousElementSibling?.textContent.replace('*', '').trim() || campoKey;
+              mensajes.push(`El campo "${labelText}" (pestaña Home) es obligatorio.`); input.classList.add('is-invalid');
+              const feedbackEl = document.getElementById(`${campoKey}-invalid`); if (feedbackEl) feedbackEl.textContent = `Este campo es obligatorio.`;
+          } else if (input) { input.classList.remove('is-invalid'); const feedbackEl = document.getElementById(`${campoKey}-invalid`); if (feedbackEl) feedbackEl.textContent = "";}
       });
-
-      const cuitInput = document.getElementById('n_cuit');
-      if (cuitInput && cuitInput.value.trim() !== "") {
+      const cuitInputHTML = document.getElementById('n_cuit');
+      if (cuitInputHTML && cuitInputHTML.value.trim() !== "") {
           const cuitPattern = /^\d{2}-\d{8}-\d{1}$/;
-          if (!cuitPattern.test(cuitInput.value.trim())) {
-              valido = false;
-              mensajes.push('El CUIT (en pestaña Home) debe tener el formato XX-XXXXXXXX-X.');
-              cuitInput.classList.add('is-invalid');
-              const feedbackEl = document.getElementById('n_cuit-invalid');
-              if (feedbackEl) feedbackEl.textContent = 'Formato inválido. Ejemplo: 20-31441849-3';
-          } else {
-              if (cuitInput.classList.contains('is-invalid') && cuitPattern.test(cuitInput.value.trim())) {
-                  cuitInput.classList.remove('is-invalid');
-                  const feedbackEl = document.getElementById('n_cuit-invalid');
-                  if (feedbackEl) feedbackEl.textContent = "";
-              }
-          }
+          if (!cuitPattern.test(cuitInputHTML.value.trim())) {
+              valido = false; mensajes.push('El CUIT (pestaña Home) debe tener el formato XX-XXXXXXXX-X.');
+              cuitInputHTML.classList.add('is-invalid'); const feedbackEl = document.getElementById('n_cuit-invalid'); if (feedbackEl) feedbackEl.textContent = 'Formato inválido. Ejemplo: 20-31441849-3';
+          } else { if (cuitInputHTML.classList.contains('is-invalid')) { cuitInputHTML.classList.remove('is-invalid'); const feedbackEl = document.getElementById('n_cuit-invalid'); if (feedbackEl) feedbackEl.textContent = "";}}
       }
-      // --- Fin de la Validación existente ---
-
-      // --- NUEVA VALIDACIÓN para Documentos Requeridos ---
       let primerDocumentoFaltante = null;
       documentosRequeridosIds.forEach(fileInputId => {
-          const fileInput = document.getElementById(fileInputId);
-          const documentCard = document.getElementById(`card-${fileInputId}`); // Asumiendo que la tarjeta tiene id="card-fileInputId"
+          const fileInput = document.getElementById(fileInputId); const documentCard = document.getElementById(`card-${fileInputId}`);
           const documentTitleElement = documentCard ? documentCard.querySelector('.document-title') : null;
           const documentName = documentTitleElement ? documentTitleElement.textContent.replace('*','').trim() : `Documento ${fileInputId}`;
-
-          // Se considera no cargado si no hay archivo seleccionado Y si no había uno previamente cargado (ver initialData)
-          // Para la validación en submit, nos enfocamos en si hay un archivo AHORA.
-          // Si initialData[fileInputId] tiene un nombre de archivo (cargado previamente) Y el input.files.length es 0,
-          // significa que el usuario NO ha seleccionado un nuevo archivo para reemplazarlo, y el archivo original sigue "vigente".
-          // El problema es si initialData[fileInputId] está vacío Y input.files.length es 0.
-          
-          const yaCargadoPreviamente = initialData[fileInputId] && initialData[fileInputId] !== '';
+          const yaCargadoPreviamenteConNombre = initialData[fileInputId] && initialData[fileInputId] !== '';
           const nuevoArchivoSeleccionado = fileInput && fileInput.files && fileInput.files.length > 0;
-
-          if (!nuevoArchivoSeleccionado && !yaCargadoPreviamente) {
-              valido = false;
-              mensajes.push(`El documento "${documentName}" es requerido.`);
-              if (documentCard) {
-                  documentCard.classList.add('border', 'border-danger'); // Resaltar la tarjeta
-              }
-              if (!primerDocumentoFaltante) {
-                  primerDocumentoFaltante = fileInputId;
-              }
-          } else if (documentCard) {
-              documentCard.classList.remove('border', 'border-danger'); // Quitar resaltado si está OK
-          }
+          if (!nuevoArchivoSeleccionado && !yaCargadoPreviamenteConNombre) {
+              valido = false; mensajes.push(`El documento "${documentName}" (pestaña Documentos) es requerido.`);
+              if (documentCard) { documentCard.classList.add('border', 'border-danger'); }
+              if (!primerDocumentoFaltante) { primerDocumentoFaltante = fileInputId; }
+          } else if (documentCard) { documentCard.classList.remove('border', 'border-danger'); }
       });
-      // --- Fin de la NUEVA VALIDACIÓN ---
-
       const msgDiv = document.getElementById('formMsg');
       if (!valido) {
-          msgDiv.innerHTML = mensajes.join('<br>');
-          msgDiv.className = 'alert alert-danger mt-0 mb-3'; // Ajustado para footer
-          msgDiv.classList.remove('d-none');
-
-          // Opcional: Cambiar a la pestaña de Documentos si hay un error allí y no en otras
-          if (primerDocumentoFaltante && mensajes.length === documentosRequeridosIds.filter(id => !initialData[id] && !document.getElementById(id).files.length).length) { // Si SOLO faltan documentos
+          msgDiv.innerHTML = mensajes.join('<br>'); msgDiv.className = 'alert alert-danger mt-0 mb-3'; msgDiv.classList.remove('d-none');
+          if (primerDocumentoFaltante && !mensajes.some(m => m.includes("pestaña Home"))) { 
               const documentsTabButton = document.getElementById('documents-tab-btn');
-              if (documentsTabButton) {
-                  var tab = new bootstrap.Tab(documentsTabButton);
-                  tab.show();
-              }
-          }
-          return; // Detener el envío del formulario
-      } else {
-          msgDiv.classList.add('d-none');
-          msgDiv.textContent = '';
-      }
-
-      // Si todo es válido, continuar con el envío...
-      // ... (resto del código de gatherFormDataFromAllTabs, fetch, etc. SIN CAMBIOS) ...
-      const formDataToSave = gatherFormDataFromAllTabs(); 
-      const method = proveedorId ? 'PATCH' : 'POST';
+              if (documentsTabButton) { new bootstrap.Tab(documentsTabButton).show(); }
+          } return; 
+      } else { msgDiv.classList.add('d-none'); msgDiv.textContent = '';}
+      const formDataToSave = gatherFormDataFromAllTabs(); const method = proveedorId ? 'PATCH' : 'POST';
       let url = proveedorId ? `/Proveedores/api/proveedores/${proveedorId}/` : `/Proveedores/api/proveedores/`;
       if (method === 'POST') { if (userId) formDataToSave.append('user', userId); if (codPais) formDataToSave.append('cod_pais', codPais); }
-      
       msgDiv.textContent = 'Guardando datos...'; msgDiv.className = 'alert alert-info mt-0 mb-3'; msgDiv.classList.remove('d-none');
       document.querySelector('.btn-save').disabled = true;
-
       try {
-        const resp = await fetch(url, { method: method, headers: { 'Authorization': 'Bearer ' + jwt, 'X-CSRFToken': getCookie('csrftoken') }, body: formDataToSave });
+        const resp = await fetch(url, { method: method, headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt'), 'X-CSRFToken': getCookie('csrftoken') }, body: formDataToSave });
         if (resp.ok) {
           const responseData = await resp.json(); 
           if (method === 'POST' && responseData.id) {
             proveedorId = responseData.id; 
-            if (responseData.cod_cpa01) {
-                codCpa01Value = responseData.cod_cpa01;
-                camposBloquear.forEach(keyToBlock => { const inputToBlock = document.getElementById(keyToBlock); if (inputToBlock && codCpa01Value && codCpa01Value.trim() !== "") { inputToBlock.disabled = true; }});
-            }
+            if (responseData.cod_cpa01) { codCpa01Value = responseData.cod_cpa01; camposBloquear.forEach(keyToBlock => { const inputToBlock = document.getElementById(keyToBlock); if (inputToBlock && codCpa01Value && codCpa01Value.trim() !== "") { inputToBlock.disabled = true; }});}
             if (responseData.cod_pais) { codPais = responseData.cod_pais; }
           }
-          
-          // Actualizar initialData para todos los campos, incluyendo archivos
-          for (const [key, value] of formDataToSave.entries()) {
-            if (typeof value === 'object' && value instanceof File) continue; 
-            if (key === 'id_categoria_iva_cond_iva') { initialData['condicionIva'] = String(value);
-            } else if (key === 'tipo') { initialData['ingresosBrutos'] = String(value);
-            } else if (initialData.hasOwnProperty(key)) { initialData[key] = value === null ? '' : String(value); }
+          for (const [key, value] of formDataToSave.entries()) { 
+            if (value instanceof File) continue; 
+
+            if (key === 'id_categoria_iva_cond_iva') { 
+                initialData['condicionIva'] = String(value);
+            } else if (key === 'tipo') { 
+                initialData['ingresosBrutos'] = String(value);
+            } else if (key === 'id_cpa57') { 
+                initialData['id_cpa57'] = String(value); 
+            } else if (key === 'nom_prov') { 
+                initialData['nom_prov'] = String(value); 
+            } else if (key === 'contacto_habitual' || key === 'recibe_ordenes_compra' || key === 'recibe_ordenes_pago') {
+                initialData[key] = String(value); // 'value' ya es 'S' o 'N' desde formDataToSave
+            } else if (initialData.hasOwnProperty(key)) { // Para todos los demás campos que estaban en initialData
+                initialData[key] = value === null ? '' : String(value);
+            }
           }
-          initialData['provincia'] = formDataToSave.get('nom_prov') || '';
+          initialData[document.getElementById('provincia').name || document.getElementById('provincia').id] = formDataToSave.get('nom_prov') || '';
 
-          const fileInputsDocumentos = document.querySelectorAll('#documents-tab-pane .file-input');
-          fileInputsDocumentos.forEach(input => {
-              if (input.id) {
-                  const backendFileStatus = responseData.documentos ? responseData.documentos[input.id] : null;
-                  if (backendFileStatus && backendFileStatus.name) {
-                      initialData[input.id] = backendFileStatus.name;
-                      // Limpiar el input.files para que no quede "seleccionado" en el navegador después de guardar
-                      input.value = ''; // Esto resetea el input de archivo
-                  } else if (formDataToSave.has(input.id)) { 
-                      initialData[input.id] = input.files[0].name; 
-                      input.value = '';
-                  } else {
-                      // Si el archivo no se envió y el backend no dice nada, el initialData no cambia
-                      // a menos que el backend indique que se borró (lógica no implementada aquí para borrado)
-                      if (initialData[input.id] && !backendFileStatus) { 
-                          // Se mantuvo el archivo anterior (no se tocó el input file)
-                      } else {
-                          initialData[input.id] = ''; // Si no había nada y sigue sin haber nada
-                      }
-                  }
-              }
+          const fileInputs = document.querySelectorAll('#documents-tab-pane .file-input');
+          fileInputs.forEach(input => {
+            if (input.id) {
+                const docDataFromServer = responseData.documentos_data ? responseData.documentos_data[input.id] : null;
+                const esRequerido = documentosRequeridosIds.includes(input.id);
+                if (docDataFromServer && docDataFromServer.name) {
+                    initialData[input.id] = docDataFromServer.name;
+                    actualizarUICardDocumento(input.id, docDataFromServer.name, docDataFromServer.url, esRequerido);
+                } else {
+                    const fileSent = formDataToSave.get(input.id); 
+                    if (fileSent instanceof File) { initialData[input.id] = fileSent.name; } 
+                    else if (!initialData[input.id] && !docDataFromServer) { initialData[input.id] = ''; actualizarUICardDocumento(input.id, null, null, esRequerido); }
+                }
+                input.value = ''; 
+            }
           });
-
           msgDiv.textContent = 'Datos actualizados correctamente.'; msgDiv.className = 'alert alert-success mt-0 mb-3'; msgDiv.classList.remove('d-none');
           document.querySelector('.btn-save').style.display = 'none'; 
-        
         } else { 
-          const errText = await resp.text(); 
-          let err; try { err = JSON.parse(errText); } catch (e) { err = errText; }
+          const errText = await resp.text(); let err; try { err = JSON.parse(errText); } catch (e) { err = errText; }
           let errorMessages = 'Error al guardar los datos.';
-          if (typeof err === 'object' && err !== null) {
-            errorMessages = Object.entries(err).map(([key, value]) => {
-              const fieldLabel = camposPrincipalesEditables.find(c => c.key === key)?.label || document.querySelector(`label[for="${key}"]`)?.textContent.replace('*', '').trim() || key;
-              return `${fieldLabel}: ${Array.isArray(value) ? value.join(', ') : value}`;
-            }).join('<br>');
+          if (typeof err === 'object' && err !== null) { errorMessages = Object.entries(err).map(([key, value]) => { const fieldLabel = camposPrincipalesEditables.find(c => c.key === key)?.label || document.querySelector(`label[for="${key}"]`)?.textContent.replace('*', '').trim() || key; return `${fieldLabel}: ${Array.isArray(value) ? value.join(', ') : value}`; }).join('<br>');
           } else if (typeof err === 'string') { errorMessages = err; }
           msgDiv.innerHTML = errorMessages; msgDiv.className = 'alert alert-danger mt-0 mb-3'; msgDiv.classList.remove('d-none');
         }
       } catch (error) { 
         console.error("Error durante el guardado:", error); msgDiv.textContent = 'Error de red o problema al procesar la solicitud de guardado.';
         msgDiv.className = 'alert alert-danger mt-0 mb-3'; msgDiv.classList.remove('d-none');
-      } finally {
-        document.querySelector('.btn-save').disabled = false; 
-      }
+      } finally { document.querySelector('.btn-save').disabled = false; }
   });
 
     function agregarValidacionCuitFrontend() {
@@ -855,9 +1000,14 @@
     document.getElementById('provincia').addEventListener('input', async function() {
       const query = this.value; const provinciaListDiv = document.getElementById('provinciaList');
       if (query.length < 2) { provinciaListDiv.innerHTML = ''; return; }
-      if (!codPais) { console.warn("Código de país no establecido. Búsqueda de provincia podría fallar o ser incorrecta."); }
+      if (!codPais && proveedorId) { // Si no hay codPais pero sí proveedor, intentar obtenerlo o usar default
+        console.warn("Código de país (codPais) no establecido globalmente. Intentando usar el del proveedor o AR por defecto para búsqueda de provincia.");
+        // Podrías hacer un fetch aquí para obtener codPais del proveedor si no se cargó inicialmente
+        // o simplemente asumir 'AR' si es el más común.
+      }
+      const paisParaQuery = codPais || 'AR'; // Usar AR como fallback si codPais no está
       try {
-        const resp = await fetch(`/Proveedores/api/provincias/?q=${encodeURIComponent(query)}&cod_pais=${codPais || ''}`, { headers: { 'Authorization': 'Bearer ' + jwt }});
+        const resp = await fetch(`/Proveedores/api/provincias/?q=${encodeURIComponent(query)}&cod_pais=${paisParaQuery}`, { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }});
         if (resp.ok) { const provincias = await resp.json(); const list = provincias.map(p => `<button type="button" class="list-group-item list-group-item-action" data-id="${p.id}" data-nom="${p.display}">${p.display}</button>`).join(''); provinciaListDiv.innerHTML = list;
         } else { console.error("Error buscando provincias:", resp.statusText); provinciaListDiv.innerHTML = '<div class="list-group-item text-danger">Error al buscar</div>'; }
       } catch (error) { console.error("Network error buscando provincias:", error); provinciaListDiv.innerHTML = '<div class="list-group-item text-danger">Error de red</div>';}
@@ -872,37 +1022,56 @@
         $(provinciaInput).trigger('input').trigger('change'); $(document.getElementById('id_cpa57')).trigger('input').trigger('change'); $(document.getElementById('nom_prov')).trigger('input').trigger('change');
       }
     });
-  });
 
-  function logout() { sessionStorage.removeItem('jwt'); window.location.href = '/Proveedores/acceder/'; }
-  function goToDashboard() { window.location.href = '/Proveedores/dashboard/'; }
-  </script>
-  <script>
-    function triggerUpload(fileInputId) { document.getElementById(fileInputId).click(); }
-
+    // Llamar a cargarDatos al final para asegurar que todo el DOM esté listo y los listeners adjuntos.
+    cargarDatos();// CORRECCIÓN: Mover el listener de .file-input DENTRO del $(document).ready()
+    // para que tenga acceso a 'documentosRequeridosIds' y 'actualizarUICardDocumento'
+    // que también están definidas o se usan dentro de este scope.
     document.querySelectorAll('.file-input').forEach(input => {
-      input.addEventListener('change', function() { // Este 'change' listener es importante para la UI y también será detectado por monitorChanges
-        const fileName = this.files[0] ? this.files[0].name : 'Ningún archivo seleccionado';
-        const cardBody = this.closest('.document-card-body');
-        const statusTextElement = cardBody.querySelector('.document-status-text');
-        const actionButton = cardBody.querySelector('.action-btn');
-        const documentCard = this.closest('.document-card');
-        const statusIconArea = cardBody.querySelector('.document-icon-area');
+      input.addEventListener('change', function() { 
+        const fileInputId = this.id;
+        const fileName = this.files[0] ? this.files[0].name : null;
+        const esRequerido = documentosRequeridosIds.includes(fileInputId); // Accede a la variable del scope de ready
+        
+        actualizarUICardDocumento(fileInputId, fileName, '#', esRequerido); // Llama a la función helper
 
-        if (this.files[0]) {
-          statusTextElement.textContent = 'Archivo seleccionado: ' + fileName;
-          actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square me-1" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.813z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/></svg> Cambiar Archivo`;
-          actionButton.classList.remove('btn-primary'); actionButton.classList.add('btn-outline-secondary');
-          documentCard.classList.remove('status-required-missing', 'status-optional-missing');
-          documentCard.classList.add('status-present');
-          statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill status-icon" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`;
-        } else {
-          // Aquí podrías revertir la UI si el usuario cancela la selección
-          // y no había un archivo cargado previamente.
+        if (this.files[0]) { // Validaciones frontend opcionales
+            const maxFileSize = 5 * 1024 * 1024; 
+            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            if (this.files[0].size > maxFileSize) {
+                alert(`El archivo "${fileName}" es demasiado grande (máx. 5MB). No se subirá.`); this.value = ''; 
+                actualizarUICardDocumento(fileInputId, null, '#', esRequerido); 
+                return;
+            }
+            if (!allowedTypes.includes(this.files[0].type)) {
+                alert(`Tipo de archivo no permitido para "${fileName}". Permitidos: PDF, JPG, PNG, DOC, DOCX.`); this.value = ''; 
+                actualizarUICardDocumento(fileInputId, null, '#', esRequerido); 
+                return;
+            }
         }
       });
     });
-    function viewDocument(path) { if (path && path !== '#') { window.open(path, '_blank'); } else { alert('Documento no disponible para visualización o ruta no especificada.');}}
+
+  }); // Fin de $(document).ready()
+
+  // Funciones globales (o que necesitan serlo)
+  function logout() { sessionStorage.removeItem('jwt'); window.location.href = '/Proveedores/acceder/'; }
+  function goToDashboard() { window.location.href = '/Proveedores/dashboard/'; }
+  function triggerUpload(fileInputId) { document.getElementById(fileInputId).click(); }
+  
+  function viewDocument(path) { 
+    if (path && path !== '#' && !path.startsWith('blob:')) { // No intentar abrir URLs blob directamente así si son locales
+        window.open(path, '_blank'); 
+    } else if (path && path.startsWith('blob:')) {
+        // Para blobs (previsualización local), el usuario ya lo "vio" al seleccionarlo.
+        // O podrías intentar mostrarlo en un modal si es una imagen.
+        // Por ahora, solo no hacemos nada o un alert.
+        alert('El archivo está seleccionado localmente. Se enviará al guardar.');
+    }
+    else { 
+        alert('El documento aún no ha sido cargado o no hay una URL válida. Intente guardar los cambios primero.');
+    }
+  }
   </script>
 </body>
 </html>

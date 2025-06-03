@@ -1,25 +1,25 @@
-"""
-Serializador para el modelo Proveedor y creación de usuario.
-Incluye validaciones personalizadas y mensajes en español.
-"""
-
+import os
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Proveedor, Comprobante
+from .models import Proveedor, Comprobante # Asegúrate que tus modelos estén aquí
 import re
+from django.utils.text import get_valid_filename # Para limpiar nombres de archivo
 
 class ComprobanteSerializer(serializers.ModelSerializer):
-  archivo = serializers.FileField(write_only=True)
   archivo_url = serializers.SerializerMethodField(read_only=True)
+  # Quitar write_only de archivo si quieres que el serializador lo maneje en create/update
+  # archivo = serializers.FileField() 
 
   class Meta:
     model = Comprobante
     fields = ['id', 'tipo', 'numero', 'fecha_emision', 'monto_total', 'archivo', 'archivo_url', 'estado', 'creado_en']
     read_only_fields = ['estado', 'creado_en', 'archivo_url']
+    # Si el archivo se maneja en la vista (como en ProveedorViewSet), puede ser read_only aquí también
+    # o excluido de fields si solo se usa para la subida y no se devuelve su data binaria.
 
   def get_archivo_url(self, obj):
     request = self.context.get('request')
-    if obj.archivo and request:
+    if obj.archivo and hasattr(obj.archivo, 'url') and request:
       return request.build_absolute_uri(obj.archivo.url)
     return None
 
@@ -29,20 +29,27 @@ class ComprobanteSerializer(serializers.ModelSerializer):
       raise serializers.ValidationError("Tipo de comprobante inválido.")
     return value
 
-  def validate_archivo(self, value):
-    valid_mime_types = ['application/pdf', 'image/jpeg', 'image/png']
+  def validate_archivo(self, value): # Esta validación se aplicará si 'archivo' no es write_only
+    valid_mime_types = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
     if value.content_type not in valid_mime_types:
-      raise serializers.ValidationError("Formato de archivo no permitido. Solo PDF, JPEG y PNG.")
+      raise serializers.ValidationError("Formato de archivo no permitido. Solo PDF, JPEG, PNG, DOC, DOCX.")
     if value.size > 10 * 1024 * 1024:  # 10MB max
       raise serializers.ValidationError("El archivo es demasiado grande. Máximo 10MB.")
+    
+    # Limpiar nombre de archivo
+    value.name = get_valid_filename(value.name)
     return value
 
   def create(self, validated_data):
-    proveedor = self.context['request'].user.proveedores.first()
-    if not proveedor:
-      raise serializers.ValidationError("Proveedor no asociado al usuario.")
-    validated_data['proveedor'] = proveedor
+    # Esto asume que el usuario autenticado está creando un comprobante para su propio perfil de proveedor
+    user = self.context['request'].user
+    try:
+      proveedor_instance = Proveedor.objects.get(username_django=user)
+      validated_data['proveedor'] = proveedor_instance
+    except Proveedor.DoesNotExist:
+      raise serializers.ValidationError("Proveedor no asociado al usuario autenticado.")
     return super().create(validated_data)
+
 
 class ProveedorRegistroSerializer(serializers.ModelSerializer):
   usuario = serializers.CharField(write_only=True, required=True)
@@ -51,14 +58,9 @@ class ProveedorRegistroSerializer(serializers.ModelSerializer):
   class Meta:
     model = Proveedor
     fields = [
-      'usuario',
-      'contrasena',
-      'nom_provee',
-      'n_cuit',
-      'e_mail',
-      'nom_fant',
-      'cod_pais',
-      'nom_pais'
+      'usuario', 'contrasena', 'nom_provee', 'n_cuit', 'e_mail', 
+      'nom_fant', 'cod_pais', 'nom_pais'
+      # No incluir campos FileField aquí para el registro inicial, se cargan después.
     ]
 
   def validate_usuario(self, value):
@@ -69,42 +71,99 @@ class ProveedorRegistroSerializer(serializers.ModelSerializer):
     return value
 
   def validate_contrasena(self, value):
+    # Puedes añadir más validaciones de complejidad de contraseña aquí
     if not value or len(value) < 6:
       raise serializers.ValidationError("La contraseña debe tener al menos 6 caracteres.")
     return value
 
   def validate_nom_provee(self, value):
     if not value or len(value.strip()) == 0:
-      raise serializers.ValidationError("El nombre comercial es obligatorio.")
+      raise serializers.ValidationError("El nombre del proveedor es obligatorio.")
     return value
 
   def validate_n_cuit(self, value):
     if not value or len(value.strip()) == 0:
       raise serializers.ValidationError("El CUIL/CUIT es obligatorio.")
-    # Validar formato: XX-XXXXXXXX-X (ej: 20-31441849-3)
     cuit_pattern = r'^\d{2}-\d{8}-\d{1}$'
     if not re.match(cuit_pattern, value):
-      raise serializers.ValidationError("El CUIL/CUIT debe tener el formato XX-XXXXXXXX-X (ejemplo: 20-31441849-3).")
+      raise serializers.ValidationError("El CUIL/CUIT debe tener el formato XX-XXXXXXXX-X.")
+    # Opcional: validar si el CUIT ya existe en Proveedor
+    # if Proveedor.objects.filter(n_cuit=value).exists():
+    #   raise serializers.ValidationError("Este CUIT ya está registrado.")
     return value
 
   def validate_e_mail(self, value):
-    if Proveedor.objects.filter(e_mail=value).exists():
-      raise serializers.ValidationError("El email ya está registrado como proveedor.")
+    # Opcional: validar si el email ya existe en User o Proveedor
+    if User.objects.filter(email=value).exists():
+        raise serializers.ValidationError("Este email ya está en uso por otro usuario.")
+    # if Proveedor.objects.filter(e_mail=value).exists():
+    #   raise serializers.ValidationError("Este email ya está registrado como proveedor.")
     return value
 
   def create(self, validated_data):
-    usuario = validated_data.pop('usuario')
-    contrasena = validated_data.pop('contrasena')
-    # Crear usuario Django
-    user = User.objects.create_user(username=usuario, password=contrasena)
-    # Crear proveedor y asociar el usuario
+    usuario_data = validated_data.pop('usuario')
+    contrasena_data = validated_data.pop('contrasena')
+    email_data = validated_data.get('e_mail') # Usar el email del proveedor para el usuario
+
+    user = User.objects.create_user(username=usuario_data, password=contrasena_data, email=email_data)
     proveedor = Proveedor.objects.create(username_django=user, **validated_data)
-     # DEBUG: imprime la relación
-    print(f"Proveedor creado: {proveedor.id}, username_django={proveedor.username_django_id}, user.id={user.id}")
     return {'user': user, 'proveedor': proveedor}
 
-# --- AGREGADO: Serializador clásico para el CRUD de proveedores ---
+
 class ProveedorSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = Proveedor
-    fields = '__all__'
+    # SerializerMethodFields para devolver URLs e información de archivos
+    documentos_data = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Proveedor
+        fields = '__all__' # Incluir todos los campos del modelo
+        read_only_fields = ['username_django', 'cod_cpa01', 'fecha_alta', 'fecha_inha'] 
+        # Los campos FileField se manejarán para escritura en la vista (partial_update)
+        # pero se pueden leer aquí.
+
+    def get_documentos_data(self, obj):
+        request = self.context.get('request')
+        data = {}
+        file_fields_info = [
+            ('cuitFile', obj.cuit_file), ('ingBrutosFile', obj.ing_brutos_file),
+            ('exclGananciasFile', obj.excl_ganancias_file), ('cm05File', obj.cm05_file),
+            ('noRetGananciasFile', obj.no_ret_ganancias_file), ('exclIIBBFile', obj.excl_iibb_file),
+            ('noRetIIBBFile', obj.no_ret_iibb_file),
+        ]
+        for key_frontend, field_instance in file_fields_info:
+            if field_instance and hasattr(field_instance, 'name') and field_instance.name:
+                url = None
+                if hasattr(field_instance, 'url') and request:
+                    url = request.build_absolute_uri(field_instance.url)
+                data[key_frontend] = {
+                    'name': os.path.basename(field_instance.name),
+                    'url': url,
+                    # Podrías añadir la fecha de última actualización si es relevante
+                    # 'updated_at': getattr(obj, field_instance.field.name + '_updated_at', None)
+                }
+            else:
+                data[key_frontend] = None
+        return data
+
+    def update(self, instance, validated_data):
+        # Manejar la actualización de archivos (si se reciben) y otros campos
+        # Los archivos se asignan directamente a la instancia en la vista antes de llamar a serializer.save()
+        # Aquí solo se guardan los campos que no son FileInput
+        
+        # Quitar campos de archivo de validated_data si el serializador no debe manejarlos directamente
+        file_field_names = [
+            'cuit_file', 'ing_brutos_file', 'excl_ganancias_file', 'cm05_file',
+            'no_ret_ganancias_file', 'excl_iibb_file', 'no_ret_iibb_file'
+        ]
+        for field_name in file_field_names:
+            if field_name in validated_data and isinstance(validated_data[field_name], str):
+                # Si es un string (nombre de archivo de un PATCH anterior sin archivo nuevo),
+                # no lo actualices a menos que el archivo también se esté actualizando.
+                # El manejo de archivos se hace en la vista.
+                pass # El archivo se actualiza en la vista si se proporciona uno nuevo
+            elif field_name in validated_data: # Si es un objeto UploadedFile
+                 # El serializador lo manejará o ya fue manejado en la vista
+                 pass
+
+
+        return super().update(instance, validated_data)
