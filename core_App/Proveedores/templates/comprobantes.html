@@ -199,6 +199,7 @@
           });
           if (!resp.ok) {
             listaComprobantes.innerHTML = '<div class="text-danger">Error al cargar comprobantes.</div>';
+            window.location.href = '/Proveedores/acceder/';
             return;
           }
           const data = await resp.json();

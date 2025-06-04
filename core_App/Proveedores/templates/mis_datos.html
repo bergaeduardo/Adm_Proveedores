@@ -4,75 +4,206 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <title>Mis Datos de Proveedor</title>
   <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+      background-color: #f8f9fa; /* Light gray background */
+      color: #333;
+    }
+
+    .container {
+      max-width: 1140px; /* Or your preferred max-width */
+    }
+
+    h2 {
+      font-weight: 600;
+      color: #2c3e50; /* Darker, more corporate blue/grey */
+    }
+    
+    h5 {
+        font-weight: 600;
+        color: #34495e; /* Slightly lighter than h2 */
+        margin-bottom: 1rem; /* Consistent spacing */
+    }
+
+    .card { /* General card enhancements */
+        border: none; /* Remove default border, rely on shadow */
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.075); /* Softer, more diffused shadow */
+        border-radius: 0.5rem; /* Slightly more rounded corners */
+    }
+
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid #e9ecef; /* Lighter border */
+    }
+    
+    .card-header-tabs {
+      margin-bottom: -0.75rem;
+    }
+
+    .nav-tabs .nav-link {
+        font-weight: 500;
+        color: #6c757d; /* Muted color for inactive tabs */
+        border: none;
+        border-bottom: 3px solid transparent;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+        transition: color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    }
+
+    .nav-tabs .nav-link:hover,
+    .nav-tabs .nav-link:focus {
+        color: #0d6efd; /* Bootstrap primary for hover */
+        border-bottom-color: #0d6efd;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--bs-primary, #0d6efd);
+        background-color: transparent; /* Keep background transparent */
+        border-color: var(--bs-primary, #0d6efd);
+        font-weight: 600; /* Make active tab bolder */
+    }
+
+    .form-control, .form-select {
+        border-radius: 0.375rem; /* Bootstrap default, good */
+        border-color: #ced4da;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+
     .required-label::after {
       content: " *";
-      color: red;
+      color: var(--bs-danger);
     }
+
     .btn-save {
       display: none;
+      font-weight: 500;
     }
-    .card-header-tabs {
-      margin-bottom: -0.75rem; 
+    
+    .btn {
+        font-weight: 500;
+        border-radius: 0.375rem;
+        padding: 0.5rem 1rem; /* Consistent padding */
     }
+    .btn-primary {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+    .btn-primary:hover {
+        background-color: #0b5ed7; /* Darken primary on hover */
+        border-color: #0a58ca;
+    }
+    .btn-success {
+        background-color: var(--bs-success);
+        border-color: var(--bs-success);
+    }
+     .btn-success:hover {
+        background-color: #157347; 
+        border-color: #146c43;
+    }
+    .btn-outline-danger:hover {
+        color: #fff;
+    }
+
+
     #provinciaList .list-group-item {
       cursor: pointer;
+      border-radius: 0; /* Remove individual item radius for cleaner look in dropdown */
     }
+    #provinciaList .list-group-item:first-child {
+        border-top-left-radius: 0.375rem;
+        border-top-right-radius: 0.375rem;
+    }
+    #provinciaList .list-group-item:last-child {
+        border-bottom-left-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+    }
+
+
+    /* Document Card Specifics */
     .document-card {
-      border: 1px solid #dee2e6; 
-      border-radius: 0.375rem; 
+      border: 1px solid #e9ecef; /* Lighter border for cards */
+      border-radius: 0.5rem; 
       background-color: #fff;
-      transition: all 0.3s ease-in-out;
-      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); 
+      transition: transform 0.25s ease-out, box-shadow 0.25s ease-out; /* Smoother transition */
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05); /* Softer initial shadow */
       display: flex;
       flex-direction: column;
       height: 100%; 
     }
+
+    .document-card:hover {
+      transform: translateY(-5px); /* Slightly more lift on hover */
+      box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1); /* More pronounced shadow on hover */
+    }
+
     .document-card-body {
-      padding: 1.25rem;
+      padding: 1.5rem; /* More padding */
       text-align: center;
       display: flex;
       flex-direction: column;
       justify-content: space-between; 
       flex-grow: 1; 
     }
+
     .document-icon-area {
-      font-size: 2rem; 
-      margin-bottom: 0.75rem;
+      font-size: 2.25rem; /* Slightly larger icon */
+      margin-bottom: 1rem;
     }
+    .document-icon-area svg {
+        width: 32px; /* Explicit size for SVG */
+        height: 32px;
+    }
+
     .document-title {
-      font-size: 1rem;
-      font-weight: 500;
-      margin-bottom: 0.25rem;
-      color: #333;
+      font-size: 1rem; /* Slightly larger for readability */
+      font-weight: 600; /* Bolder title */
+      margin-bottom: 0.5rem;
+      color: #343a40; /* Darker text for title */
+      min-height: 40px; /* Ensure titles align if some wrap */
     }
+
     .required-asterisk {
       color: var(--bs-danger, #dc3545); 
       font-weight: bold;
     }
+
     .document-status-text {
-      font-size: 0.8rem;
+      font-size: 0.875rem; /* Slightly larger status text */
       color: #6c757d; 
-      margin-bottom: 1rem;
-      min-height: 30px; 
+      margin-bottom: 1.25rem;
+      min-height: 40px; /* Ensure consistent height */
     }
+
     .action-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       width: 100%; 
-      padding: 0.5rem 0.75rem;
+      padding: 0.6rem 0.75rem; /* Slightly more padding */
+      font-weight: 500;
     }
     .action-btn svg {
         vertical-align: middle;
+        margin-right: 0.35rem;
     }
+
+    /* Status indicators using left border (already good, slight color tweak) */
     .document-card.status-present {
       border-left: 5px solid var(--bs-success, #198754); 
     }
     .document-card.status-present .status-icon {
       color: var(--bs-success, #198754);
     }
+
     .document-card.status-required-missing {
       border-left: 5px solid var(--bs-danger, #dc3545); 
     }
@@ -80,31 +211,44 @@
       color: var(--bs-danger, #dc3545);
     }
     .document-card.status-required-missing .document-title .required-asterisk {
-      animation: pulse-danger 2s infinite; 
+      animation: pulse-danger 1.5s infinite ease-in-out; 
     }
+
     .document-card.status-optional-missing {
       border-left: 5px solid var(--bs-secondary, #6c757d); 
     }
     .document-card.status-optional-missing .status-icon {
       color: var(--bs-secondary, #6c757d);
     }
-    .document-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-    }
+
     @keyframes pulse-danger {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.1); }
+      100% { opacity: 1; transform: scale(1); }
     }
+
     .file-input {
       display: none;
     }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05); /* Subtle hover for table rows */
+    }
+    
+    .modal-header {
+        background-color: #f8f9fa; /* Light header for modal */
+        border-bottom: 1px solid #dee2e6;
+    }
+    .modal-title {
+        font-weight: 600;
+        color: #343a40;
+    }
+
   </style>
 </head>
 <body>
-  <div class="container mt-4">
-    <h2 class="mb-3">Mis Datos de Proveedor</h2>
+  <div class="container mt-4 mb-5"> <!-- Added mb-5 for bottom spacing -->
+    <h2 class="mb-4 text-center">Mis Datos de Proveedor</h2> <!-- Centered and more margin -->
     <div class="card card-primary card-outline card-outline-tabs">
       <div class="card-header border-bottom-0">
         <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
@@ -122,144 +266,139 @@
           </li>
         </ul>
       </div>
-      <div class="card-body">
+      <div class="card-body p-lg-4"> <!-- Increased padding on larger screens -->
         <div class="tab-content" id="myTabContent">
           <!-- Home Tab Pane -->
           <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab-btn" tabindex="0">
-            <!-- El formulario principal ahora engloba el contenido de Home y los botones de acción -->
             <form id="proveedorForm" class="mt-3" novalidate>
-              <h5>Datos de empresa</h5>
+              <h5 class="mt-3 mb-3">Datos de empresa</h5>
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label class="required-label" for="nom_provee">Razón social</label>
+                  <label class="form-label required-label" for="nom_provee">Razón social</label>
                   <input type="text" class="form-control" id="nom_provee" name="nom_provee" required>
                   <div class="invalid-feedback" id="nom_provee-invalid"></div>
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label class="required-label" for="n_cuit">CUIT</label>
+                  <label class="form-label required-label" for="n_cuit">CUIT</label>
                   <input type="text" class="form-control" id="n_cuit" name="n_cuit" required>
                   <div class="invalid-feedback" id="n_cuit-invalid"></div>
                 </div>
               </div>
               <div class="mb-3">
-                <label class="required-label" for="domicilio">Domicilio</label>
+                <label class="form-label required-label" for="domicilio">Domicilio</label>
                 <input type="text" class="form-control" id="domicilio" name="domicilio" required>
                 <div class="invalid-feedback" id="domicilio-invalid"></div>
               </div>
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label for="localidad">Localidad</label>
+                  <label for="localidad" class="form-label">Localidad</label>
                   <input type="text" class="form-control" id="localidad" name="localidad">
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="c_postal">Código postal</label>
+                  <label for="c_postal" class="form-label">Código postal</label>
                   <input type="text" class="form-control" id="c_postal" name="c_postal">
                 </div>
               </div>
               <div class="mb-3">
-                <label for="provincia">Provincia</label>
+                <label for="provincia" class="form-label">Provincia</label>
                 <input type="text" class="form-control" id="provincia" name="provincia_display" placeholder="Buscar provincia...">
                 <input type="hidden" id="id_cpa57" name="id_cpa57">
                 <input type="hidden" id="nom_prov" name="nom_prov">
-                <div class="list-group mt-1" id="provinciaList"></div>
+                <div class="list-group mt-1 position-absolute" style="z-index: 1000;" id="provinciaList"></div> <!-- Added position absolute and z-index -->
               </div>
 
-              <h5 class="mt-4">Datos de contacto</h5>
+              <h5 class="mt-4 mb-3">Datos de contacto</h5>
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label class="required-label" for="telefono_1">Teléfono</label>
+                  <label class="form-label required-label" for="telefono_1">Teléfono</label>
                   <input type="text" class="form-control" id="telefono_1" name="telefono_1" required>
                   <div class="invalid-feedback" id="telefono_1-invalid"></div>
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="telefono_2">Teléfono 2</label>
+                  <label for="telefono_2" class="form-label">Teléfono 2</label>
                   <input type="text" class="form-control" id="telefono_2" name="telefono_2">
                 </div>
               </div>
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label for="telefono_movil">Teléfono Móvil</label>
+                  <label for="telefono_movil" class="form-label">Teléfono Móvil</label>
                   <input type="text" class="form-control" id="telefono_movil" name="telefono_movil">
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label class="required-label" for="e_mail">Email</label>
+                  <label class="form-label required-label" for="e_mail">Email</label>
                   <input type="email" class="form-control" id="e_mail" name="e_mail" required>
                   <div class="invalid-feedback" id="e_mail-invalid"></div>
                 </div>
               </div>
               <div class="mb-3">
-                <label for="web">Página web</label>
+                <label for="web" class="form-label">Página web</label>
                 <input type="text" class="form-control" id="web" name="web">
               </div>
 
-              <h5 class="mt-4">Información comercial</h5>
+              <h5 class="mt-4 mb-3">Información comercial</h5>
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label for="nom_fant">Nombre comercial</label>
+                  <label for="nom_fant" class="form-label">Nombre comercial</label>
                   <input type="text" class="form-control" id="nom_fant" name="nom_fant">
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="domicilio_comercial">Domicilio comercial</label>
+                  <label for="domicilio_comercial" class="form-label">Domicilio comercial</label>
                   <input type="text" class="form-control" id="domicilio_comercial" name="domicilio_comercial">
                 </div>
               </div>
               <div class="mb-3">
-                <label for="n_iva">Actividad</label>
+                <label for="n_iva" class="form-label">Actividad</label>
                 <input type="text" class="form-control" id="n_iva" name="n_iva">
               </div>
-              
-              
-
-              <!-- CORRECCIÓN ESTRUCTURAL: Botones de acción movidos DENTRO del proveedorForm -->
-              
-            </form> <!-- Fin de proveedorForm -->
+            </form> 
           </div>
 
           <!-- Configuración Tab Pane -->
           <div class="tab-pane fade" id="config-tab-pane" role="tabpanel" aria-labelledby="config-tab-btn" tabindex="0">
-            <h5 class="mt-3">Configuración</h5>
+            <h5 class="mt-3 mb-3">Configuración General</h5>
             <form id="configForm" class="mt-3" novalidate>
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label for="condicionIva">Condición de IVA</label>
+                  <label for="condicionIva" class="form-label">Condición de IVA</label>
                   <select class="form-select" id="condicionIva" name="condicionIva"></select>
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="ingresosBrutos">Régimen de Ingresos Brutos</label>
+                  <label for="ingresosBrutos" class="form-label">Régimen de Ingresos Brutos</label>
                   <select class="form-select" id="ingresosBrutos" name="ingresosBrutos"></select>
                 </div>
               </div>
               <div class="mb-3">
-                <label for="n_ing_brut">Nro. de ingresos brutos</label>
+                <label for="n_ing_brut" class="form-label">Nro. de ingresos brutos</label>
                 <input type="text" class="form-control" id="n_ing_brut" name="n_ing_brut">
               </div>
+              <h5 class="mt-4 mb-3">Datos Bancarios</h5>
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label for="cbu">Clave bancaria única (CBU)</label>
+                  <label for="cbu" class="form-label">Clave bancaria única (CBU)</label>
                   <input type="text" class="form-control" id="cbu" name="cbu">
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="descripcion_cbu">Descripción</label>
+                  <label for="descripcion_cbu" class="form-label">Descripción</label>
                   <input type="text" class="form-control" id="descripcion_cbu" name="descripcion_cbu">
                 </div>
               </div>
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label for="cbu_2">Clave bancaria única 2 (CBU)</label>
+                  <label for="cbu_2" class="form-label">Clave bancaria única 2 (CBU)</label>
                   <input type="text" class="form-control" id="cbu_2" name="cbu_2">
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="descripcion_cbu_2">Descripción</label>
+                  <label for="descripcion_cbu_2" class="form-label">Descripción</label>
                   <input type="text" class="form-control" id="descripcion_cbu_2" name="descripcion_cbu_2">
                 </div>
               </div>
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label for="cbu_3">Clave bancaria única 3 (CBU)</label>
+                  <label for="cbu_3" class="form-label">Clave bancaria única 3 (CBU)</label>
                   <input type="text" class="form-control" id="cbu_3" name="cbu_3">
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="descripcion_cbu_3">Descripción</label>
+                  <label for="descripcion_cbu_3" class="form-label">Descripción</label>
                   <input type="text" class="form-control" id="descripcion_cbu_3" name="descripcion_cbu_3">
                 </div>
               </div>
@@ -269,7 +408,7 @@
           <!-- Mensajes Tab Pane -->
           <div class="tab-pane fade" id="messages-tab-pane" role="tabpanel" aria-labelledby="messages-tab-btn" tabindex="0">
             <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
-              <h5>Contactos de Mensajería</h5>
+              <h5 class="mb-0">Contactos de Mensajería</h5>
               <button type="button" class="btn btn-primary" id="btnNuevoContacto">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle-fill me-1" viewBox="0 0 16 16">
                   <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
@@ -279,23 +418,22 @@
             </div>
             <div id="mensajesStatus" class="alert d-none"></div>
             <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
+              <table class="table table-hover align-middle"> <!-- Added align-middle -->
+                <thead class="table-light"> <!-- Lighter thead -->
                   <tr>
                     <th>Nombre</th>
                     <th>Cargo</th>
                     <th>Email</th>
                     <th>Teléfono</th>
-                    <th>Habitual</th>
-                    <th>Recibe OC</th>
-                    <th>Recibe OP</th>
-                    <th>Acciones</th>
+                    <th class="text-center">Habitual</th>
+                    <th class="text-center">Recibe OC</th>
+                    <th class="text-center">Recibe OP</th>
+                    <th class="text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody id="tablaContactosBody">
-                  <!-- Los contactos se cargarán aquí por JS -->
                   <tr>
-                    <td colspan="8" class="text-center">Cargando contactos...</td>
+                    <td colspan="8" class="text-center py-4">Cargando contactos...</td>
                   </tr>
                 </tbody>
               </table>
@@ -304,13 +442,13 @@
 
           <!-- Modal para Agregar/Editar Contacto -->
           <div class="modal fade" id="contactoModal" tabindex="-1" aria-labelledby="contactoModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-lg modal-dialog-centered"> <!-- Added modal-dialog-centered -->
               <div class="modal-content">
                 <div class="modal-header">
                   <h5 class="modal-title" id="contactoModalLabel">Agregar Contacto</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                   <form id="contactoForm" novalidate>
                     <input type="hidden" id="contactoId" name="contactoId">
                     <div class="row">
@@ -345,7 +483,7 @@
                     </div>
                     <div class="row">
                       <div class="col-md-4 mb-3">
-                        <div class="form-check">
+                        <div class="form-check form-switch"> <!-- Using form-switch for modern toggle -->
                           <input class="form-check-input" type="checkbox" id="contactoDefecto" name="defecto">
                           <label class="form-check-label" for="contactoDefecto">
                             Contacto habitual
@@ -353,7 +491,7 @@
                         </div>
                       </div>
                       <div class="col-md-4 mb-3">
-                        <div class="form-check">
+                        <div class="form-check form-switch">
                           <input class="form-check-input" type="checkbox" id="contactoEnviaPdfOc" name="envia_pdf_oc">
                           <label class="form-check-label" for="contactoEnviaPdfOc">
                             Recibe órdenes de compra
@@ -361,7 +499,7 @@
                         </div>
                       </div>
                       <div class="col-md-4 mb-3">
-                        <div class="form-check">
+                        <div class="form-check form-switch">
                           <input class="form-check-input" type="checkbox" id="contactoEnviaPdfOp" name="envia_pdf_op">
                           <label class="form-check-label" for="contactoEnviaPdfOp">
                             Recibe órdenes de pago
@@ -373,7 +511,7 @@
                   </form>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                   <button type="submit" class="btn btn-primary" form="contactoForm" id="btnGuardarContacto">Guardar Contacto</button>
                 </div>
               </div>
@@ -383,19 +521,19 @@
           <!-- Documentos Tab Pane -->
           <div class="tab-pane fade" id="documents-tab-pane" role="tabpanel" aria-labelledby="documents-tab-btn" tabindex="0">
             <h5 class="mt-3 mb-4">Documentos Adjuntos</h5>
-            <div class="row">
-              <div class="col-md-6 col-lg-4 mb-4">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"> <!-- Using Bootstrap grid for consistent card sizing -->
+              <div class="col">
                 <div class="document-card status-required-missing" id="card-cuitFile">
                   <div class="document-card-body">
                     <div class="document-icon-area">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill status-icon" viewBox="0 0 16 16">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-exclamation-triangle-fill status-icon" viewBox="0 0 16 16">
                         <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
                       </svg>
                     </div>
                     <h6 class="document-title">Constancia de CUIT/CUIL <span class="required-asterisk">*</span></h6>
                     <p class="document-status-text">Pendiente de carga</p>
                     <button type="button" class="btn btn-primary btn-sm action-btn" onclick="triggerUpload('cuitFile')">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16">
                         <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
                         <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
                       </svg>
@@ -405,68 +543,68 @@
                   </div>
                 </div>
               </div>
-              <div class="col-md-6 col-lg-4 mb-4">
-                <div class="document-card status-required-missing" id="card-ingBrutosFile"> <!-- Asumiendo que este es requerido -->
+              <div class="col">
+                <div class="document-card status-required-missing" id="card-ingBrutosFile"> 
                   <div class="document-card-body">
                     <div class="document-icon-area">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill status-icon" viewBox="0 0 16 16">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-exclamation-triangle-fill status-icon" viewBox="0 0 16 16">
                         <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
                       </svg>
                     </div>
                     <h6 class="document-title">Inscripción Ing. Brutos <span class="required-asterisk">*</span></h6>
                     <p class="document-status-text">Pendiente de carga</p>
                     <button type="button" class="btn btn-primary btn-sm action-btn" onclick="triggerUpload('ingBrutosFile')">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                       Cargar Archivo
                     </button>
                     <input type="file" id="ingBrutosFile" name="ingBrutosFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg">
                   </div>
                 </div>
               </div>
-              <div class="col-md-6 col-lg-4 mb-4">
+              <div class="col">
                 <div class="document-card status-optional-missing" id="card-exclGananciasFile">
                   <div class="document-card-body">
                     <div class="document-icon-area">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16">
                           <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/>
                       </svg>
                     </div>
                     <h6 class="document-title">Cert. Exclusión Ganancias</h6>
                     <p class="document-status-text">Opcional, no cargado</p>
                     <button type="button" class="btn btn-outline-primary btn-sm action-btn" onclick="triggerUpload('exclGananciasFile')">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                       Cargar (Opcional)
                     </button>
                     <input type="file" id="exclGananciasFile" name="exclGananciasFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg">
                   </div>
                 </div>
               </div>
-              <div class="col-md-6 col-lg-4 mb-4">
+              <div class="col">
                 <div class="document-card status-optional-missing" id="card-cm05File">
                   <div class="document-card-body">
                     <div class="document-icon-area">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
                     </div>
                     <h6 class="document-title">Constancia CM05</h6>
                     <p class="document-status-text">Opcional, no cargado</p>
                     <button type="button" class="btn btn-outline-primary btn-sm action-btn" onclick="triggerUpload('cm05File')">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                       Cargar (Opcional)
                     </button>
                     <input type="file" id="cm05File" name="cm05File" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg">
                   </div>
                 </div>
               </div>
-              <div class="col-md-6 col-lg-4 mb-4">
+              <div class="col">
                 <div class="document-card status-optional-missing" id="card-noRetGananciasFile">
                   <div class="document-card-body">
                     <div class="document-icon-area">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
                     </div>
                     <h6 class="document-title">Cert. No Ret. Ganancias</h6>
                     <p class="document-status-text">Opcional, no cargado</p>
                     <button type="button" class="btn btn-outline-primary btn-sm action-btn" onclick="triggerUpload('noRetGananciasFile')">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                       Cargar (Opcional)
                     </button>
                     <input type="file" id="noRetGananciasFile" name="noRetGananciasFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg,.doc,.docx">
@@ -474,17 +612,16 @@
                 </div>
               </div>
 
-              <!-- Documento: Certificado de Exclusión de Ingresos Brutos (Opcional) -->
-              <div class="col-md-6 col-lg-4 mb-4">
+              <div class="col">
                 <div class="document-card status-optional-missing" id="card-exclIIBBFile">
                   <div class="document-card-body">
                     <div class="document-icon-area">
-                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
+                       <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
                     </div>
                     <h6 class="document-title">Cert. Exclusión IIBB</h6>
                     <p class="document-status-text">Opcional, no cargado</p>
                     <button type="button" class="btn btn-outline-primary btn-sm action-btn" onclick="triggerUpload('exclIIBBFile')">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                       Cargar (Opcional)
                     </button>
                     <input type="file" id="exclIIBBFile" name="exclIIBBFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg,.doc,.docx">
@@ -492,17 +629,16 @@
                 </div>
               </div>
 
-              <!-- Documento: Certificado de No Retención de Ingresos Brutos (Opcional) -->
-              <div class="col-md-6 col-lg-4 mb-4">
+              <div class="col">
                 <div class="document-card status-optional-missing" id="card-noRetIIBBFile">
                   <div class="document-card-body">
                     <div class="document-icon-area">
-                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
+                       <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
                     </div>
                     <h6 class="document-title">Cert. No Ret. IIBB</h6>
                     <p class="document-status-text">Opcional, no cargado</p>
                     <button type="button" class="btn btn-outline-primary btn-sm action-btn" onclick="triggerUpload('noRetIIBBFile')">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
                       Cargar (Opcional)
                     </button>
                     <input type="file" id="noRetIIBBFile" name="noRetIIBBFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg,.doc,.docx">
@@ -514,15 +650,14 @@
           </div> 
         </div>
       </div>
-      <div class="card-footer bg-light">
-        <div id="formMsg" class="alert mt-0 mb-3 d-none"></div> <!-- Mensaje global -->
+      <div class="card-footer bg-light py-3"> <!-- Added py-3 for padding -->
+        <div id="formMsg" class="alert mt-0 mb-3 d-none"></div>
         <div class="d-flex justify-content-between">
-          <button type="button" class="btn btn-secondary" onclick="goToDashboard()">Volver al Inicio</button>
+          <button type="button" class="btn btn-outline-secondary" onclick="goToDashboard()">Volver al Inicio</button>
           <button type="submit" class="btn btn-success btn-save" form="proveedorForm">Guardar Cambios</button>
         </div>
       </div>
     </div>
-    <!-- Botón de cerrar sesión, fuera de la estructura de la tarjeta y formularios -->
     <div class="text-center">
         <button class="btn btn-outline-danger mt-4 mb-4" onclick="logout()">Cerrar sesión</button>
     </div>
