@@ -9,7 +9,8 @@ from .api import (
   CambiarConexionView,
   CategoriaIVAListView,
   IngresosBrutosListView,
-  ComprobanteViewSet
+  ComprobanteViewSet,
+  CpaContactosProveedorHabitualViewSet
 )
 from .views import register, login_view, mis_datos_view, dashboard_view
 from django.views.generic import TemplateView
@@ -18,6 +19,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 router = DefaultRouter()
 router.register(r'proveedores', ProveedorViewSet, basename='proveedor')
 router.register(r'comprobantes', ComprobanteViewSet, basename='comprobante')
+router.register(r'proveedor-contactos', CpaContactosProveedorHabitualViewSet, basename='proveedorcontacto')
 
 urlpatterns = [
   path('registro/', register, name='registro-proveedor-form'),

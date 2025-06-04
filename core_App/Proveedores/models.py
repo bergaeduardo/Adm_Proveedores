@@ -175,10 +175,16 @@ class Comprobante(models.Model):
   
 
 class CpaContactosProveedorHabitual(models.Model):
-    id_cpa_contactos_proveedor_habitual = models.IntegerField(db_column='ID_CPA_CONTACTOS_PROVEEDOR_HABITUAL', primary_key=True)  # Field name made lowercase.
+    id = models.AutoField(primary_key=True)
+    id_cpa_contactos_proveedor_habitual_sql = models.IntegerField(
+        db_column='ID_CPA_CONTACTOS_PROVEEDOR_HABITUAL_SQL', # Nombre de columna en PostgreSQL
+        blank=True, 
+        null=True,
+        help_text="ID de la tabla original en SQL Server, se llena después de la sincronización."
+    )
     cargo = models.CharField(db_column='CARGO', max_length=20, blank=True, null=True)  # Field name made lowercase.       
     defecto = models.CharField(db_column='DEFECTO', max_length=1, blank=True, null=True)  # Field name made lowercase.    
-    cod_provee = models.CharField(db_column='COD_PROVEE', max_length=6)  # Field name made lowercase.
+    cod_provee = models.CharField(db_column='COD_PROVEE', max_length=6,blank=True, null=True)  # Field name made lowercase.
     nombre = models.CharField(db_column='NOMBRE', max_length=30, blank=True, null=True)  # Field name made lowercase.     
     telefono = models.CharField(db_column='TELEFONO', max_length=30, blank=True, null=True)  # Field name made lowercase. 
     telefono_movil = models.CharField(db_column='TELEFONO_MOVIL', max_length=30, blank=True, null=True)  # Field name made lowercase.
@@ -187,11 +193,14 @@ class CpaContactosProveedorHabitual(models.Model):
     observacion = models.CharField(db_column='OBSERVACION', max_length=60, blank=True, null=True)  # Field name made lowercase.
     tipo_documento = models.SmallIntegerField(db_column='TIPO_DOCUMENTO', blank=True, null=True)  # Field name made lowercase.
     numero_documento = models.CharField(db_column='NUMERO_DOCUMENTO', max_length=20, blank=True, null=True)  # Field name made lowercase.
-    envia_pdf_oc = models.CharField(db_column='ENVIA_PDF_OC', max_length=1)  # Field name made lowercase.
-    envia_pdf_op = models.CharField(db_column='ENVIA_PDF_OP', max_length=1)  # Field name made lowercase.
-    username_django = models.ForeignKey(User, on_delete=models.CASCADE, db_column='USERNAME_DJANGO')
+    envia_pdf_oc = models.CharField(db_column='ENVIA_PDF_OC', max_length=1, blank=True, null=True)  # Field name made lowercase.
+    envia_pdf_op = models.CharField(db_column='ENVIA_PDF_OP', max_length=1, blank=True, null=True)  # Field name made lowercase.
+    username_django = models.ForeignKey(User, db_column='USERNAME_DJANGO', on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
-        managed = False
-        db_table = 'CPA_CONTACTOS_PROVEEDOR_HABITUAL'
+        managed = True
+        db_table = 'proveedores_cpacontactosproveedorhabitual_staging'
         unique_together = (('cod_provee', 'nombre'),)
+
+    def __str__(self):
+      return f"{self.nombre} (Staging ID: {self.id})"

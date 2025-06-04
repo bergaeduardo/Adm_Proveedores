@@ -268,66 +268,116 @@
 
           <!-- Mensajes Tab Pane -->
           <div class="tab-pane fade" id="messages-tab-pane" role="tabpanel" aria-labelledby="messages-tab-btn" tabindex="0">
-            <h5 class="mt-3">Mensajes</h5>
-            <form id="messagesForm" class="mt-3" novalidate>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="nombre">Nombre</label>
-                  <input type="text" class="form-control" id="nombre" name="nombre">
+            <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+              <h5>Contactos de Mensajería</h5>
+              <button type="button" class="btn btn-primary" id="btnNuevoContacto">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle-fill me-1" viewBox="0 0 16 16">
+                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+                </svg>
+                Nuevo Contacto
+              </button>
+            </div>
+            <div id="mensajesStatus" class="alert d-none"></div>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Cargo</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Habitual</th>
+                    <th>Recibe OC</th>
+                    <th>Recibe OP</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tablaContactosBody">
+                  <!-- Los contactos se cargarán aquí por JS -->
+                  <tr>
+                    <td colspan="8" class="text-center">Cargando contactos...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Modal para Agregar/Editar Contacto -->
+          <div class="modal fade" id="contactoModal" tabindex="-1" aria-labelledby="contactoModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="contactoModalLabel">Agregar Contacto</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="col-md-6 mb-3">
-                  <label for="cargo">Cargo</label>
-                  <input type="text" class="form-control" id="cargo" name="cargo">
+                <div class="modal-body">
+                  <form id="contactoForm" novalidate>
+                    <input type="hidden" id="contactoId" name="contactoId">
+                    <div class="row">
+                      <div class="col-md-6 mb-3">
+                        <label for="contactoNombre" class="form-label required-label">Nombre</label>
+                        <input type="text" class="form-control" id="contactoNombre" name="nombre" required>
+                        <div class="invalid-feedback">El nombre es obligatorio.</div>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <label for="contactoCargo" class="form-label">Cargo</label>
+                        <input type="text" class="form-control" id="contactoCargo" name="cargo">
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-6 mb-3">
+                        <label for="contactoTelefono" class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="contactoTelefono" name="telefono">
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <label for="contactoMovil" class="form-label">Móvil</label>
+                        <input type="text" class="form-control" id="contactoMovil" name="telefono_movil">
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <label for="contactoEmail" class="form-label">Email</label>
+                      <input type="email" class="form-control" id="contactoEmail" name="email">
+                      <div class="invalid-feedback">Ingrese un email válido.</div>
+                    </div>
+                    <div class="mb-3">
+                      <label for="contactoObservaciones" class="form-label">Observaciones</label>
+                      <textarea class="form-control" id="contactoObservaciones" name="observacion" rows="2"></textarea>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-4 mb-3">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="contactoDefecto" name="defecto">
+                          <label class="form-check-label" for="contactoDefecto">
+                            Contacto habitual
+                          </label>
+                        </div>
+                      </div>
+                      <div class="col-md-4 mb-3">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="contactoEnviaPdfOc" name="envia_pdf_oc">
+                          <label class="form-check-label" for="contactoEnviaPdfOc">
+                            Recibe órdenes de compra
+                          </label>
+                        </div>
+                      </div>
+                      <div class="col-md-4 mb-3">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="contactoEnviaPdfOp" name="envia_pdf_op">
+                          <label class="form-check-label" for="contactoEnviaPdfOp">
+                            Recibe órdenes de pago
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="contactoFormMsg" class="alert d-none"></div>
+                  </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="submit" class="btn btn-primary" form="contactoForm" id="btnGuardarContacto">Guardar Contacto</button>
                 </div>
               </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="telefono">Teléfono</label>
-                  <input type="text" class="form-control" id="telefono" name="telefono">
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label for="movil">Móvil</label>
-                  <input type="text" class="form-control" id="movil" name="movil">
-                </div>
-              </div>
-              <div class="mb-3">
-                <label for="email">Email</label>
-                <input type="email" class="form-control" id="email" name="email">
-              </div>
-              <div class="row">
-                <div class="col-md-4 mb-3">
-                  <!-- Contacto habitual -->
-                  <div class="form-check" style="margin-top: 1.8rem;">
-                    <input class="form-check-input" type="checkbox" id="contacto_habitual" name="contacto_habitual">
-                    <label class="form-check-label" for="contacto_habitual">
-                      Contacto habitual
-                    </label>
-                  </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <!-- Recibe ordenes de compra -->
-                  <div class="form-check" style="margin-top: 1.8rem;">
-                    <input class="form-check-input" type="checkbox" id="recibe_ordenes_compra" name="recibe_ordenes_compra">
-                    <label class="form-check-label" for="recibe_ordenes_compra">
-                      Recibe órdenes de compra
-                    </label>
-                  </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <!-- Recibe ordenes de pago -->
-                  <div class="form-check" style="margin-top: 1.8rem;">
-                    <input class="form-check-input" type="checkbox" id="recibe_ordenes_pago" name="recibe_ordenes_pago">
-                    <label class="form-check-label" for="recibe_ordenes_pago">
-                      Recibe órdenes de pago
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="mb-3">
-                <label for="observaciones">Observaciones</label>
-                <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
-              </div>
-            </form>
+            </div>
           </div>
 
           <!-- Documentos Tab Pane -->
@@ -1051,6 +1101,266 @@
         }
       });
     });
+
+    const contactoModal = new bootstrap.Modal(document.getElementById('contactoModal'));
+  const contactoForm = document.getElementById('contactoForm');
+  const mensajesStatusDiv = document.getElementById('mensajesStatus');
+  const contactoFormMsgDiv = document.getElementById('contactoFormMsg');
+
+  // // Cargar contactos cuando se muestra la pestaña de mensajes
+  $('#messages-tab-btn').on('shown.bs.tab', function () {
+    cargarContactos();
+  });
+  // Si es la pestaña activa por defecto, cárgala también al inicio
+  // if ($('#messages-tab-btn').hasClass('active')) {
+  //   cargarContactos();
+  // }
+
+
+  $('#btnNuevoContacto').on('click', function() {
+    contactoForm.reset();
+    // El ID del formulario modal se refiere al ID de la tabla de staging ('id')
+    $('#contactoId').val(''); // Limpiar ID para modo "nuevo"
+    $('#contactoModalLabel').text('Agregar Nuevo Contacto');
+    contactoForm.classList.remove('was-validated');
+    contactoFormMsgDiv.classList.add('d-none');
+    contactoModal.show();
+  });
+
+  async function cargarContactos() {
+    const tablaBody = $('#tablaContactosBody');
+    tablaBody.html('<tr><td colspan="8" class="text-center">Cargando contactos...</td></tr>');
+    const JW_TOKEN = sessionStorage.getItem('jwt');
+    if (!JW_TOKEN) {
+      tablaBody.html('<tr><td colspan="8" class="text-center text-danger">Error de autenticación.</td></tr>');
+      return;
+    }
+
+    try {
+      const response = await fetch('/Proveedores/api/proveedor-contactos/', { // Endpoint no cambia
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + JW_TOKEN,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+      }
+      const contactos = await response.json();
+      renderContactos(contactos);
+    } catch (error) {
+      console.error('Error al cargar contactos:', error);
+      tablaBody.html(`<tr><td colspan="8" class="text-center text-danger">Error al cargar contactos: ${error.message}</td></tr>`);
+      mostrarMensajeGlobal(mensajesStatusDiv, 'Error al cargar contactos.', 'danger');
+    }
+  }
+
+  function renderContactos(contactos) {
+    const tablaBody = $('#tablaContactosBody');
+    tablaBody.empty();
+
+    if (contactos.length === 0) {
+      tablaBody.html('<tr><td colspan="8" class="text-center">No hay contactos registrados.</td></tr>');
+      return;
+    }
+
+    contactos.forEach(contacto => {
+      // CAMBIO: Usar contacto.id para los data-id
+      const row = `
+        <tr>
+          <td>${escapeHtml(contacto.nombre || '')}</td>
+          <td>${escapeHtml(contacto.cargo || '')}</td>
+          <td>${escapeHtml(contacto.email || '')}</td>
+          <td>${escapeHtml(contacto.telefono || '')}</td>
+          <td>${contacto.defecto === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+          <td>${contacto.envia_pdf_oc === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+          <td>${contacto.envia_pdf_op === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary btn-editar-contacto" data-id="${contacto.id}" title="Editar">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/></svg>
+            </button>
+            <button class="btn btn-sm btn-outline-danger btn-eliminar-contacto" data-id="${contacto.id}" title="Eliminar">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16"><path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.024l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m3.5-.058a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5.5a.5.5 0 0 0-.5-.5m3.5 0a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5.5a.5.5 0 0 0-.5-.5"/></svg>
+            </button>
+          </td>
+        </tr>
+      `;
+      tablaBody.append(row);
+    });
+
+    // Adjuntar eventos a los nuevos botones
+    $('.btn-editar-contacto').on('click', function() {
+      const contactoId = $(this).data('id'); // Esto ahora es el 'id' de PostgreSQL
+      // CAMBIO: Buscar el contacto usando 'id'
+      const contactoAEditar = contactos.find(c => c.id == contactoId);
+      if (contactoAEditar) {
+        abrirModalEdicion(contactoAEditar);
+      }
+    });
+
+    $('.btn-eliminar-contacto').on('click', function() {
+      const contactoId = $(this).data('id'); // Esto ahora es el 'id' de PostgreSQL
+      const contactoNombre = $(this).closest('tr').find('td:first').text();
+      eliminarContacto(contactoId, contactoNombre);
+    });
+  }
+
+  function abrirModalEdicion(contacto) {
+    contactoForm.reset();
+    contactoForm.classList.remove('was-validated');
+    contactoFormMsgDiv.classList.add('d-none');
+
+    // CAMBIO: Usar contacto.id para el input oculto del formulario
+    $('#contactoId').val(contacto.id); // El ID de PostgreSQL
+    $('#contactoModalLabel').text('Editar Contacto');
+    
+    $('#contactoNombre').val(contacto.nombre || '');
+    $('#contactoCargo').val(contacto.cargo || '');
+    $('#contactoTelefono').val(contacto.telefono || '');
+    $('#contactoMovil').val(contacto.telefono_movil || '');
+    $('#contactoEmail').val(contacto.email || '');
+    $('#contactoObservaciones').val(contacto.observacion || '');
+
+    $('#contactoDefecto').prop('checked', contacto.defecto === 'S');
+    $('#contactoEnviaPdfOc').prop('checked', contacto.envia_pdf_oc === 'S');
+    $('#contactoEnviaPdfOp').prop('checked', contacto.envia_pdf_op === 'S');
+    
+    contactoModal.show();
+  }
+
+  contactoForm.addEventListener('submit', async function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!contactoForm.checkValidity()) {
+      contactoForm.classList.add('was-validated');
+      return;
+    }
+    contactoForm.classList.add('was-validated');
+    
+    const JW_TOKEN = sessionStorage.getItem('jwt');
+    if (!JW_TOKEN) {
+        mostrarMensaje(contactoFormMsgDiv, 'Error de autenticación.', 'danger');
+        return;
+    }
+
+    const contactoId = $('#contactoId').val(); // Este es el 'id' de PostgreSQL del input oculto
+    const formData = {
+      nombre: $('#contactoNombre').val(),
+      cargo: $('#contactoCargo').val(),
+      telefono: $('#contactoTelefono').val(),
+      telefono_movil: $('#contactoMovil').val(),
+      email: $('#contactoEmail').val(),
+      observacion: $('#contactoObservaciones').val(),
+      defecto: $('#contactoDefecto').is(':checked') ? 'S' : 'N',
+      envia_pdf_oc: $('#contactoEnviaPdfOc').is(':checked') ? 'S' : 'N',
+      envia_pdf_op: $('#contactoEnviaPdfOp').is(':checked') ? 'S' : 'N',
+    };
+    // No incluimos 'id_cpa_contactos_proveedor_habitual_sql' en el envío,
+    // ya que el backend lo tiene como read_only y no lo espera en el POST/PUT.
+
+    const url = contactoId ? `/Proveedores/api/proveedor-contactos/${contactoId}/` : '/Proveedores/api/proveedor-contactos/';
+    const method = contactoId ? 'PUT' : 'POST';
+
+    $('#btnGuardarContacto').prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...');
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Authorization': 'Bearer ' + JW_TOKEN,
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        let errorMsg = `Error HTTP ${response.status}: ${response.statusText}.`;
+        if (errorData && typeof errorData === 'object') {
+            errorMsg += " Detalles: " + Object.entries(errorData).map(([key, val]) => `${key}: ${val}`).join('; ');
+        }
+        throw new Error(errorMsg);
+      }
+      
+      mostrarMensajeGlobal(mensajesStatusDiv, `Contacto ${contactoId ? 'actualizado' : 'creado'} correctamente.`, 'success');
+      contactoModal.hide();
+      cargarContactos();
+
+    } catch (error) {
+      console.error('Error al guardar contacto:', error);
+      mostrarMensaje(contactoFormMsgDiv, `Error al guardar: ${error.message}`, 'danger');
+    } finally {
+        $('#btnGuardarContacto').prop('disabled', false).text('Guardar Contacto');
+    }
+  });
+
+  async function eliminarContacto(contactoId, contactoNombre) { // contactoId es el 'id' de PostgreSQL
+    if (!confirm(`¿Está seguro de que desea eliminar el contacto "${escapeHtml(contactoNombre)}"?`)) {
+      return;
+    }
+
+    const JW_TOKEN = sessionStorage.getItem('jwt');
+    if (!JW_TOKEN) {
+        mostrarMensajeGlobal(mensajesStatusDiv, 'Error de autenticación.', 'danger');
+        return;
+    }
+
+    try {
+      // La URL usa el 'id' de PostgreSQL
+      const response = await fetch(`/Proveedores/api/proveedor-contactos/${contactoId}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Bearer ' + JW_TOKEN,
+          'X-CSRFToken': getCookie('csrftoken')
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status !== 204) {
+            const errorData = await response.text();
+            throw new Error(`Error HTTP ${response.status}: ${errorData || response.statusText}`);
+        }
+      }
+      
+      mostrarMensajeGlobal(mensajesStatusDiv, 'Contacto eliminado correctamente.', 'success');
+      cargarContactos();
+
+    } catch (error) {
+      console.error('Error al eliminar contacto:', error);
+      mostrarMensajeGlobal(mensajesStatusDiv, `Error al eliminar: ${error.message}`, 'danger');
+    }
+  }
+  
+  // --- Funciones auxiliares (mostrarMensaje, mostrarMensajeGlobal, escapeHtml, getCookie) ---
+  // ... (deben estar definidas como antes) ...
+  function mostrarMensaje(divElement, mensaje, tipo = 'info') { // Muestra mensaje dentro del modal o form
+    divElement.textContent = mensaje;
+    divElement.className = `alert alert-${tipo}`; // Reemplaza clases
+    divElement.classList.remove('d-none');
+  }
+
+  function mostrarMensajeGlobal(divElement, mensaje, tipo = 'info') { // Muestra mensaje en la pestaña
+    divElement.textContent = mensaje;
+    divElement.className = `alert alert-${tipo} mt-3 mb-3`;
+    divElement.classList.remove('d-none');
+    setTimeout(() => { // Ocultar después de unos segundos
+        divElement.classList.add('d-none');
+    }, 5000);
+  }
+  
+  function escapeHtml(unsafe) {
+    if (unsafe === null || typeof unsafe === 'undefined') return '';
+    return String(unsafe)
+         .replace(/&/g, "&")
+         .replace(/</g, "<")
+         .replace(/>/g, ">")
+         .replace(/"/g, "''")
+         .replace(/'/g, "'");
+  }
 
   }); // Fin de $(document).ready()
 

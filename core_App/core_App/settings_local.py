@@ -105,3 +105,20 @@ REST_FRAMEWORK = {
 DATABASE_ROUTERS = ['core_App.db_routers.DatabaseRouter']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Cierra la sesión al cerrar el navegador
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# Para que las sesiones duren 1 Hora:
+SESSION_COOKIE_AGE = 1 * 60 * 60
+
+""" 
+La expresión 12 * 60 * 60 se refiere a la cantidad de segundos que representa la duración de la sesión.
+
+Aquí te explico la lógica detrás de esta expresión:
+
+60 segundos son 1 minuto
+60 minutos son 1 hora
+12 horas son... ¡12 horas!
+Entonces, 12 * 60 * 60 es igual a 12 horas x 60 minutos/hora x 60 segundos/minuto = 43200 segundos
+
+Por lo tanto, SESSION_COOKIE_AGE = 12 * 60 * 60 representa una duración de sesión de 12 horas. """

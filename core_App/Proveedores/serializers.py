@@ -1,7 +1,7 @@
 import os
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Proveedor, Comprobante # Asegúrate que tus modelos estén aquí
+from .models import Proveedor, Comprobante, CpaContactosProveedorHabitual # Asegúrate que tus modelos estén aquí
 import re
 from django.utils.text import get_valid_filename # Para limpiar nombres de archivo
 
@@ -166,4 +166,72 @@ class ProveedorSerializer(serializers.ModelSerializer):
                  pass
 
 
+        return super().update(instance, validated_data)
+    
+class CpaContactosProveedorHabitualSerializer(serializers.ModelSerializer):
+    # Si quieres que el frontend envíe booleanos y el serializer convierta a S/N y viceversa:
+    # defecto = serializers.BooleanField(source='get_defecto_bool', required=False) 
+    # envia_pdf_oc = serializers.BooleanField(source='get_envia_pdf_oc_bool', required=False)
+    # envia_pdf_op = serializers.BooleanField(source='get_envia_pdf_op_bool', required=False)
+    # Sin embargo, es más simple si el frontend envía 'S' o 'N' directamente para estos CharFields.
+
+    class Meta:
+        model = CpaContactosProveedorHabitual # Este modelo ahora apunta a tu tabla de staging en PostgreSQL
+        fields = [
+            'id', # Este es el id de PostgreSQL, usado para CRUD vía API
+            'nombre', 'cargo', 
+            'telefono', 'telefono_movil', 'email', 'observacion',
+            'defecto', 'envia_pdf_oc', 'envia_pdf_op',
+            'cod_provee',
+            'id_cpa_contactos_proveedor_habitual_sql', # Lo incluimos para lectura, si es relevante para el frontend
+        ]
+        read_only_fields = [
+            'id', # El id de PostgreSQL es PK y autoincremental
+            'cod_provee', # Se establece en el backend
+            'id_cpa_contactos_proveedor_habitual_sql' # Este campo no lo modifica el usuario directamente vía API
+        ]
+
+    def validate_nombre(self, value):
+        if not value or len(value.strip()) == 0:
+            raise serializers.ValidationError("El nombre del contacto es obligatorio.")
+        return value
+
+    def validate_email(self, value):
+        if value: # Opcional, si se requiere
+            try:
+                serializers.EmailField().run_validation(value)
+            except serializers.ValidationError:
+                raise serializers.ValidationError("El formato del email no es válido.")
+        return value
+    
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user
+        
+        try:
+            # Asumimos que el modelo Proveedor apunta a la tabla de Proveedores en PostgreSQL (o default)
+            proveedor_instance = Proveedor.objects.get(username_django=user)
+        except Proveedor.DoesNotExist:
+            # Si Proveedor también es una tabla de SQL Server y no está en la BD default/Postgres,
+            # necesitarás una forma de obtener el cod_provee.
+            # Podrías, por ejemplo, tener el cod_provee almacenado en el perfil de usuario Django,
+            # o hacer una consulta a SQL Server aquí (menos ideal para el flujo de staging).
+            # Por ahora, asumimos que Proveedor está accesible desde la conexión default.
+            raise serializers.ValidationError({
+                "detail": "No se encontró un proveedor principal asociado a este usuario en la base de datos de la aplicación."
+            })
+
+        validated_data['username_django'] = user
+        validated_data['cod_provee'] = proveedor_instance.cod_cpa01 
+        
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Similar a create para la conversión S/N si es necesario
+        # if 'defecto' in validated_data:
+        #     validated_data['defecto'] = 'S' if validated_data.pop('defecto') else 'N'
+        # if 'envia_pdf_oc' in validated_data:
+        #     validated_data['envia_pdf_oc'] = 'S' if validated_data.pop('envia_pdf_oc') else 'N'
+        # if 'envia_pdf_op' in validated_data:
+        #     validated_data['envia_pdf_op'] = 'S' if validated_data.pop('envia_pdf_op') else 'N'
         return super().update(instance, validated_data)

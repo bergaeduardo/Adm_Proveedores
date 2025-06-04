@@ -3,9 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
-from .models import Proveedor, Comprobante 
+from .models import Proveedor, Comprobante, CpaContactosProveedorHabitual 
 from consultasTango.models import Cpa57 # Asegúrate que esta importación sea correcta para tu proyecto
-from .serializers import ProveedorRegistroSerializer, ProveedorSerializer, ComprobanteSerializer
+from .serializers import ProveedorRegistroSerializer, ProveedorSerializer, ComprobanteSerializer, CpaContactosProveedorHabitualSerializer
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.db import connections
@@ -18,6 +18,28 @@ import re # Para validación de CUIT en ProveedorRegistroSerializer
 # class ProveedorViewSet(viewsets.ModelViewSet):
 #   queryset = Proveedor.objects.all()
 #   serializer_class = ProveedorSerializer
+
+class CpaContactosProveedorHabitualViewSet(viewsets.ModelViewSet):
+    serializer_class = CpaContactosProveedorHabitualSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Solo devolver contactos del usuario autenticado
+        user = self.request.user
+        # Es importante que el related_name esté bien o usar el nombre por defecto
+        # (modelo_en_minusculas_set)
+        # O filtrar directamente por el campo:
+        return CpaContactosProveedorHabitual.objects.filter(username_django=user)
+
+    def perform_create(self, serializer):
+        # El serializer ya maneja la asignación de username_django y cod_provee en su método create
+        # gracias al context que le pasamos.
+        serializer.save()
+
+    def perform_update(self, serializer):
+        # No se necesita lógica adicional aquí si el serializer maneja la conversión S/N
+        serializer.save()
+
 
 class ComprobanteViewSet(viewsets.ModelViewSet):
   serializer_class = ComprobanteSerializer
