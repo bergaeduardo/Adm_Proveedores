@@ -128,7 +128,7 @@ class ProveedorSerializer(serializers.ModelSerializer):
             ('cuitFile', obj.cuit_file), ('ingBrutosFile', obj.ing_brutos_file),
             ('exclGananciasFile', obj.excl_ganancias_file), ('cm05File', obj.cm05_file),
             ('noRetGananciasFile', obj.no_ret_ganancias_file), ('exclIIBBFile', obj.excl_iibb_file),
-            ('noRetIIBBFile', obj.no_ret_iibb_file),
+            ('noRetIIBBFile', obj.no_ret_iibb_file), ('cbuFile', obj.cbu_file), # Añadido 'cbuFile'
         ]
         for key_frontend, field_instance in file_fields_info:
             if field_instance and hasattr(field_instance, 'name') and field_instance.name:
@@ -153,7 +153,7 @@ class ProveedorSerializer(serializers.ModelSerializer):
         # Quitar campos de archivo de validated_data si el serializador no debe manejarlos directamente
         file_field_names = [
             'cuit_file', 'ing_brutos_file', 'excl_ganancias_file', 'cm05_file',
-            'no_ret_ganancias_file', 'excl_iibb_file', 'no_ret_iibb_file'
+            'no_ret_ganancias_file', 'excl_iibb_file', 'no_ret_iibb_file', 'cbu_file' # Añadido 'cbu_file'
         ]
         for field_name in file_field_names:
             if field_name in validated_data and isinstance(validated_data[field_name], str):

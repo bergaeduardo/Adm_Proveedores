@@ -176,7 +176,7 @@
                       <input type="text" class="form-control" id="descripcion_cbu" name="descripcion_cbu">
                     </div>
                   </div>
-                  <div class="row">
+                  <!-- <div class="row">
                     <div class="col-md-6 mb-3">
                       <label for="cbu_2" class="form-label">Clave bancaria única 2 (CBU)</label>
                       <input type="text" class="form-control" id="cbu_2" name="cbu_2">
@@ -195,7 +195,7 @@
                       <label for="descripcion_cbu_3" class="form-label">Descripción</label>
                       <input type="text" class="form-control" id="descripcion_cbu_3" name="descripcion_cbu_3">
                     </div>
-                  </div>
+                  </div> -->
                 </form>
               </div>
 
@@ -436,6 +436,23 @@
                           Cargar (Opcional)
                         </button>
                         <input type="file" id="noRetIIBBFile" name="noRetIIBBFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg,.doc,.docx">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col">
+                    <div class="document-card status-optional-missing" id="card-cbuFile">
+                      <div class="document-card-body">
+                        <div class="document-icon-area">
+                           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>
+                        </div>
+                        <h6 class="document-title">Constancia de CBU<span class="required-asterisk d-none">*</span></h6>
+                        <p class="document-status-text">Opcional, no cargado</p>
+                        <button type="button" class="btn btn-outline-primary btn-sm action-btn" onclick="triggerUpload('cbuFile')">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg>
+                          Cargar (Opcional)
+                        </button>
+                        <input type="file" id="cbuFile" name="cbuFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg,.doc,.docx">
                       </div>
                     </div>
                   </div>

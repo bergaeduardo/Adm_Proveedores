@@ -101,6 +101,7 @@ class ProveedorViewSet(viewsets.ModelViewSet): # Esta es la que se registra en e
         'noRetGananciasFile': 'no_ret_ganancias_file',
         'exclIIBBFile': 'excl_iibb_file',
         'noRetIIBBFile': 'no_ret_iibb_file',
+        'cbuFile': 'cbu_file',
     }
 
     data_for_serializer = request.data.copy() # Copiar para poder modificarlo

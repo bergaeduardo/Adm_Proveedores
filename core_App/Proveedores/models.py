@@ -13,7 +13,7 @@ def documentos_upload_path(instance, filename):
     # Obtener el nombre del campo que está llamando a esta función
     # Esto requiere un pequeño truco o pasar el field_name explícitamente si es necesario diferenciar subcarpetas por tipo de doc.
     # Para este caso, todos van a una carpeta general de documentos del proveedor.
-    # Opcional: crear subcarpetas por tipo de documento si es necesario
+    # Opcional: crear subfolders por tipo de documento si es necesario
     # field_name = '' # Determinar el field_name si se necesita
     # subfolder = field_name.replace('_file', '') # ej: cuit, ingBrutos
 
@@ -132,6 +132,7 @@ class Proveedor(models.Model):
   no_ret_ganancias_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True) # Certificado de No Retención de ganancias
   excl_iibb_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)        # Certificado de Exclusión de Ingresos Brutos
   no_ret_iibb_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)      # Certificado de No Retención de Ingresos Brutos
+  cbu_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True) # Nuevo campo para Constancia de CBU
 
   # Fechas de actualización de cada archivo
   cuit_file_updated_at = models.DateTimeField(blank=True, null=True)
@@ -141,6 +142,7 @@ class Proveedor(models.Model):
   no_ret_ganancias_file_updated_at = models.DateTimeField(blank=True, null=True)
   excl_iibb_file_updated_at = models.DateTimeField(blank=True, null=True)
   no_ret_iibb_file_updated_at = models.DateTimeField(blank=True, null=True)
+  cbu_file_updated_at = models.DateTimeField(blank=True, null=True) # Nuevo campo para la fecha de actualización del CBU
 
   def __str__(self):
     return self.nom_provee
