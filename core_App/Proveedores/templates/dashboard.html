@@ -1,133 +1,66 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-  <title>Tablero de Control Moderno</title>
-  <style>
-    body {
-      background-color: #f8f9fa; /* Un fondo suave */
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente más moderna */
-    }
+{% load static %}
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+      <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+      <title>Tablero de Control Moderno</title>
+      <link rel="stylesheet" href="{% static 'dashboard.css' %}">
+    </head>
+    <body>
+      <div class="container mt-4 mb-5">
+        <div class="dashboard-header text-center">
+          <h1 class="display-4">Tablero de Control</h1>
+        </div>
 
-    .dashboard-header {
-      padding-top: 30px;
-      padding-bottom: 30px;
-      color: #343a40;
-    }
+        <div class="row justify-content-center">
+          <div class="col-md-6 col-lg-4 mb-4">
+            <a href="/Proveedores/mis-datos/" class="dashboard-card card-mis-datos">
+              <i class="fas fa-user icon"></i>
+              <h5>Mis Datos</h5>
+            </a>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <a href="/Proveedores/comprobantes/" class="dashboard-card card-comprobantes">
+              <i class="fas fa-file-invoice icon"></i>
+              <h5>Comprobantes</h5>
+            </a>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="dashboard-card card-resumenCuentas">
+              <i class="fas fa-chart-line icon"></i>
+              <h5>Resumen de Cuenta</h5>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="dashboard-card disabled">
+              <i class="fas fa-cogs icon"></i>
+              <h5>Botón 4</h5>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="dashboard-card disabled">
+              <i class="fas fa-envelope icon"></i>
+              <h5>Botón 5</h5>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="dashboard-card disabled">
+              <i class="fas fa-question-circle icon"></i>
+              <h5>Botón 6</h5>
+            </div>
+          </div>
+        </div>
 
-    .dashboard-card {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 180px; /* Aumentamos un poco la altura */
-      padding: 25px;
-      text-align: center;
-      color: white;
-      border-radius: 15px; /* Bordes más redondeados */
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      text-decoration: none; /* Para los 'a' que son cards */
-    }
-
-    .dashboard-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-      text-decoration: none; /* Mantener sin subrayado en hover */
-      color: white; /* Asegurar que el color del texto no cambie en hover si es un 'a' */
-    }
-
-    .dashboard-card.disabled {
-      background-color: #e9ecef; /* Gris más claro para deshabilitados */
-      color: #6c757d; /* Texto más oscuro para contraste en fondo claro */
-      pointer-events: none;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Sombra más sutil */
-    }
-    .dashboard-card.disabled .icon {
-      color: #adb5bd; /* Icono más claro en deshabilitados */
-    }
-
-    .card-mis-datos { background: linear-gradient(45deg, #007bff, #0056b3); }
-    .card-comprobantes { background: linear-gradient(45deg, #343a40, #1d2124); } /* Un gris oscuro elegante */
-    .card-resumenCuentas { background: linear-gradient(45deg, #28a745, #1e7e34); }
-    /* Los botones deshabilitados usan .disabled, así que no necesitan color específico aquí */
-
-    .icon {
-      font-size: 48px; /* Iconos más grandes */
-      margin-bottom: 15px;
-    }
-
-    .dashboard-card h5 {
-        font-size: 1.1rem;
-        font-weight: 500;
-    }
-
-    .btn-logout {
-        padding: 10px 25px;
-        font-size: 1rem;
-    }
-  </style>
-</head>
-<body>
-  <div class="container mt-4 mb-5">
-    <div class="dashboard-header text-center">
-      <h1 class="display-4">Tablero de Control</h1>
-    </div>
-
-    <div class="row justify-content-center">
-      <div class="col-md-6 col-lg-4 mb-4">
-        <a href="/Proveedores/mis-datos/" class="dashboard-card card-mis-datos">
-          <i class="fas fa-user icon"></i>
-          <h5>Mis Datos</h5>
-        </a>
-      </div>
-      <div class="col-md-6 col-lg-4 mb-4">
-        <a href="/Proveedores/comprobantes/" class="dashboard-card card-comprobantes">
-          <i class="fas fa-file-invoice icon"></i>
-          <h5>Comprobantes</h5>
-        </a>
-      </div>
-      <div class="col-md-6 col-lg-4 mb-4">
-        <div class="dashboard-card card-resumenCuentas">
-          <i class="fas fa-chart-line icon"></i>
-          <h5>Resumen de Cuenta</h5>
+        <div class="text-center mt-4 mb-4">
+            <button class="btn btn-outline-danger btn-logout" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+            </button>
         </div>
       </div>
-      <div class="col-md-6 col-lg-4 mb-4">
-        <div class="dashboard-card disabled">
-          <i class="fas fa-cogs icon"></i>
-          <h5>Botón 4</h5>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-4 mb-4">
-        <div class="dashboard-card disabled">
-          <i class="fas fa-envelope icon"></i>
-          <h5>Botón 5</h5>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-4 mb-4">
-        <div class="dashboard-card disabled">
-          <i class="fas fa-question-circle icon"></i>
-          <h5>Botón 6</h5>
-        </div>
-      </div>
-    </div>
 
-    <div class="text-center mt-4 mb-4">
-        <button class="btn btn-outline-danger btn-logout" onclick="logout()">
-            <i class="fas fa-sign-out-alt"></i> Cerrar sesión
-        </button>
-    </div>
-  </div>
-
-  <script>
-    function logout() {
-      sessionStorage.removeItem('jwt');
-      window.location.href = '/Proveedores/acceder/';
-    }
-  </script>
-</body>
-</html>
+      <script src="{% static 'dashboard.js' %}"></script>
+    </body>
+    </html>

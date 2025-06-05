@@ -1,263 +1,71 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Comprobantes - Carga y Listado</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    body {
-      background: #f8f9fa;
-      padding: 2rem;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .form-section {
-      background: #fff;
-      padding: 1.5rem;
-      border-radius: 0.5rem;
-      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
-      margin-bottom: 2rem;
-    }
-    .comprobante-list {
-      background: #fff;
-      padding: 1.5rem;
-      border-radius: 0.5rem;
-      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
-    }
-    .comprobante-item {
-      border-bottom: 1px solid #dee2e6;
-      padding: 0.75rem 0;
-    }
-    .comprobante-item:last-child {
-      border-bottom: none;
-    }
-    .file-label {
-      cursor: pointer;
-    }
-    .btn-upload {
-      margin-top: 0.5rem;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1 class="mb-4">Carga de Comprobantes</h1>
+{% load static %}
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>Comprobantes - Carga y Listado</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+      <link rel="stylesheet" href="{% static 'comprobantes.css' %}">
+    </head>
+    <body>
+      <div class="container">
+        <h1 class="mb-4">Carga de Comprobantes</h1>
 
-    <div class="form-section">
-      <form id="comprobanteForm" novalidate>
-        <div class="mb-3">
-          <label for="tipo" class="form-label">Tipo de Comprobante <span class="text-danger">*</span></label>
-          <select class="form-select" id="tipo" name="tipo" required>
-            <option value="" selected disabled>Seleccione...</option>
-            <option value="Factura A">Factura A</option>
-            <option value="Factura B">Factura B</option>
-            <option value="Factura C">Factura C</option>
-            <option value="Nota de Crédito">Nota de Crédito</option>
-            <option value="Nota de Débito">Nota de Débito</option>
-          </select>
-          <div class="invalid-feedback">Seleccione un tipo válido.</div>
+        <div class="form-section">
+          <form id="comprobanteForm" novalidate>
+            <div class="mb-3">
+              <label for="tipo" class="form-label">Tipo de Comprobante <span class="text-danger">*</span></label>
+              <select class="form-select" id="tipo" name="tipo" required>
+                <option value="" selected disabled>Seleccione...</option>
+                <option value="Factura A">Factura A</option>
+                <option value="Factura B">Factura B</option>
+                <option value="Factura C">Factura C</option>
+                <option value="Nota de Crédito">Nota de Crédito</option>
+                <option value="Nota de Débito">Nota de Débito</option>
+              </select>
+              <div class="invalid-feedback">Seleccione un tipo válido.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="numero" class="form-label">Número de Comprobante <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="numero" name="numero" required />
+              <div class="invalid-feedback">Ingrese el número de comprobante.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="fecha_emision" class="form-label">Fecha de Emisión <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" required />
+              <div class="invalid-feedback">Ingrese la fecha de emisión.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="monto_total" class="form-label">Monto Total <span class="text-danger">*</span></label>
+              <input type="number" step="0.01" min="0" class="form-control" id="monto_total" name="monto_total" required />
+              <div class="invalid-feedback">Ingrese un monto válido.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="archivo" class="form-label">Archivo adjunto (PDF, JPEG, PNG) <span class="text-danger">*</span></label>
+              <input type="file" class="form-control" id="archivo" name="archivo" accept=".pdf,.jpeg,.jpg,.png" required />
+              <div class="invalid-feedback">Seleccione un archivo válido.</div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <button type="button" class="btn btn-secondary" onclick="goToDashboard()">Volver al Inicio</button>
+              <button type="submit" class="btn btn-primary btn-upload">Cargar Comprobante</button>
+            </div>
+          </form>
         </div>
 
-        <div class="mb-3">
-          <label for="numero" class="form-label">Número de Comprobante <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="numero" name="numero" required />
-          <div class="invalid-feedback">Ingrese el número de comprobante.</div>
+        <div class="comprobante-list">
+          <h2>Comprobantes Cargados</h2>
+          <div id="listaComprobantes" class="list-group">
+            <!-- Comprobantes cargados aparecerán aquí -->
+          </div>
         </div>
-
-        <div class="mb-3">
-          <label for="fecha_emision" class="form-label">Fecha de Emisión <span class="text-danger">*</span></label>
-          <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" required />
-          <div class="invalid-feedback">Ingrese la fecha de emisión.</div>
-        </div>
-
-        <div class="mb-3">
-          <label for="monto_total" class="form-label">Monto Total <span class="text-danger">*</span></label>
-          <input type="number" step="0.01" min="0" class="form-control" id="monto_total" name="monto_total" required />
-          <div class="invalid-feedback">Ingrese un monto válido.</div>
-        </div>
-
-        <div class="mb-3">
-          <label for="archivo" class="form-label">Archivo adjunto (PDF, JPEG, PNG) <span class="text-danger">*</span></label>
-          <input type="file" class="form-control" id="archivo" name="archivo" accept=".pdf,.jpeg,.jpg,.png" required />
-          <div class="invalid-feedback">Seleccione un archivo válido.</div>
-        </div>
-
-        <div class="d-flex justify-content-between">
-          <button type="button" class="btn btn-secondary" onclick="goToDashboard()">Volver al Inicio</button>
-          <button type="submit" class="btn btn-primary btn-upload">Cargar Comprobante</button>
-        </div>
-      </form>
-    </div>
-
-    <div class="comprobante-list">
-      <h2>Comprobantes Cargados</h2>
-      <div id="listaComprobantes" class="list-group">
-        <!-- Comprobantes cargados aparecerán aquí -->
       </div>
-    </div>
-  </div>
 
-  <script>
-    (function() {
-      const jwt = sessionStorage.getItem('jwt');
-      if (!jwt) {
-        alert('Debe iniciar sesión para acceder a esta página.');
-        window.location.href = '/Proveedores/acceder/';
-        return;
-      }
-
-    
-      const form = document.getElementById('comprobanteForm');
-      const listaComprobantes = document.getElementById('listaComprobantes');
-
-      function mostrarError(input, mensaje) {
-        input.classList.add('is-invalid');
-        const feedback = input.nextElementSibling;
-        if (feedback) feedback.textContent = mensaje;
-      }
-
-      function limpiarErrores() {
-        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-      }
-
-      function validarFormulario() {
-        limpiarErrores();
-        let valido = true;
-
-        const tipo = form.tipo.value;
-        if (!tipo) {
-          mostrarError(form.tipo, 'Seleccione un tipo válido.');
-          valido = false;
-        }
-
-        if (!form.numero.value.trim()) {
-          mostrarError(form.numero, 'Ingrese el número de comprobante.');
-          valido = false;
-        }
-
-        if (!form.fecha_emision.value) {
-          mostrarError(form.fecha_emision, 'Ingrese la fecha de emisión.');
-          valido = false;
-        }
-
-        const monto = parseFloat(form.monto_total.value);
-        if (isNaN(monto) || monto < 0) {
-          mostrarError(form.monto_total, 'Ingrese un monto válido.');
-          valido = false;
-        }
-
-        const archivo = form.archivo.files[0];
-        if (!archivo) {
-          mostrarError(form.archivo, 'Seleccione un archivo válido.');
-          valido = false;
-        } else {
-          const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-          if (!validTypes.includes(archivo.type)) {
-            mostrarError(form.archivo, 'Formato no permitido. Solo PDF, JPEG y PNG.');
-            valido = false;
-          }
-          if (archivo.size > 10 * 1024 * 1024) {
-            mostrarError(form.archivo, 'Archivo demasiado grande. Máximo 10MB.');
-            valido = false;
-          }
-        }
-
-        return valido;
-      }
-
-      async function cargarComprobante(formData) {
-        try {
-          const resp = await fetch('/Proveedores/api/comprobantes/', {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer ' + jwt
-            },
-            body: formData
-          });
-          if (!resp.ok) {
-            const errorData = await resp.json();
-            let mensajes = [];
-            for (const key in errorData) {
-              mensajes.push(`${key}: ${Array.isArray(errorData[key]) ? errorData[key].join(', ') : errorData[key]}`);
-            }
-            alert('Error al cargar comprobante:\n' + mensajes.join('\n'));
-            return false;
-          }
-          return true;
-        } catch (error) {
-          alert('Error de red al cargar comprobante.');
-          return false;
-        }
-      }
-
-      async function listarComprobantes() {
-        try {
-          const resp = await fetch('/Proveedores/api/comprobantes/', {
-            headers: {
-              'Authorization': 'Bearer ' + jwt
-            }
-          });
-          if (!resp.ok) {
-            listaComprobantes.innerHTML = '<div class="text-danger">Error al cargar comprobantes.</div>';
-            window.location.href = '/Proveedores/acceder/';
-            return;
-          }
-          const data = await resp.json();
-          if (data.length === 0) {
-            listaComprobantes.innerHTML = '<div class="text-muted">No hay comprobantes cargados.</div>';
-            return;
-          }
-          listaComprobantes.innerHTML = '';
-          data.forEach(c => {
-            const item = document.createElement('div');
-            item.className = 'list-group-item d-flex justify-content-between align-items-center comprobante-item';
-            const fecha = new Date(c.fecha_emision).toLocaleDateString('es-AR');
-            item.innerHTML = `
-              <div>
-                <strong>${c.tipo}</strong> - Nº ${c.numero} <br />
-                Fecha: ${fecha} - Monto: $${parseFloat(c.monto_total).toFixed(2)} <br />
-                Estado: <span class="badge bg-success">${c.estado}</span>
-              </div>
-              <div>
-                <a href="${c.archivo_url}" target="_blank" class="btn btn-sm btn-outline-primary">Ver Archivo</a>
-              </div>
-            `;
-            listaComprobantes.appendChild(item);
-          });
-        } catch (error) {
-          listaComprobantes.innerHTML = '<div class="text-danger">Error de red al cargar comprobantes.</div>';
-        }
-      }
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!validarFormulario()) return;
-
-        const formData = new FormData();
-        formData.append('tipo', form.tipo.value);
-        formData.append('numero', form.numero.value.trim());
-        formData.append('fecha_emision', form.fecha_emision.value);
-        formData.append('monto_total', form.monto_total.value);
-        formData.append('archivo', form.archivo.files[0]);
-
-        form.querySelector('button[type="submit"]').disabled = true;
-        const exito = await cargarComprobante(formData);
-        form.querySelector('button[type="submit"]').disabled = false;
-
-        if (exito) {
-          alert('Comprobante cargado correctamente.');
-          form.reset();
-          listarComprobantes();
-        }
-      });
-
-      listarComprobantes();
-    })();
-
-  // Funcion para volver al inicio
-  function goToDashboard() {
-    window.location.href = '/Proveedores/dashboard/';
-  }
-  </script>
-</body>
-</html>
+      <script src="{% static 'comprobantes.js' %}"></script>
+    </body>
+    </html>
