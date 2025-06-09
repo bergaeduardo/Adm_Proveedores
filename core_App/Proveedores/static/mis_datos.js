@@ -45,6 +45,7 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
                 // Requerido y cargado
                 statusTextElement.textContent = 'Archivo cargado: ' + fileName;
                 actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-1" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg> Ver Documento`;
+                // MODIFIED: Call viewDocument with the fileUrl
                 actionButton.onclick = () => viewDocument(fileUrl);
                 actionButton.classList.add('btn-outline-secondary');
                 documentCard.classList.add('status-present');
@@ -65,6 +66,7 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
                 // Opcional y cargado
                 statusTextElement.textContent = 'Archivo cargado: ' + fileName;
                 actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-1" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg> Ver Documento`;
+                 // MODIFIED: Call viewDocument with the fileUrl
                 actionButton.onclick = () => viewDocument(fileUrl);
                 actionButton.classList.add('btn-outline-secondary');
                 documentCard.classList.add('status-present');
@@ -87,6 +89,11 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
       let codCpa01Value = null;
       let initialData = {};
       let codPais = null;
+
+      // Initialize the document viewer modal instance
+      const documentViewerModal = new bootstrap.Modal(document.getElementById('documentViewerModal'));
+      const documentViewerModalBody = document.getElementById('documentViewerModalBody');
+
 
       const camposPrincipalesEditables = [
         { key: "nom_provee", label: "Razon social" }, { key: "n_cuit", label: "CUIT" },
@@ -633,22 +640,24 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
       document.querySelectorAll('.file-input').forEach(input => {
         input.addEventListener('change', function() {
           const fileInputId = this.id;
-          const fileName = this.files[0] ? this.files[0].name : null;
+          const file = this.files[0];
+          const fileName = file ? file.name : null;
           const esRequerido = getDynamicRequiredDocumentIds().includes(fileInputId); // Usar la función dinámica
 
-          actualizarUICardDocumento(fileInputId, fileName, '#', esRequerido);
+          // Update UI immediately with local file info (no URL yet)
+          actualizarUICardDocumento(fileInputId, fileName, null, esRequerido);
 
-          if (this.files[0]) {
+          if (file) {
               const maxFileSize = 5 * 1024 * 1024;
               const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-              if (this.files[0].size > maxFileSize) {
+              if (file.size > maxFileSize) {
                   alert(`El archivo "${fileName}" es demasiado grande (máx. 5MB). No se subirá.`); this.value = '';
-                  actualizarUICardDocumento(fileInputId, null, '#', esRequerido);
+                  actualizarUICardDocumento(fileInputId, null, null, esRequerido); // Reset UI on error
                   return;
               }
-              if (!allowedTypes.includes(this.files[0].type)) {
+              if (!allowedTypes.includes(file.type)) {
                   alert(`Tipo de archivo no permitido para "${fileName}". Permitidos: PDF, JPG, PNG, DOC, DOCX.`); this.value = '';
-                  actualizarUICardDocumento(fileInputId, null, '#', esRequerido);
+                  actualizarUICardDocumento(fileInputId, null, null, esRequerido); // Reset UI on error
                   return;
               }
           }
@@ -906,9 +915,50 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
     function goToDashboard() { window.location.href = '/Proveedores/dashboard/'; }
     function triggerUpload(fileInputId) { document.getElementById(fileInputId).click(); }
 
+    // MODIFIED: Function to display document in modal
     function viewDocument(path) {
+      const documentViewerModal = new bootstrap.Modal(document.getElementById('documentViewerModal'));
+      const documentViewerModalBody = document.getElementById('documentViewerModalBody');
+
       if (path && path !== '#' && !path.startsWith('blob:')) {
-          window.open(path, '_blank');
+          documentViewerModalBody.innerHTML = ''; // Clear previous content
+          const fileExtension = path.split('.').pop().toLowerCase();
+
+          if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+              const img = document.createElement('img');
+              img.src = path;
+              img.classList.add('img-fluid', 'mw-100', 'mh-100'); // Make image responsive and fit modal
+              img.style.maxHeight = '80vh'; // Limit height to prevent overflow
+              documentViewerModalBody.appendChild(img);
+          } else if (fileExtension === 'pdf') {
+              const embed = document.createElement('embed');
+              embed.src = path;
+              embed.type = 'application/pdf';
+              embed.style.width = '100%';
+              embed.style.height = '80vh'; // Set a fixed height for PDF viewer
+              documentViewerModalBody.appendChild(embed);
+          } else if (['doc', 'docx'].includes(fileExtension)) {
+               // For Word documents, provide a link to download/view in browser if supported
+               const link = document.createElement('a');
+               link.href = path;
+               link.textContent = `Descargar o ver documento (${fileExtension.toUpperCase()})`;
+               link.target = '_blank';
+               link.classList.add('btn', 'btn-secondary', 'mt-3');
+               documentViewerModalBody.innerHTML = '<p>Este tipo de archivo puede no visualizarse directamente en el navegador.</p>';
+               documentViewerModalBody.appendChild(link);
+          }
+           else {
+              // Fallback for other types or if type is unknown
+              const link = document.createElement('a');
+              link.href = path;
+              link.textContent = 'Ver documento (abrir en nueva pestaña)';
+              link.target = '_blank';
+              link.classList.add('btn', 'btn-secondary', 'mt-3');
+              documentViewerModalBody.innerHTML = '<p>No se puede previsualizar este tipo de archivo.</p>';
+              documentViewerModalBody.appendChild(link);
+          }
+
+          documentViewerModal.show(); // Show the modal
       } else if (path && path.startsWith('blob:')) {
           alert('El archivo está seleccionado localmente. Se enviará al guardar.');
       }
