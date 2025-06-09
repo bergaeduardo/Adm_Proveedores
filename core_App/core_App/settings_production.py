@@ -95,6 +95,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+# X_FRAME_OPTIONS = ALLOWED_HOSTS
+
 # Cierra la sesión al cerrar el navegador
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # Para que las sesiones duren 1 día:

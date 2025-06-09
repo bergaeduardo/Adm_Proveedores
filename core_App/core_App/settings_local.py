@@ -6,6 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'your-secret-key'
 DEBUG = True
 ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = ['example.com', 'www.example.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -105,6 +106,9 @@ REST_FRAMEWORK = {
 DATABASE_ROUTERS = ['core_App.db_routers.DatabaseRouter']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+# X_FRAME_OPTIONS = ALLOWED_HOSTS
 
 # Cierra la sesión al cerrar el navegador
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

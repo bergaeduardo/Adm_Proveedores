@@ -8,15 +8,43 @@
 
       const form = document.getElementById('comprobanteForm');
       const listaComprobantes = document.getElementById('listaComprobantes');
+      const montoTotalInput = document.getElementById('monto_total');
+
+      // Initialize IMask for monto_total
+      const montoMask = IMask(montoTotalInput, {
+        mask: '$num',
+        lazy: false,
+        blocks: {
+          num: {
+            mask: Number,
+            thousandsSeparator: '.',
+            radix: ',',
+            mapToRadix: ['.'],
+            scale: 2,
+            signed: false,
+            padFractionalZeros: true,
+            normalizeZeros: true,
+            min: 0
+          }
+        }
+      });
+
 
       function mostrarError(input, mensaje) {
         input.classList.add('is-invalid');
         const feedback = input.nextElementSibling;
-        if (feedback) feedback.textContent = mensaje;
+        // Check if the next sibling is the small text instruction for 'numero'
+        if (input.id === 'numero' && feedback && feedback.tagName === 'SMALL') {
+             const invalidFeedback = feedback.nextElementSibling;
+             if(invalidFeedback) invalidFeedback.textContent = mensaje;
+        } else if (feedback) {
+            feedback.textContent = mensaje;
+        }
       }
 
       function limpiarErrores() {
         form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = ''); // Clear feedback messages
       }
 
       function validarFormulario() {
@@ -39,7 +67,8 @@
           valido = false;
         }
 
-        const monto = parseFloat(form.monto_total.value);
+        // Use the unmasked value from IMask
+        const monto = parseFloat(montoMask.unmaskedValue);
         if (isNaN(monto) || monto < 0) {
           mostrarError(form.monto_total, 'Ingrese un monto válido.');
           valido = false;
@@ -50,7 +79,7 @@
           mostrarError(form.archivo, 'Seleccione un archivo válido.');
           valido = false;
         } else {
-          const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+          const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']; // Added .jpg
           if (!validTypes.includes(archivo.type)) {
             mostrarError(form.archivo, 'Formato no permitido. Solo PDF, JPEG y PNG.');
             valido = false;
@@ -97,8 +126,13 @@
             }
           });
           if (!resp.ok) {
+             // If unauthorized, redirect to login
+            if (resp.status === 401) {
+               alert('Sesión expirada o no autorizada. Por favor, inicie sesión nuevamente.');
+               window.location.href = '/Proveedores/acceder/';
+               return;
+            }
             listaComprobantes.innerHTML = '<div class="text-danger">Error al cargar comprobantes.</div>';
-            window.location.href = '/Proveedores/acceder/';
             return;
           }
           const data = await resp.json();
@@ -115,6 +149,7 @@
               <div>
                 <strong>${c.tipo}</strong> - Nº ${c.numero} <br />
                 Fecha: ${fecha} - Monto: $${parseFloat(c.monto_total).toFixed(2)} <br />
+                Orden de Compra: ${c.Num_Oc || 'N/A'} <br />
                 Estado: <span class="badge bg-success">${c.estado}</span>
               </div>
               <div>
@@ -136,8 +171,10 @@
         formData.append('tipo', form.tipo.value);
         formData.append('numero', form.numero.value.trim());
         formData.append('fecha_emision', form.fecha_emision.value);
-        formData.append('monto_total', form.monto_total.value);
+        // Append the unmasked value
+        formData.append('monto_total', montoMask.unmaskedValue);
         formData.append('archivo', form.archivo.files[0]);
+        formData.append('Num_Oc', document.getElementById('Num_Oc').value.trim()); // Trim OC field
 
         form.querySelector('button[type="submit"]').disabled = true;
         const exito = await cargarComprobante(formData);
@@ -146,6 +183,7 @@
         if (exito) {
           alert('Comprobante cargado correctamente.');
           form.reset();
+          montoMask.updateValue(''); // Reset the masked input value
           listarComprobantes();
         }
       });

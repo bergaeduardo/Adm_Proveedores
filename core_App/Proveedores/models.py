@@ -6,19 +6,8 @@ import os
 import datetime
 
 def documentos_upload_path(instance, filename):
-    # Limpiar el nombre del proveedor para evitar caracteres problemáticos en la ruta
-    # Usar username_django.username que es único y más predecible que nom_provee
     proveedor_identifier = instance.username_django.username if instance.username_django else 'sin_usuario'
-    
-    # Obtener el nombre del campo que está llamando a esta función
-    # Esto requiere un pequeño truco o pasar el field_name explícitamente si es necesario diferenciar subcarpetas por tipo de doc.
-    # Para este caso, todos van a una carpeta general de documentos del proveedor.
-    # Opcional: crear subfolders por tipo de documento si es necesario
-    # field_name = '' # Determinar el field_name si se necesita
-    # subfolder = field_name.replace('_file', '') # ej: cuit, ingBrutos
-
     fecha_hoy = datetime.date.today()
-    # Ruta: documentos/{username_proveedor}/{YYYY}/{MM}/{DD}/{filename}
     return f'documentos/{proveedor_identifier}/{fecha_hoy.year}/{fecha_hoy.month:02d}/{fecha_hoy.day:02d}/{filename}'
 
 def comprobante_upload_path(instance, filename):
@@ -28,6 +17,7 @@ def comprobante_upload_path(instance, filename):
 
 
 class Proveedor(models.Model):
+  # ... [sin cambios en Proveedor] ...
   cod_cpa01 = models.CharField(db_column='COD_CPA01', max_length=10, unique=True, blank=True, null=True)
   id_tipo_documento_gv = models.IntegerField(db_column='ID_TIPO_DOCUMENTO_GV', blank=True, null=True)
   n_cuit = models.CharField(db_column='N_CUIT', max_length=15, blank=True, null=True)
@@ -129,10 +119,10 @@ class Proveedor(models.Model):
   ing_brutos_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
   excl_ganancias_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
   cm05_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
-  no_ret_ganancias_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True) # Certificado de No Retención de ganancias
-  excl_iibb_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)        # Certificado de Exclusión de Ingresos Brutos
-  no_ret_iibb_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)      # Certificado de No Retención de Ingresos Brutos
-  cbu_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True) # Nuevo campo para Constancia de CBU
+  no_ret_ganancias_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
+  excl_iibb_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
+  no_ret_iibb_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
+  cbu_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
 
   # Fechas de actualización de cada archivo
   cuit_file_updated_at = models.DateTimeField(blank=True, null=True)
@@ -142,7 +132,7 @@ class Proveedor(models.Model):
   no_ret_ganancias_file_updated_at = models.DateTimeField(blank=True, null=True)
   excl_iibb_file_updated_at = models.DateTimeField(blank=True, null=True)
   no_ret_iibb_file_updated_at = models.DateTimeField(blank=True, null=True)
-  cbu_file_updated_at = models.DateTimeField(blank=True, null=True) # Nuevo campo para la fecha de actualización del CBU
+  cbu_file_updated_at = models.DateTimeField(blank=True, null=True)
 
   def __str__(self):
     return self.nom_provee
@@ -160,6 +150,7 @@ class Comprobante(models.Model):
   numero = models.CharField(max_length=50)
   fecha_emision = models.DateField()
   monto_total = models.DecimalField(max_digits=14, decimal_places=2)
+  Num_Oc = models.CharField(max_length=50, blank=True, null=True, verbose_name="Orden de Compra asociada")  # NUEVO CAMPO
   archivo = models.FileField(upload_to=comprobante_upload_path)
   estado = models.CharField(max_length=20, default='Recibido')
   creado_en = models.DateTimeField(auto_now_add=True)
@@ -179,24 +170,24 @@ class Comprobante(models.Model):
 class CpaContactosProveedorHabitual(models.Model):
     id = models.AutoField(primary_key=True)
     id_cpa_contactos_proveedor_habitual_sql = models.IntegerField(
-        db_column='ID_CPA_CONTACTOS_PROVEEDOR_HABITUAL_SQL', # Nombre de columna en PostgreSQL
+        db_column='ID_CPA_CONTACTOS_PROVEEDOR_HABITUAL_SQL',
         blank=True, 
         null=True,
         help_text="ID de la tabla original en SQL Server, se llena después de la sincronización."
     )
-    cargo = models.CharField(db_column='CARGO', max_length=20, blank=True, null=True)  # Field name made lowercase.       
-    defecto = models.CharField(db_column='DEFECTO', max_length=1, blank=True, null=True)  # Field name made lowercase.    
-    cod_provee = models.CharField(db_column='COD_PROVEE', max_length=6,blank=True, null=True)  # Field name made lowercase.
-    nombre = models.CharField(db_column='NOMBRE', max_length=30, blank=True, null=True)  # Field name made lowercase.     
-    telefono = models.CharField(db_column='TELEFONO', max_length=30, blank=True, null=True)  # Field name made lowercase. 
-    telefono_movil = models.CharField(db_column='TELEFONO_MOVIL', max_length=30, blank=True, null=True)  # Field name made lowercase.
-    email = models.CharField(db_column='EMAIL', max_length=255, blank=True, null=True)  # Field name made lowercase.      
-    direccion = models.CharField(db_column='DIRECCION', max_length=30, blank=True, null=True)  # Field name made lowercase.
-    observacion = models.CharField(db_column='OBSERVACION', max_length=60, blank=True, null=True)  # Field name made lowercase.
-    tipo_documento = models.SmallIntegerField(db_column='TIPO_DOCUMENTO', blank=True, null=True)  # Field name made lowercase.
-    numero_documento = models.CharField(db_column='NUMERO_DOCUMENTO', max_length=20, blank=True, null=True)  # Field name made lowercase.
-    envia_pdf_oc = models.CharField(db_column='ENVIA_PDF_OC', max_length=1, blank=True, null=True)  # Field name made lowercase.
-    envia_pdf_op = models.CharField(db_column='ENVIA_PDF_OP', max_length=1, blank=True, null=True)  # Field name made lowercase.
+    cargo = models.CharField(db_column='CARGO', max_length=20, blank=True, null=True)      
+    defecto = models.CharField(db_column='DEFECTO', max_length=1, blank=True, null=True)   
+    cod_provee = models.CharField(db_column='COD_PROVEE', max_length=6,blank=True, null=True)
+    nombre = models.CharField(db_column='NOMBRE', max_length=30, blank=True, null=True)    
+    telefono = models.CharField(db_column='TELEFONO', max_length=30, blank=True, null=True)
+    telefono_movil = models.CharField(db_column='TELEFONO_MOVIL', max_length=30, blank=True, null=True)
+    email = models.CharField(db_column='EMAIL', max_length=255, blank=True, null=True)     
+    direccion = models.CharField(db_column='DIRECCION', max_length=30, blank=True, null=True)
+    observacion = models.CharField(db_column='OBSERVACION', max_length=60, blank=True, null=True)
+    tipo_documento = models.SmallIntegerField(db_column='TIPO_DOCUMENTO', blank=True, null=True)
+    numero_documento = models.CharField(db_column='NUMERO_DOCUMENTO', max_length=20, blank=True, null=True)
+    envia_pdf_oc = models.CharField(db_column='ENVIA_PDF_OC', max_length=1, blank=True, null=True)
+    envia_pdf_op = models.CharField(db_column='ENVIA_PDF_OP', max_length=1, blank=True, null=True)
     username_django = models.ForeignKey(User, db_column='USERNAME_DJANGO', on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
