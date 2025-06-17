@@ -1,11 +1,22 @@
+from dotenv import load_dotenv
 import os
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-production-secret-key')
-DEBUG = False
-ALLOWED_HOSTS = ['yourdomain.com']
+BASE_DIR = Path(__file__).resolve().parent.parent
+CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env_path = os.path.join(BASE_DIR, '.env')
+
+# print(f"La ruta completa del archivo .env es: {env_path}")
+# Intenta con dotenv_path
+load_dotenv(dotenv_path=env_path, verbose=True)
+
+# print("POSTGRES_DB:", os.environ.get("POSTGRES_DB"))
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'S#perS3crEt_1122')
+DEBUG = True
+# ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['*']
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -17,6 +28,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'Proveedores',
+    'consultasTango',  # <--- App renombrada
 ]
 
 MIDDLEWARE = [
@@ -52,21 +64,21 @@ WSGI_APPLICATION = 'core_App.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'proveedores_xl'),
-        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'extra,123'),
-        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
-        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('POSTGRES_HOST'),
+        'PORT': os.environ.get('POSTGRES_PORT'),
     },
     'sqlserver': {
         'ENGINE': 'mssql',
-        'NAME': os.environ.get('MSSQL_DB', 'Empresa_Ejemplo'),
-        'USER': os.environ.get('MSSQL_USER', 'sa'),
-        'PASSWORD': os.environ.get('MSSQL_PASSWORD', 'Axoft1988'),
-        'HOST': os.environ.get('MSSQL_HOST', 'SERVIDOR'),
-        'PORT': os.environ.get('MSSQL_PORT', '1433'),
+        'NAME': os.environ.get('MSSQL_DB'),
+        'USER': os.environ.get('MSSQL_USER'),
+        'PASSWORD': os.environ.get('MSSQL_PASSWORD'),
+        'HOST': os.environ.get('MSSQL_HOST'),
+        'PORT': os.environ.get('MSSQL_PORT'),
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
+            'driver': 'ODBC Driver 13 for SQL Server',
         },
     },
 }
@@ -93,6 +105,12 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# Extra places for collectstatic to find static files.
+STATICFILES_DIRS = [CORE_DIR + '/Proveedores/static']
+print("STATICFILES_DIRS:", STATICFILES_DIRS)
+print('STATIC_ROOT: ',STATIC_ROOT)
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
@@ -110,3 +128,5 @@ REST_FRAMEWORK = {
 }
 
 DATABASE_ROUTERS = ['core_App.db_routers.DatabaseRouter']
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
