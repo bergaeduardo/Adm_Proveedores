@@ -414,7 +414,7 @@ class ResumenCuentaProveedorView(APIView):
         # Mapeo de nombres originales a claves sanitizadas para formateo
         date_fields_map = {
             'Fecha comprobante': 'Fecha_comprobante',
-            'Fecha vto.': 'Fecha_vto'
+            'Fecha vto.': 'Fecha_vto_' # <-- CORREGIDO: Usar la clave sanitizada correcta
         }
         currency_fields_map = {
             'Importe': 'Importe'
