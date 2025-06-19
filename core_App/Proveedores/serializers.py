@@ -18,6 +18,7 @@ from django.utils import timezone # Import timezone utilities
 SQL_TO_MODEL_MAPPING = {
     'N_CUIT': 'n_cuit',
     'NOM_PROVEE': 'nom_provee',
+    'COD_CPA01': 'cod_cpa01',
     'DOMICILIO': 'domicilio',
     'LOCALIDAD': 'localidad',
     'C_POSTAL': 'c_postal',
