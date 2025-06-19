@@ -20,6 +20,7 @@ import os
 from django.utils import timezone
 import re # Para validación de CUIT en ProveedorRegistroSerializer
 import traceback # Importar para imprimir el traceback completo si es necesario
+import decimal # Importar para manejar Decimal
 
 # No necesitas definir ProveedorViewSet dos veces. Usa la que ya está configurada para el router.
 # class ProveedorViewSet(viewsets.ModelViewSet):
@@ -227,7 +228,7 @@ class CambiarConexionView(APIView):
     cod_pais = request.data.get('cod_pais', 'AR')
     connection_alias = 'sqlserver' # El alias de la conexión en settings.DATABASES
     
-    db_name = 'Empresa_Ejemplo' # DB por defecto (AR)
+    db_name = 'LAKER_SA' # DB por defecto (AR)
     if cod_pais == 'UR':
       db_name = 'TASKY_SA'
     
@@ -251,6 +252,84 @@ class IngresosBrutosListView(APIView):
     data = [{'Cod_Ingresos_brutos': key, 'Desc_Ingresos_brutos': value} for key, value in Ingresos_brutos.items()]
     return Response(data, status=status.HTTP_200_OK)
   
+# --- Funciones de Formateo ---
+
+def format_date_ddmmyyyy(value):
+    """Formatea un valor de fecha a 'DD/MM/AAAA'."""
+    if isinstance(value, (datetime, date)):
+        # Si ya es un objeto date/datetime
+        return value.strftime('%d/%m/%Y')
+    elif isinstance(value, str):
+        try:
+            # Intentar parsear el formato YYYY-MM-DDTHH:MM:SS o YYYY-MM-DD
+            # Eliminar la 'Z' si está presente y manejar la parte de la hora opcional
+            value = value.replace('Z', '').split('.')[0] # Eliminar milisegundos si existen
+            try:
+                # Intentar como datetime completo
+                dt_obj = datetime.fromisoformat(value)
+            except ValueError:
+                 # Si falla, intentar solo la parte de la fecha
+                 dt_obj = datetime.strptime(value.split('T')[0], '%Y-%m-%d')
+
+            return dt_obj.strftime('%d/%m/%Y')
+        except (ValueError, TypeError):
+            # Si el parseo falla, devolver el valor original
+            return value
+    else:
+        # Si no es string ni objeto fecha, devolver tal cual
+        return value
+
+def format_currency_ars(value):
+    """Formatea un valor numérico a formato de moneda ARS (miles con '.', decimales con ',')."""
+    if value is None:
+        return "0,00" # O el valor deseado para None
+    try:
+        # Convertir a Decimal para manejo preciso de decimales
+        num = decimal.Decimal(value)
+        # Redondear a 2 decimales
+        num = num.quantize(decimal.Decimal('0.01'), rounding=decimal.ROUND_HALF_UP)
+
+        # Convertir a string para formateo manual de miles y decimales
+        num_str = str(num)
+
+        # Separar parte entera y decimal
+        if '.' in num_str:
+            integer_part, decimal_part = num_str.split('.')
+        else:
+            integer_part = num_str
+            decimal_part = '00' # Asegurar 2 decimales
+
+        # Manejar signo negativo
+        is_negative = integer_part.startswith('-')
+        if is_negative:
+            integer_part = integer_part[1:]
+
+        # Formatear parte entera con separador de miles '.'
+        formatted_integer_part = []
+        n = len(integer_part)
+        for i in range(n):
+            formatted_integer_part.append(integer_part[i])
+            # Añadir punto cada 3 dígitos desde la derecha, excepto al principio
+            if (n - 1 - i) % 3 == 0 and (n - 1 - i) != 0:
+                formatted_integer_part.append('.')
+
+        formatted_integer_part_str = "".join(formatted_integer_part)
+
+        # Combinar con separador de decimales ','
+        final_formatted_value = f"{formatted_integer_part_str},{decimal_part}"
+
+        # Añadir signo negativo de vuelta si es necesario
+        if is_negative:
+            final_formatted_value = f"-{final_formatted_value}"
+
+        return final_formatted_value
+    except (ValueError, TypeError, decimal.InvalidOperation):
+        # Manejar casos donde el valor no es un número válido
+        return str(value) # Devolver el valor original como string o un indicador de error
+
+# --- Fin Funciones de Formateo ---
+
+
 class ResumenCuentaProveedorView(APIView):
   """
   Endpoint para obtener el resumen de cuenta de un proveedor autenticado.
@@ -287,7 +366,7 @@ class ResumenCuentaProveedorView(APIView):
       first_day_current_month = today.replace(day=1)
       last_day_previous_month = first_day_current_month - relativedelta(days=1)
       fecha_hasta_default = last_day_previous_month.strftime('%Y-%m-%d')
-      
+
       fecha_desde_obj = first_day_current_month - relativedelta(months=3)
       fecha_desde_default = fecha_desde_obj.strftime('%Y-%m-%d')
 
@@ -304,13 +383,13 @@ class ResumenCuentaProveedorView(APIView):
             "EXEC dbo.EB_ConsultaResumenCuentaProveedor @FechaDesde=%s, @FechaHasta=%s, @Cod_Provee=%s",
             [fecha_desde_sp, fecha_hasta_sp, cod_provee]
         )
-        
-        # --- INICIO DE LA LÓGICA DE SANITIZACIÓN ---
+
+        # --- INICIO DE LA LÓGICA DE SANITIZACIÓN Y FORMATEO ---
 
         # 1. Obtener los nombres de columna originales de la base de datos
         original_columns = [col[0] for col in cursor.description]
         data = cursor.fetchall()
-        
+
         print(f"DEBUG: Obtenidas {len(data)} filas del SP.")
         if original_columns:
             print(f"DEBUG: Nombres de columnas originales del SP: {original_columns}")
@@ -318,7 +397,7 @@ class ResumenCuentaProveedorView(APIView):
         # 2. Crear una versión "limpia" de cada nombre de columna para usarla como clave JSON.
         #    Reemplaza cualquier carácter que no sea letra, número o guion bajo por un guion bajo.
         sanitized_keys = [re.sub(r'[^a-zA-Z0-9_]', '_', col) for col in original_columns]
-        
+
         if sanitized_keys:
             print(f"DEBUG: Nombres de columnas sanitizadas para JSON: {sanitized_keys}")
 
@@ -326,20 +405,46 @@ class ResumenCuentaProveedorView(APIView):
         #    'title' será el nombre original (lo que ve el usuario).
         #    'data' será la clave sanitizada (lo que usa JavaScript internamente).
         columns_for_datatables = [
-            {"title": orig_col, "data": san_key} 
+            {"title": orig_col, "data": san_key}
             for orig_col, san_key in zip(original_columns, sanitized_keys)
         ]
 
-        # 4. Formatear los datos de las filas, usando las claves sanitizadas.
-        resumen_data = [dict(zip(sanitized_keys, row)) for row in data]
+        # 4. Formatear los datos de las filas, usando las claves sanitizadas y aplicando formato.
+        resumen_data = []
+        # Mapeo de nombres originales a claves sanitizadas para formateo
+        date_fields_map = {
+            'Fecha comprobante': 'Fecha_comprobante',
+            'Fecha vto.': 'Fecha_vto'
+        }
+        currency_fields_map = {
+            'Importe': 'Importe'
+        }
+
+        for row in data:
+            row_dict = dict(zip(sanitized_keys, row))
+
+            # Aplicar formato de fecha
+            for original_col, sanitized_key in date_fields_map.items():
+                # Verificar si la clave sanitizada existe en el diccionario de la fila
+                if sanitized_key in row_dict:
+                    row_dict[sanitized_key] = format_date_ddmmyyyy(row_dict[sanitized_key])
+
+            # Aplicar formato de moneda
+            for original_col, sanitized_key in currency_fields_map.items():
+                 # Verificar si la clave sanitizada existe en el diccionario de la fila
+                 if sanitized_key in row_dict:
+                    row_dict[sanitized_key] = format_currency_ars(row_dict[sanitized_key])
+
+
+            resumen_data.append(row_dict)
 
         # 5. Construir la respuesta final que se enviará al frontend
         response_payload = {
             "data": resumen_data,
             "columns": columns_for_datatables
         }
-        
-        # --- FIN DE LA LÓGICA DE SANITIZACIÓN ---
+
+        # --- FIN DE LA LÓGICA DE SANITIZACIÓN Y FORMATEO ---
 
       return Response(response_payload, status=status.HTTP_200_OK)
 
