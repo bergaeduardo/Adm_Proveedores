@@ -2,6 +2,8 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Proveedor, Comprobante, CpaContactosProveedorHabitual 
 from consultasTango.models import Cpa57 # Asegúrate que esta importación sea correcta para tu proyecto
@@ -9,10 +11,15 @@ from .serializers import ProveedorRegistroSerializer, ProveedorSerializer, Compr
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.db import connections
+from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
+import json
+
 from rest_framework.decorators import api_view
 import os
 from django.utils import timezone
 import re # Para validación de CUIT en ProveedorRegistroSerializer
+import traceback # Importar para imprimir el traceback completo si es necesario
 
 # No necesitas definir ProveedorViewSet dos veces. Usa la que ya está configurada para el router.
 # class ProveedorViewSet(viewsets.ModelViewSet):
@@ -243,3 +250,104 @@ class IngresosBrutosListView(APIView):
   def get(self, request):
     data = [{'Cod_Ingresos_brutos': key, 'Desc_Ingresos_brutos': value} for key, value in Ingresos_brutos.items()]
     return Response(data, status=status.HTTP_200_OK)
+  
+class ResumenCuentaProveedorView(APIView):
+  """
+  Endpoint para obtener el resumen de cuenta de un proveedor autenticado.
+  Ejecuta el stored procedure dbo.EB_ConsultaResumenCuentaProveedor.
+  """
+  authentication_classes = [JWTAuthentication, SessionAuthentication] # Añadir explícitamente SessionAuthentication
+  permission_classes = [IsAuthenticated]
+
+  def get(self, request, *args, **kwargs):
+    # --- Depuración: Verificar estado del usuario ---
+    print(f"DEBUG: Accediendo a ResumenCuentaProveedorView")
+    print(f"DEBUG: Objeto User: {request.user}")
+    print(f"DEBUG: Usuario autenticado: {request.user.is_authenticated}")
+
+    user = request.user
+
+    if not user.is_authenticated:
+         print("DEBUG: El usuario NO está autenticado dentro del método de la vista.")
+         return Response({"error": "Usuario no autenticado dentro del método de la vista."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    print("DEBUG: El usuario SÍ está autenticado dentro del método de la vista. Procediendo...")
+
+    try:
+      # Obtener el proveedor asociado al usuario autenticado
+      proveedor = Proveedor.objects.get(username_django=user)
+      cod_provee = proveedor.cod_cpa01
+
+      if not cod_provee:
+         print("DEBUG: Proveedor encontrado pero cod_cpa01 es None.")
+         return Response({"error": "Proveedor no tiene código CPA01 asociado."}, status=status.HTTP_400_BAD_REQUEST)
+
+      # Calcular rango de fechas por defecto
+      today = date.today()
+      first_day_current_month = today.replace(day=1)
+      last_day_previous_month = first_day_current_month - relativedelta(days=1)
+      fecha_hasta_default = last_day_previous_month.strftime('%Y-%m-%d')
+      
+      fecha_desde_obj = first_day_current_month - relativedelta(months=3)
+      fecha_desde_default = fecha_desde_obj.strftime('%Y-%m-%d')
+
+      # Usar parámetros de la request si se proveen, de lo contrario usar los calculados
+      fecha_desde_sp = request.query_params.get('fecha_desde', fecha_desde_default)
+      fecha_hasta_sp = request.query_params.get('fecha_hasta', fecha_hasta_default)
+
+      print(f"DEBUG: Ejecutando SP con FechaDesde={fecha_desde_sp}, FechaHasta={fecha_hasta_sp}, Cod_Provee={cod_provee}")
+      print(f"DEBUG: Conectando a la base de datos: {connections['sqlserver'].settings_dict['NAME']}")
+
+      # Ejecutar stored procedure
+      with connections['sqlserver'].cursor() as cursor:
+        cursor.execute(
+            "EXEC dbo.EB_ConsultaResumenCuentaProveedor @FechaDesde=%s, @FechaHasta=%s, @Cod_Provee=%s",
+            [fecha_desde_sp, fecha_hasta_sp, cod_provee]
+        )
+        
+        # --- INICIO DE LA LÓGICA DE SANITIZACIÓN ---
+
+        # 1. Obtener los nombres de columna originales de la base de datos
+        original_columns = [col[0] for col in cursor.description]
+        data = cursor.fetchall()
+        
+        print(f"DEBUG: Obtenidas {len(data)} filas del SP.")
+        if original_columns:
+            print(f"DEBUG: Nombres de columnas originales del SP: {original_columns}")
+
+        # 2. Crear una versión "limpia" de cada nombre de columna para usarla como clave JSON.
+        #    Reemplaza cualquier carácter que no sea letra, número o guion bajo por un guion bajo.
+        sanitized_keys = [re.sub(r'[^a-zA-Z0-9_]', '_', col) for col in original_columns]
+        
+        if sanitized_keys:
+            print(f"DEBUG: Nombres de columnas sanitizadas para JSON: {sanitized_keys}")
+
+        # 3. Crear la lista de columnas para DataTables.
+        #    'title' será el nombre original (lo que ve el usuario).
+        #    'data' será la clave sanitizada (lo que usa JavaScript internamente).
+        columns_for_datatables = [
+            {"title": orig_col, "data": san_key} 
+            for orig_col, san_key in zip(original_columns, sanitized_keys)
+        ]
+
+        # 4. Formatear los datos de las filas, usando las claves sanitizadas.
+        resumen_data = [dict(zip(sanitized_keys, row)) for row in data]
+
+        # 5. Construir la respuesta final que se enviará al frontend
+        response_payload = {
+            "data": resumen_data,
+            "columns": columns_for_datatables
+        }
+        
+        # --- FIN DE LA LÓGICA DE SANITIZACIÓN ---
+
+      return Response(response_payload, status=status.HTTP_200_OK)
+
+    except Proveedor.DoesNotExist:
+      print("DEBUG: Excepción Proveedor.DoesNotExist capturada.")
+      return Response({"error": "Proveedor no encontrado para el usuario autenticado."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+      print(f"DEBUG: Excepción general capturada en la vista ResumenCuentaProveedorView: {e}")
+      # Imprimir el traceback completo en la consola del servidor para una depuración profunda
+      traceback.print_exc()
+      return Response({"error": "Ocurrió un error al obtener el resumen de cuenta."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -10,7 +10,8 @@ from .api import (
   CategoriaIVAListView,
   IngresosBrutosListView,
   ComprobanteViewSet,
-  CpaContactosProveedorHabitualViewSet
+  CpaContactosProveedorHabitualViewSet,
+  ResumenCuentaProveedorView
 )
 from .views import register, login_view, mis_datos_view, dashboard_view
 from django.views.generic import TemplateView
@@ -26,12 +27,12 @@ urlpatterns = [
   path('acceder/', login_view, name='acceder-proveedor-form'),
   path('mis-datos/', mis_datos_view, name='mis-datos-proveedor'),
   path('dashboard/', dashboard_view, name='dashboard'),
-
-  # Nueva ruta para la plantilla de comprobantes
   path('comprobantes/', TemplateView.as_view(template_name='comprobantes.html'), name='comprobantes'),
+  path('resumen-cuenta/', TemplateView.as_view(template_name='resumen_cuenta.html'), name='resumen-cuenta'),
 
   # API endpoints
   path('api/registro/', ProveedorRegistroView.as_view(), name='registro-proveedor'),
+  path('api/proveedores/resumen-cuenta/', ResumenCuentaProveedorView.as_view(), name='api-resumen-cuenta'),
   path('api/', include(router.urls)),
   path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
   path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
