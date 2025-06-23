@@ -6,6 +6,18 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
         'certNoRetIIBB': 'noRetIIBBFile'
     };
 
+    // Mapeo de IDs de input de archivo a nombres de campo en el modelo Django
+    const fileInputIdToModelFieldName = {
+        'cuitFile': 'cuit_file',
+        'ingBrutosFile': 'ing_brutos_file',
+        'exclGananciasFile': 'excl_ganancias_file',
+        'cm05File': 'cm05_file',
+        'noRetGananciasFile': 'no_ret_ganancias_file',
+        'exclIIBBFile': 'excl_iibb_file',
+        'noRetIIBBFile': 'no_ret_iibb_file',
+        'cbuFile': 'cbu_file',
+    };
+
     function getDynamicRequiredDocumentIds() {
         let dynamicRequired = [...documentosRequeridosFijos];
         for (const switchId in documentosCondicionalesMap) {
@@ -39,14 +51,18 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
         documentCard.classList.remove('status-required-missing', 'status-optional-missing', 'status-present');
         actionButton.classList.remove('btn-primary', 'btn-outline-primary', 'btn-outline-secondary');
 
+        // Actualizar el data-file-input-id en el botón de acción
+        actionButton.setAttribute('data-file-input-id', fileInputId);
+
+
         if (esRequerido) {
             requiredAsterisk.classList.remove('d-none');
             if (fileName && fileUrl) {
                 // Requerido y cargado
                 statusTextElement.textContent = 'Archivo cargado: ' + fileName;
                 actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-1" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg> Ver Documento`;
-                // MODIFIED: Call viewDocument with the fileUrl
-                actionButton.onclick = () => viewDocument(fileUrl);
+                // Pasar fileInputId a viewDocument
+                actionButton.onclick = () => viewDocument(fileUrl, fileInputId);
                 actionButton.classList.add('btn-outline-secondary');
                 documentCard.classList.add('status-present');
                 statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill status-icon" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`;
@@ -66,8 +82,8 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
                 // Opcional y cargado
                 statusTextElement.textContent = 'Archivo cargado: ' + fileName;
                 actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-1" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg> Ver Documento`;
-                 // MODIFIED: Call viewDocument with the fileUrl
-                actionButton.onclick = () => viewDocument(fileUrl);
+                 // Pasar fileInputId a viewDocument
+                actionButton.onclick = () => viewDocument(fileUrl, fileInputId);
                 actionButton.classList.add('btn-outline-secondary');
                 documentCard.classList.add('status-present');
                 statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill status-icon" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`;
@@ -89,10 +105,12 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
       let codCpa01Value = null;
       let initialData = {};
       let codPais = null;
+      let proveedorFileStates = {}; // Variable para almacenar los estados de los archivos (URLs o null)
 
       // Initialize the document viewer modal instance
       const documentViewerModal = new bootstrap.Modal(document.getElementById('documentViewerModal'));
       const documentViewerModalBody = document.getElementById('documentViewerModalBody');
+      const btnReplaceDocument = document.getElementById('btnReplaceDocument');
 
 
       const camposPrincipalesEditables = [
@@ -103,11 +121,6 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
         { key: "e_mail", label: "Email" }, { key: "web", label: "Pagina Web" },
         { key: "nom_fant", label: "Nombre comercial" }, { key: "domicilio_comercial", label: "Domicilio comercial" },
         { key: "n_iva", label: "Actividad" },
-        // Los campos de certificaciones ahora están en configForm, no en proveedorForm
-        // { key: "certExclGanancias", label: "Cert. Exclusión Ganancias" },
-        // { key: "certExclIIBB", label: "Cert. Exclusión IIBB" },
-        // { key: "certNoRetGanancias", label: "Cert. No Ret. Ganancias" },
-        // { key: "certNoRetIIBB", label: "Cert. No Ret. IIBB" },
       ];
       const camposConfiguracionEditables = [
         { key: "n_ing_brut", label: "Nro. de ingresos brutos" },
@@ -116,16 +129,16 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
         { key: "cbu_3", label: "Clave bancaria única 3 (CBU)" }, { key: "descripcion_cbu_3", label: "Descripción" },
       ];
 
-      const camposContactoObligatorios = ["nom_provee", "n_cuit", "telefono_1", "e_mail", "domicilio"];
+      const camposContactoObligatorios = ["nom_provee", "n_cuit", "telefono_1", "e_mail", "domicilio", "cbu"];
 
       const camposBloquear = ["nom_provee","nom_fant","n_cuit"];
 
       // Nuevos campos de switches para certificaciones
       const certificacionSwitches = [
-          { id: 'certExclGanancias', name: 'cert_excl_ganancias', documentId: 'exclGananciasFile' },
-          { id: 'certExclIIBB', name: 'cert_excl_iibb', documentId: 'exclIIBBFile' },
-          { id: 'certNoRetGanancias', name: 'cert_no_ret_ganancias', documentId: 'noRetGananciasFile' },
-          { id: 'certNoRetIIBB', name: 'cert_no_ret_iibb', documentId: 'noRetIIBBFile' }
+          { id: 'certExclGanancias', name: 'excl_ganancias_file', documentId: 'exclGananciasFile' }, // Mapeo a nombre de campo de archivo
+          { id: 'certExclIIBB', name: 'excl_iibb_file', documentId: 'exclIIBBFile' },
+          { id: 'certNoRetGanancias', name: 'no_ret_ganancias_file', documentId: 'noRetGananciasFile' },
+          { id: 'certNoRetIIBB', name: 'no_ret_iibb_file', documentId: 'noRetIIBBFile' }
       ];
 
       async function obtenerUserId() {
@@ -202,6 +215,7 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
               console.log('Datos del proveedor cargados:', proveedor);
           }
 
+          // Cargar datos en los formularios principales
           camposPrincipalesEditables.forEach(campo => {
             const inputElement = document.getElementById(campo.key);
             if (inputElement) {
@@ -237,53 +251,65 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
           await cargarIngresosBrutos(proveedor.tipo);
           initialData['ingresosBrutos'] = document.getElementById('ingresosBrutos').value;
 
-          // Cargar estado de los nuevos switches de certificaciones
+          // --- Lógica para inicializar estados de archivos y checkboxes de certificación con JavaScript (desde API) ---
+          proveedorFileStates = {}; // Reset states
+          const allFileInputs = document.querySelectorAll('#documents-tab-pane .file-input');
+          allFileInputs.forEach(input => {
+              const modelFieldName = fileInputIdToModelFieldName[input.id];
+              if (modelFieldName && proveedor.hasOwnProperty(modelFieldName)) {
+                  // Store the file URL if it exists, otherwise null
+                  proveedorFileStates[modelFieldName] = proveedor[modelFieldName] || null;
+              } else {
+                   proveedorFileStates[modelFieldName] = null;
+              }
+          });
+          console.log('Proveedor file states initialized from API:', proveedorFileStates);
+
           certificacionSwitches.forEach(s => {
               const switchElement = document.getElementById(s.id);
-              if (switchElement) {
-                  const value = proveedor[s.name];
-                  switchElement.checked = (value === 'S');
-                  initialData[s.name] = switchElement.checked ? 'S' : 'N';
+              const fileFieldName = s.name; // Nombre del campo en el modelo (ej: 'excl_ganancias_file')
+              const fileInputId = s.documentId; // ID del input de archivo (ej: 'exclGananciasFile')
+
+              if (switchElement && proveedorFileStates.hasOwnProperty(fileFieldName)) {
+                  // Marcar el checkbox si el archivo correspondiente existe (URL no es null)
+                  switchElement.checked = !!proveedorFileStates[fileFieldName];
+                  // Actualizar initialData para que monitorChanges detecte el estado inicial correcto
+                  // Usamos el nombre del campo del modelo para el estado del switch ('S'/'N')
+                  initialData[fileFieldName] = switchElement.checked ? 'S' : 'N';
+                  // Y usamos el ID del input de archivo para el estado inicial del archivo (nombre o '')
+                  initialData[fileInputId] = proveedorFileStates[fileFieldName] ? proveedorFileStates[fileFieldName].split('/').pop() : '';
+
+                  console.log(`Setting switch ${s.id} to ${switchElement.checked} based on ${fileFieldName} state.`);
+                  console.log(`Initial file state for ${fileInputId}: ${initialData[fileInputId]}`);
               }
           });
+          // --- Fin de la lógica para inicializar checkboxes ---
 
-          const messagesFormElements = document.querySelectorAll('#messagesForm input, #messagesForm select, #messagesForm textarea');
-          messagesFormElements.forEach(el => {
-              if (el.name || el.id) {
-                  const key = el.name || el.id;
-                  const value = proveedor[key];
-
-                  if (el.type === 'checkbox' && (key === 'contacto_habitual' || key === 'recibe_ordenes_compra' || key === 'recibe_ordenes_pago')) {
-                      el.checked = (value === 'S'); // Marcar si el valor es "S"
-                      initialData[key] = el.checked ? 'S' : 'N'; // Guardar 'S' o 'N' en initialData
-                  } else if (el.tagName.toLowerCase() === 'select') {
-                      el.value = (value !== null && value !== undefined) ? String(value) : (el.options.length > 0 ? el.options[0].value : '');
-                      initialData[key] = el.value;
-                  } else { // Para inputs de texto, email, textarea, etc.
-                      el.value = (value !== null && value !== undefined) ? value : '';
-                      initialData[key] = el.value;
-                  }
-              }
-          });
 
           // Actualizar UI de documentos basado en el estado inicial y los switches
-          const fileInputsDocumentos = document.querySelectorAll('#documents-tab-pane .file-input');
-          fileInputsDocumentos.forEach(input => {
+          // getDynamicRequiredDocumentIds() debe llamarse *después* de setear los switches
+          const initiallyRequiredDocumentIds = getDynamicRequiredDocumentIds();
+
+          allFileInputs.forEach(input => {
               if (input.id) {
-                  const fileInfo = proveedor.documentos_data ? proveedor.documentos_data[input.id] : null;
-                  const esRequerido = getDynamicRequiredDocumentIds().includes(input.id); // Usar la función dinámica
-                  if (fileInfo && fileInfo.name) {
-                      initialData[input.id] = fileInfo.name;
-                      actualizarUICardDocumento(input.id, fileInfo.name, fileInfo.url, esRequerido);
-                  } else {
-                      initialData[input.id] = '';
-                      actualizarUICardDocumento(input.id, null, null, esRequerido);
-                  }
+                  const modelFieldName = fileInputIdToModelFieldName[input.id];
+                  const fileUrl = proveedorFileStates[modelFieldName]; // Obtener la URL del estado inicial
+                  const fileName = fileUrl ? fileUrl.split('/').pop() : null;
+
+                  const esRequerido = initiallyRequiredDocumentIds.includes(input.id); // Usar la función dinámica (depende de los switches)
+                  // initialData[input.id] ya fue seteado arriba con el nombre del archivo o ''
+                  actualizarUICardDocumento(input.id, fileName, fileUrl, esRequerido);
               }
           });
 
+
+          // Cargar datos de contactos (si aplica, basado en tu implementación actual)
+          // ... (Tu código existente para cargar contactos si es necesario al inicio) ...
+
+
           agregarValidacionCuitFrontend();
-          monitorChanges();
+          monitorChanges(); // Iniciar monitoreo de cambios después de cargar y establecer estados iniciales
+          addCertificationSwitchListeners(); // Añadir listeners para los switches de certificación
         } catch (error) {
           console.error('Error al procesar los datos del proveedor o al cargar componentes:', error);
           msgDivCarga.text('Ocurrió un error al cargar la información de la página. Intente recargar.')
@@ -379,8 +405,7 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
         const inputs = document.querySelectorAll(
           '#proveedorForm input, #proveedorForm select, #proveedorForm textarea, ' +
           '#configForm input, #configForm select, #configForm textarea, ' +
-          '#messagesForm input, #messagesForm select, #messagesForm textarea, ' +
-          '#documents-tab-pane .file-input'
+          '#documents-tab-pane .file-input' // Incluir file inputs para detectar cambios locales
         );
         const saveButton = document.querySelector('.btn-save');
         const checkChanges = () => {
@@ -388,35 +413,40 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
           inputs.forEach(input => {
             const key = input.name || input.id;
             const dataKey = (input.id === 'provincia' && initialData.hasOwnProperty('provincia')) ? 'provincia' : key;
-            if (input.type === 'file') {
-              if (input.files && input.files.length > 0) {
-                const currentFileName = input.files[0].name;
-                const initialFileName = initialData[key] || '';
-                if (currentFileName !== initialFileName) { hasChanges = true; }
-              }
-            } else {
-              const key = input.name || input.id;
-              const dataKey = (input.id === 'provincia' && initialData.hasOwnProperty('provincia')) ? 'provincia' : key;
 
-              if (input.type === 'file') {
-                if (input.files && input.files.length > 0) {
-                  const currentFileName = input.files[0].name;
-                  const initialFileName = initialData[key] || '';
-                  if (currentFileName !== initialFileName) { hasChanges = true; }
-                }
-              } else if (input.type === 'checkbox' && (key === 'contacto_habitual' || key === 'recibe_ordenes_compra' || key === 'recibe_ordenes_pago' || certificacionSwitches.some(s => s.name === key))) {
-                const currentValue = input.checked ? 'S' : 'N';
-                const initialValue = initialData[key] !== undefined ? String(initialData[key]) : 'N';
+            if (input.type === 'file') {
+              // Para inputs de tipo file, comparamos si se ha seleccionado un nuevo archivo
+              // con el nombre del archivo que estaba cargado inicialmente (si lo había).
+              const currentFileName = input.files && input.files.length > 0 ? input.files[0].name : '';
+              const initialFileName = initialData[key] || ''; // initialData[key] guarda el nombre del archivo cargado inicialmente
+              if (currentFileName !== '' && currentFileName !== initialFileName) {
+                 hasChanges = true;
+              }
+            } else if (input.type === 'checkbox') {
+                // Para checkboxes, comparamos el estado actual ('S'/'N' o true/false) con el estado inicial
+                // Usamos el nombre del campo del modelo para los switches de certificación
+                const isCertSwitch = certificacionSwitches.some(s => s.id === key);
+                const initialValue = initialData[isCertSwitch ? input.name : dataKey] !== undefined ? String(initialData[isCertSwitch ? input.name : dataKey]) : (isCertSwitch ? 'N' : ''); // Default 'N' for switches, '' for others
+                const currentValue = isCertSwitch ? (input.checked ? 'S' : 'N') : (input.checked.toString());
+
                 if (currentValue !== initialValue) {
                     hasChanges = true;
                 }
-              } else {
-                const currentValue = (input.type === 'checkbox') ? input.checked.toString() : input.value;
-                const initialValue = initialData[dataKey] !== undefined ? String(initialData[dataKey]) : '';
+            } else if (input.type === 'radio') {
+                 // Para radios, comparamos el valor seleccionado con el inicial
+                 const initialValue = initialData[dataKey] !== undefined ? String(initialData[dataKey]) : '';
+                 const currentValue = input.checked ? (input.value.trim() === "" ? '' : input.value.trim()) : initialValue; // Si no está checked, mantenemos el valor inicial para no detectar cambio si no se tocó
+                 if (input.checked && String(currentValue) !== initialValue) {
+                     hasChanges = true;
+                 }
+            }
+            else {
+                // Para otros tipos de inputs (texto, select, textarea, etc.)
+                const currentValue = input.value;
+                const initialValue = initialData[dataKey] !== undefined ? String(initialData[dataKey]) : ''; // Default to empty string
                 if (String(currentValue) !== initialValue) {
                     hasChanges = true;
                 }
-              }
             }
           });
           saveButton.style.display = hasChanges ? 'block' : 'none';
@@ -430,20 +460,80 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
         });
 
         // Add event listeners for the new certification switches to update document card UI
+        // NOTE: The pop-up logic is added in addCertificationSwitchListeners()
         certificacionSwitches.forEach(s => {
             const switchElement = document.getElementById(s.id);
             if (switchElement) {
+                // Keep the UI update logic here, separate from the pop-up logic
+                // This listener updates the UI card immediately when the switch state changes
                 switchElement.addEventListener('change', () => {
                     const fileInput = document.getElementById(s.documentId);
-                    const fileName = fileInput && fileInput.files[0] ? fileInput.files[0].name : null;
-                    const fileUrl = null; // No URL if not yet uploaded
-                    const esRequerido = switchElement.checked;
+                    const modelFieldName = fileInputIdToModelFieldName[s.documentId];
+
+                    // Determine file name: local file if selected, otherwise initial loaded name from initialData
+                    const fileName = fileInput && fileInput.files && fileInput.files.length > 0 ? fileInput.files[0].name : (initialData[s.documentId] || null);
+                    // Determine file URL: Use backend URL from proveedorFileStates
+                    const fileUrl = proveedorFileStates[modelFieldName] || null;
+
+                    const esRequerido = switchElement.checked; // Required if switch is checked
                     actualizarUICardDocumento(s.documentId, fileName, fileUrl, esRequerido);
-                    checkChanges(); // Also trigger general form changes
+                    // monitorChanges() is called by the general input change listener
                 });
             }
         });
       }
+
+      // --- Nueva función para añadir listeners a los switches de certificación ---
+      function addCertificationSwitchListeners() {
+          const confirmationModalEl = document.getElementById('confirmationModal');
+          const confirmationModal = bootstrap.Modal.getOrCreateInstance(confirmationModalEl);
+          const confirmationModalBody = document.getElementById('confirmationModalBody');
+          const btnConfirmUpload = document.getElementById('btnConfirmUpload');
+
+          certificacionSwitches.forEach(s => {
+              const switchElement = document.getElementById(s.id);
+              if (switchElement) {
+                  switchElement.addEventListener('change', function(event) {
+                      const fileInputId = s.documentId;
+                      const fileWasLoadedInitially = initialData[fileInputId] && initialData[fileInputId] !== '';
+
+                      if (this.checked && !fileWasLoadedInitially) {
+                          const documentTitleElement = document.getElementById(`card-${fileInputId}`).querySelector('.document-title');
+                          const documentTitle = documentTitleElement ? documentTitleElement.textContent.replace('*', '').trim() : "este documento";
+
+                          // --- New logic using Bootstrap Modal ---
+                          confirmationModalBody.textContent = `Ha activado la certificación "${documentTitle}". ¿Desea cargar el documento ahora?`;
+                          
+                          let confirmed = false;
+
+                          const handleConfirm = () => {
+                            confirmed = true;
+                            triggerUpload(fileInputId);
+                            confirmationModal.hide();
+                          };
+                          
+                          // Use .onclick to easily replace the handler for each switch
+                          btnConfirmUpload.onclick = handleConfirm;
+
+                          const handleHide = () => {
+                            if (!confirmed) {
+                                // User cancelled (closed modal without confirming)
+                                this.checked = false;
+                                const changeEvent = new Event('change', { bubbles: true });
+                                this.dispatchEvent(changeEvent);
+                            }
+                          };
+                          
+                          confirmationModalEl.addEventListener('hidden.bs.modal', handleHide, { once: true });
+                          
+                          confirmationModal.show();
+                      }
+                  });
+              }
+          });
+      }
+      // --- Fin Nueva función ---
+
 
       function gatherFormDataFromAllTabs() {
           const formData = new FormData();
@@ -454,8 +544,10 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
                   if ((el.name || el.id) && !el.disabled) {
                       const key = el.name || el.id;
                       // Handle all checkboxes, including new certification switches
-                      if (el.type === 'checkbox' && (key === 'contacto_habitual' || key === 'recibe_ordenes_compra' || key === 'recibe_ordenes_pago' || certificacionSwitches.some(s => s.name === key))) {
-                          formData.append(key, el.checked ? 'S' : 'N');
+                      if (el.type === 'checkbox' && (key === 'contactoDefecto' || key === 'contactoEnviaPdfOc' || key === 'contactoEnviaPdfOp' || certificacionSwitches.some(s => s.id === key))) { // Use s.id for checkbox ID
+                           // For certification switches, use the model field name (s.name) for the form data key
+                           const formKey = certificacionSwitches.find(s => s.id === key)?.name || key;
+                           formData.append(formKey, el.checked ? 'S' : 'N');
                       } else if (el.type === 'checkbox') {
                           formData.append(key, el.checked);
                       } else if (el.type === 'radio') {
@@ -473,10 +565,13 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
           if (formData.has('condicionIva')) formData.delete('condicionIva');
           formData.set('tipo', document.getElementById('ingresosBrutos').value || '');
           if (formData.has('ingresosBrutos')) formData.delete('ingresosBrutos');
+
+          // Agregar archivos al FormData usando los nombres de campo del modelo
           const fileInputsDocumentos = document.querySelectorAll('#documents-tab-pane .file-input');
           fileInputsDocumentos.forEach(input => {
-              if (input.id && input.files && input.files.length > 0) {
-                  formData.append(input.id, input.files[0], input.files[0].name);
+              const modelFieldName = fileInputIdToModelFieldName[input.id];
+              if (modelFieldName && input.files && input.files.length > 0) {
+                  formData.append(modelFieldName, input.files[0], input.files[0].name);
               }
           });
           return formData;
@@ -491,8 +586,8 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
                 valido = false; const labelText = input.previousElementSibling?.textContent.replace('*', '').trim() || campoKey;
                 mensajes.push(`El campo "${labelText}" (pestaña Home) es obligatorio.`); input.classList.add('is-invalid');
                 const feedbackEl = document.getElementById(`${campoKey}-invalid`); if (feedbackEl) feedbackEl.textContent = `Este campo es obligatorio.`;
-            } else if (input) { input.classList.remove('is-invalid'); const feedbackEl = document.getElementById(`${campoKey}-invalid`); if (feedbackEl) feedbackEl.textContent = "";}
-        });
+            } else if (input) { input.classList.remove('is-invalid'); const feedbackEl = document.getElementById(`${campoKey}-invalid`); if (feedbackEl) feedbackEl.textContent = "";}}
+        );
         const cuitInputHTML = document.getElementById('n_cuit');
         if (cuitInputHTML && cuitInputHTML.value.trim() !== "") {
             const cuitPattern = /^\d{2}-\d{8}-\d{1}$/;
@@ -512,10 +607,11 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
             const documentTitleElement = documentCard ? documentCard.querySelector('.document-title') : null;
             const documentName = documentTitleElement ? documentTitleElement.textContent.replace('*','').trim() : `Documento ${fileInputId}`;
 
-            const yaCargadoPreviamenteConNombre = initialData[fileInputId] && initialData[fileInputId] !== '';
+            // Verificar si hay un archivo seleccionado localmente O si ya estaba cargado inicialmente (verificando initialData)
             const nuevoArchivoSeleccionado = fileInput && fileInput.files && fileInput.files.length > 0;
+            const yaCargadoPreviamente = initialData[fileInputId] && initialData[fileInputId] !== ''; // initialData[fileInputId] guarda el nombre del archivo cargado inicialmente
 
-            if (!nuevoArchivoSeleccionado && !yaCargadoPreviamenteConNombre) {
+            if (!nuevoArchivoSeleccionado && !yaCargadoPreviamente) {
                 valido = false;
                 mensajes.push(`El documento "${documentName}" (pestaña Documentos) es requerido.`);
                 if (documentCard) { documentCard.classList.add('border', 'border-danger'); }
@@ -547,10 +643,16 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
               if (responseData.cod_cpa01) { codCpa01Value = responseData.cod_cpa01; camposBloquear.forEach(keyToBlock => { const inputToBlock = document.getElementById(keyToBlock); if (inputToBlock && codCpa01Value && codCpa01Value.trim() !== "") { inputToBlock.disabled = true; }});}
               if (responseData.cod_pais) { codPais = responseData.cod_pais; }
             }
+            // Actualizar initialData con los valores guardados (excluyendo archivos por ahora)
             for (const [key, value] of formDataToSave.entries()) {
+              // No actualizamos initialData para archivos aquí, se maneja después
               if (value instanceof File) continue;
 
-              if (key === 'id_categoria_iva_cond_iva') {
+              // Handle specific fields and certification switches
+              const certSwitchConfig = certificacionSwitches.find(s => s.name === key);
+              if (certSwitchConfig) {
+                  initialData[key] = String(value); // Store 'S' or 'N' for the model field name
+              } else if (key === 'id_categoria_iva_cond_iva') {
                   initialData['condicionIva'] = String(value);
               } else if (key === 'tipo') {
                   initialData['ingresosBrutos'] = String(value);
@@ -558,32 +660,49 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
                   initialData['id_cpa57'] = String(value);
               } else if (key === 'nom_prov') {
                   initialData['nom_prov'] = String(value);
-              } else if (key === 'contacto_habitual' || key === 'recibe_ordenes_compra' || key === 'recibe_ordenes_pago' || certificacionSwitches.some(s => s.name === key)) {
-                  initialData[key] = String(value);
               } else if (initialData.hasOwnProperty(key)) {
                   initialData[key] = value === null ? '' : String(value);
               }
             }
             initialData[document.getElementById('provincia').name || document.getElementById('provincia').id] = formDataToSave.get('nom_prov') || '';
 
+            // Actualizar initialData y UI para archivos basándose en la respuesta del servidor
             const fileInputs = document.querySelectorAll('#documents-tab-pane .file-input');
             fileInputs.forEach(input => {
               if (input.id) {
-                  const docDataFromServer = responseData.documentos_data ? responseData.documentos_data[input.id] : null;
+                  const modelFieldName = fileInputIdToModelFieldName[input.id];
+                  const docUrlFromServer = responseData[modelFieldName] || null; // Obtener la URL del archivo guardado desde la respuesta
+                  const docNameFromServer = docUrlFromServer ? docUrlFromServer.split('/').pop() : null;
+
+                  // Actualizar proveedorFileStates con la URL del archivo guardado
+                  proveedorFileStates[modelFieldName] = docUrlFromServer;
+
+                  // Actualizar initialData para el input de archivo con el nombre del archivo guardado
+                  initialData[input.id] = docNameFromServer || '';
+
                   const esRequerido = getDynamicRequiredDocumentIds().includes(input.id); // Usar la función dinámica
-                  if (docDataFromServer && docDataFromServer.name) {
-                      initialData[input.id] = docDataFromServer.name;
-                      actualizarUICardDocumento(input.id, docDataFromServer.name, docDataFromServer.url, esRequerido);
-                  } else {
-                      const fileSent = formDataToSave.get(input.id);
-                      if (fileSent instanceof File) { initialData[input.id] = fileSent.name; }
-                      else if (!initialData[input.id] && !docDataFromServer) { initialData[input.id] = ''; actualizarUICardDocumento(input.id, null, null, esRequerido); }
-                  }
-                  input.value = '';
+
+                  actualizarUICardDocumento(input.id, docNameFromServer, docUrlFromServer, esRequerido);
+
+                  input.value = ''; // Limpiar el input file después de la carga exitosa
               }
             });
+
+            // Re-evaluar el estado de los switches de certificación después de actualizar los estados de archivo
+             certificacionSwitches.forEach(s => {
+                const switchElement = document.getElementById(s.id);
+                const fileFieldName = s.name;
+                 if (switchElement && proveedorFileStates.hasOwnProperty(fileFieldName)) {
+                    // Sincronizar el estado del switch con si hay un archivo cargado
+                    switchElement.checked = !!proveedorFileStates[fileFieldName];
+                    // Sincronizar initialData con el estado final del switch
+                    initialData[fileFieldName] = switchElement.checked ? 'S' : 'N';
+                 }
+             });
+
+
             msgDiv.textContent = 'Datos actualizados correctamente.'; msgDiv.className = 'alert alert-success mt-0 mb-3'; msgDiv.classList.remove('d-none');
-            document.querySelector('.btn-save').style.display = 'none';
+            document.querySelector('.btn-save').style.display = 'none'; // Ocultar botón de guardar si no hay cambios
           } else {
             const errText = await resp.text(); let err; try { err = JSON.parse(errText); } catch (e) { err = errText; }
             let errorMessages = 'Error al guardar los datos.';
@@ -636,7 +755,9 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
         }
       });
 
-      cargarDatos();
+      cargarDatos(); // Iniciar la carga de datos al cargar la página
+
+      // Listener para inputs de archivo
       document.querySelectorAll('.file-input').forEach(input => {
         input.addEventListener('change', function() {
           const fileInputId = this.id;
@@ -644,7 +765,8 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
           const fileName = file ? file.name : null;
           const esRequerido = getDynamicRequiredDocumentIds().includes(fileInputId); // Usar la función dinámica
 
-          // Update UI immediately with local file info (no URL yet)
+          // Actualizar UI inmediatamente con info del archivo local (sin URL aún)
+          // La URL se obtendrá y actualizará en proveedorFileStates después de un guardado exitoso
           actualizarUICardDocumento(fileInputId, fileName, null, esRequerido);
 
           if (file) {
@@ -728,10 +850,10 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
               <td>${escapeHtml(contacto.cargo || '')}</td>
               <td>${escapeHtml(contacto.email || '')}</td>
               <td>${escapeHtml(contacto.telefono || '')}</td>
-              <td>${contacto.defecto === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
-              <td>${contacto.envia_pdf_oc === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
-              <td>${contacto.envia_pdf_op === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
-              <td>
+              <td class="text-center">${contacto.defecto === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+              <td class="text-center">${contacto.envia_pdf_oc === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+              <td class="text-center">${contacto.envia_pdf_op === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+              <td class="text-center">
                 <button class="btn btn-sm btn-outline-primary btn-editar-contacto" data-id="${contacto.id}" title="Editar">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/></svg>
                 </button>
@@ -913,12 +1035,26 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
     // Funciones globales (o que necesitan serlo)
     function logout() { sessionStorage.removeItem('jwt'); window.location.href = '/Proveedores/acceder/'; }
     function goToDashboard() { window.location.href = '/Proveedores/dashboard/'; }
-    function triggerUpload(fileInputId) { document.getElementById(fileInputId).click(); }
 
-    // MODIFIED: Function to display document in modal
-    function viewDocument(path) {
+    // Modificada para ser llamada por los botones de acción y el botón de reemplazar
+    function triggerUpload(fileInputId) {
+        const fileInput = document.getElementById(fileInputId);
+        if (fileInput) {
+            fileInput.click();
+        } else {
+            console.error(`Input de archivo con ID "${fileInputId}" no encontrado.`);
+        }
+    }
+
+    // Function to display document in modal
+    // Ahora recibe el fileInputId para saber qué documento se está viendo
+    function viewDocument(path, fileInputId) {
       const documentViewerModal = new bootstrap.Modal(document.getElementById('documentViewerModal'));
       const documentViewerModalBody = document.getElementById('documentViewerModalBody');
+      const btnReplaceDocument = document.getElementById('btnReplaceDocument');
+
+      // Almacenar el fileInputId en el botón de reemplazar para usarlo después
+      btnReplaceDocument.setAttribute('data-file-input-id', fileInputId);
 
       if (path && path !== '#' && !path.startsWith('blob:')) {
           documentViewerModalBody.innerHTML = ''; // Clear previous content
@@ -961,8 +1097,33 @@ let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
           documentViewerModal.show(); // Show the modal
       } else if (path && path.startsWith('blob:')) {
           alert('El archivo está seleccionado localmente. Se enviará al guardar.');
+          // Si es un archivo local, no mostramos el botón de reemplazar en el modal de visualización
+          btnReplaceDocument.style.display = 'none';
+          return; // No mostrar el modal si es un archivo local
       }
       else {
           alert('El documento aún no ha sido cargado o no hay una URL válida. Intente guardar los cambios primero.');
+          // Si no hay archivo cargado, no mostramos el botón de reemplazar
+          btnReplaceDocument.style.display = 'none';
+          return; // No mostrar el modal si no hay archivo
       }
+
+      // Mostrar el botón de reemplazar solo si hay un documento cargado (URL válida)
+      btnReplaceDocument.style.display = (path && path !== '#' && !path.startsWith('blob:')) ? 'block' : 'none';
     }
+
+    // Listener para el botón "Reemplazar Documento" en el modal
+    document.getElementById('btnReplaceDocument').addEventListener('click', function() {
+        const fileInputId = this.getAttribute('data-file-input-id');
+        if (fileInputId) {
+            // Ocultar el modal de visualización antes de abrir el selector de archivos
+            const documentViewerModal = bootstrap.Modal.getInstance(document.getElementById('documentViewerModal'));
+            if (documentViewerModal) {
+                documentViewerModal.hide();
+            }
+            // Disparar la carga del archivo correspondiente
+            triggerUpload(fileInputId);
+        } else {
+            console.error('No se pudo determinar el input de archivo para reemplazar.');
+        }
+    });
