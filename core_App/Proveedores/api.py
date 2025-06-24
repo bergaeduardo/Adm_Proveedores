@@ -417,7 +417,8 @@ class ResumenCuentaProveedorView(APIView):
             'Fecha vto.': 'Fecha_vto_' # <-- CORREGIDO: Usar la clave sanitizada correcta
         }
         currency_fields_map = {
-            'Importe': 'Importe'
+            'Importe': 'Importe',
+            'Acumulado': 'Acumulado'
         }
 
         for row in data:
