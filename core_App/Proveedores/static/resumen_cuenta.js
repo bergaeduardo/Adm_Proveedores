@@ -69,6 +69,57 @@ $(document).ready(function() {
             // --- Caso 1: Hay datos para mostrar ---
             noDataMessage.hide();
             errorMessage.hide();
+            
+            // --- INICIO DE MODIFICACIONES ---
+
+            // 1. Calcular el total del campo "Importe"
+            const importeColumnIndex = result.columns.findIndex(col => col.data === 'Importe');
+            let totalImporte = 0;
+
+            if (importeColumnIndex !== -1) {
+                result.data.forEach(row => {
+                    // El dato puede venir en un array o en un objeto, nos aseguramos que funcione para ambos
+                    const importeStr = Array.isArray(row) ? row[importeColumnIndex] : row.Importe;
+                    if (importeStr) {
+                        // Convertir el formato "1.234.567,89" a un número 1234567.89
+                        const importeNum = parseFloat(importeStr.replace(/\./g, '').replace(',', '.'));
+                        if (!isNaN(importeNum)) {
+                            totalImporte += importeNum;
+                        }
+                    }
+                });
+            }
+            
+            // Formatear el total al estilo moneda y mostrarlo
+            const formattedTotal = totalImporte.toLocaleString('es-AR', {
+                style: 'currency',
+                currency: 'ARS', // Esto agregará el símbolo '$' para el localismo es-AR
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            $('#total-importe').text(formattedTotal);
+
+
+            // 2. Definir las reglas de estilo para la columna "Importe"
+            const columnDefs = [{
+                targets: importeColumnIndex,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    if (cellData) {
+                        // Convertir el dato de la celda a número para la comparación
+                        const valor = parseFloat(cellData.replace(/\./g, '').replace(',', '.'));
+                        if (!isNaN(valor)) {
+                            if (valor > 0) {
+                                $(td).css('font-weight', 'bold');
+                            } else if (valor < 0) {
+                                $(td).css('color', 'red');
+                            }
+                        }
+                    }
+                }
+            }];
+            
+            // --- FIN DE MODIFICACIONES ---
+
             tableContainer.show(); // Mostrar el contenedor de la tabla
 
             // Destruir cualquier instancia previa de DataTables en este elemento
@@ -83,16 +134,13 @@ $(document).ready(function() {
             resumenCuentaTable.DataTable({
                 data: result.data,       // Array de objetos con los datos de las filas
                 columns: result.columns, // Array de objetos que define las columnas
+                columnDefs: columnDefs,  // <-- Aplicar las reglas de estilo
+                order: [], // <-- MODIFICACIÓN: Evita el ordenamiento inicial automático.
                 language: {
                     // Usar el plugin de traducción al español para DataTables
                     url: '//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json'
                 },
                 responsive: true, // Habilitar diseño responsivo para móviles
-                // Opciones adicionales que podrías querer:
-                // paging: true,
-                // searching: true,
-                // ordering: true,
-                // info: true,
             });
 
         } else {
