@@ -174,6 +174,15 @@ $(document).ready(function() {
   const btnReplaceDocument = document.getElementById('btnReplaceDocument');
 
   const camposBloquear = ["nom_provee","nom_fant","n_cuit"];
+  const camposPrincipalesEditables = [
+        { key: "nom_provee", label: "Razon social" }, { key: "n_cuit", label: "CUIT" },
+        { key: "domicilio", label: "Domicilio" }, { key: "localidad", label: "Localidad" },
+        { key: "c_postal", label: "Código postal" }, { key: "telefono_1", label: "Teléfono" },
+        { key: "telefono_2", label: "Teléfono 2" }, { key: "telefono_movil", label: "Teléfono móvil" },
+        { key: "e_mail", label: "Email" }, { key: "web", label: "Pagina Web" },
+        { key: "nom_fant", label: "Nombre comercial" }, { key: "domicilio_comercial", label: "Domicilio comercial" },
+        { key: "n_iva", label: "Actividad" },
+      ];
 
   // --- Wizard Logic ---
   const steps = [
@@ -444,6 +453,15 @@ $(document).ready(function() {
       }
 
       // Cargar datos en los formularios principales
+      camposPrincipalesEditables.forEach(campo => {
+            const inputElement = document.getElementById(campo.key);
+            if (inputElement) {
+              const value = proveedor[campo.key]; inputElement.value = (value !== null && value !== undefined) ? value : '';
+              initialData[campo.key] = inputElement.value;
+              if (codCpa01Value && codCpa01Value.trim() !== "" && camposBloquear.includes(campo.key)) { inputElement.disabled = true; }
+            }
+          });
+          
       const allFormInputs = document.querySelectorAll('#proveedorForm input, #proveedorForm select, #proveedorForm textarea, #configForm input, #configForm select, #configForm textarea');
       allFormInputs.forEach(input => {
         const key = input.name || input.id;
