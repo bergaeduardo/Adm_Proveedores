@@ -10,6 +10,13 @@
       const listaComprobantes = document.getElementById('listaComprobantes');
       const montoTotalInput = document.getElementById('monto_total');
 
+      // Get the modal element and the replace button
+      const documentViewerModal = document.getElementById('documentViewerModal');
+      const btnReplaceDocument = document.getElementById('btnReplaceDocument');
+
+      // Variable to store the status of the currently viewed comprobante
+      let currentComprobanteStatus = null;
+
       // Initialize IMask for monto_total
       const montoMask = IMask(montoTotalInput, {
         mask: '$num',
@@ -153,15 +160,67 @@
                 Estado: <span class="badge bg-success">${c.estado}</span>
               </div>
               <div>
-                <a href="${c.archivo_url}" target="_blank" class="btn btn-sm btn-outline-primary">Ver Archivo</a>
+                <!-- Modified button to trigger modal -->
+                <button type="button" class="btn btn-sm btn-outline-primary btn-view-comprobante" data-url="${c.archivo_url}">Ver Archivo</button>
               </div>
             `;
             listaComprobantes.appendChild(item);
           });
+
+          // Removed the loop for adding listeners here, using delegation below
+
         } catch (error) {
           listaComprobantes.innerHTML = '<div class="text-danger">Error de red al cargar comprobantes.</div>';
         }
       }
+
+      // Add event listener to the modal shown event to control replace button visibility
+      documentViewerModal.addEventListener('shown.bs.modal', function () {
+          // Check the stored status and update button visibility
+          if (currentComprobanteStatus === 'Recibido') {
+              btnReplaceDocument.style.display = ''; // Show the button
+          } else {
+              btnReplaceDocument.style.display = 'none'; // Hide the button
+          }
+      });
+
+      // Add event listener to the modal hidden event to reset status
+      documentViewerModal.addEventListener('hidden.bs.modal', function () {
+          currentComprobanteStatus = null; // Reset status when modal is closed
+          // Ensure the button is hidden when modal closes
+          btnReplaceDocument.style.display = 'none';
+      });
+
+
+      // Add a single event listener to the parent container using delegation
+      listaComprobantes.addEventListener('click', function(event) {
+          // Check if the clicked element or its parent is a '.btn-view-comprobante'
+          const viewButton = event.target.closest('.btn-view-comprobante');
+
+          if (viewButton) {
+              const fileUrl = viewButton.getAttribute('data-url');
+              // Find the closest parent item to get the status
+              const itemElement = viewButton.closest('.list-group-item'); // Use list-group-item as the item container
+              const statusElement = itemElement ? itemElement.querySelector('.badge') : null;
+              const status = statusElement ? statusElement.textContent.trim() : null;
+
+              if (fileUrl) {
+                  // Store the status before opening the modal
+                  currentComprobanteStatus = status;
+                  // Call the global viewDocument function from mis_datos.js
+                  // This function is expected to open the modal
+                  if (typeof viewDocument === 'function') {
+                      viewDocument(fileUrl);
+                  } else {
+                      console.error('viewDocument function not found. Ensure mis_datos.js is loaded.');
+                      alert('Error interno: No se pudo abrir el visor de documentos.');
+                  }
+              } else {
+                  alert('No hay archivo adjunto para este comprobante.');
+              }
+          }
+      });
+
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -188,7 +247,7 @@
         }
       });
 
-      listarComprobantes();
+      listarComprobantes(); // Initial load of comprobantes
     })();
 
     // Funcion para volver al inicio
