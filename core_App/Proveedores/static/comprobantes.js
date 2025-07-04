@@ -125,6 +125,21 @@
         }
       }
 
+      // Function to get the appropriate badge class based on status
+      function getStatusBadgeClass(status) {
+          switch (status) {
+              case 'Recibido':
+                  return 'badge-recibido';
+              case 'Aceptado':
+                  return 'badge-aceptado';
+              case 'Rechazado':
+                  return 'badge-rechazado';
+              // Add more cases for other statuses here
+              default:
+                  return 'bg-secondary'; // Default Bootstrap gray badge
+          }
+      }
+
       async function listarComprobantes() {
         try {
           const resp = await fetch('/Proveedores/api/comprobantes/', {
@@ -152,15 +167,25 @@
             const item = document.createElement('div');
             item.className = 'list-group-item d-flex justify-content-between align-items-center comprobante-item';
             const fecha = new Date(c.fecha_emision).toLocaleDateString('es-AR');
+
+            // Determine the badge class based on status
+            const statusClass = getStatusBadgeClass(c.estado);
+
+            // Conditionally add the Delete button HTML
+            const deleteButtonHTML = (c.estado === 'Recibido' || c.estado === 'Rechazado') ?
+                `<button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-comprobante me-2" data-id="${c.id}">Eliminar</button>` :
+                ''; // Empty string if button should not be shown
+
+
             item.innerHTML = `
               <div>
                 <strong>${c.tipo}</strong> - Nº ${c.numero} <br />
                 Fecha: ${fecha} - Monto: $${parseFloat(c.monto_total).toFixed(2)} <br />
                 Orden de Compra: ${c.Num_Oc || 'N/A'} <br />
-                Estado: <span class="badge bg-success">${c.estado}</span>
+                Estado: <span class="badge ${statusClass}">${c.estado}</span>
               </div>
               <div>
-                <!-- Modified button to trigger modal -->
+                ${deleteButtonHTML} <!-- Add delete button here -->
                 <button type="button" class="btn btn-sm btn-outline-primary btn-view-comprobante" data-url="${c.archivo_url}">Ver Archivo</button>
               </div>
             `;
@@ -191,11 +216,59 @@
           btnReplaceDocument.style.display = 'none';
       });
 
+      // Function to handle comprobante deletion
+      async function eliminarComprobante(comprobanteId) {
+          if (!confirm('¿Está seguro de que desea eliminar este comprobante? Esta acción no se puede deshacer.')) {
+              return; // User cancelled
+          }
+
+          try {
+              const resp = await fetch(`/Proveedores/api/comprobantes/${comprobanteId}/`, {
+                  method: 'DELETE',
+                  headers: {
+                      'Authorization': 'Bearer ' + jwt
+                  }
+              });
+
+              if (!resp.ok) {
+                  // Handle specific error statuses if needed
+                  if (resp.status === 401) {
+                      alert('Sesión expirada o no autorizada. Por favor, inicie sesión nuevamente.');
+                      window.location.href = '/Proveedores/acceder/';
+                      return;
+                  }
+                  // Attempt to read error message from response body
+                  const errorText = await resp.text(); // Read as text first
+                  let errorMessage = 'Error al eliminar comprobante.';
+                  try {
+                      const errorJson = JSON.parse(errorText);
+                      errorMessage = errorJson.detail || JSON.stringify(errorJson); // Use detail or stringify
+                  } catch (e) {
+                      // If parsing fails, use the raw text
+                      errorMessage = `Error al eliminar comprobante: ${errorText}`;
+                  }
+                  alert(errorMessage);
+                  return false;
+              }
+
+              // If successful (status 204 No Content is common for DELETE)
+              alert('Comprobante eliminado correctamente.');
+              listarComprobantes(); // Refresh the list
+              return true;
+
+          } catch (error) {
+              console.error('Error deleting comprobante:', error);
+              alert('Error de red al eliminar comprobante.');
+              return false;
+          }
+      }
+
 
       // Add a single event listener to the parent container using delegation
       listaComprobantes.addEventListener('click', function(event) {
           // Check if the clicked element or its parent is a '.btn-view-comprobante'
           const viewButton = event.target.closest('.btn-view-comprobante');
+          const deleteButton = event.target.closest('.btn-eliminar-comprobante'); // Check for delete button
 
           if (viewButton) {
               const fileUrl = viewButton.getAttribute('data-url');
@@ -217,6 +290,15 @@
                   }
               } else {
                   alert('No hay archivo adjunto para este comprobante.');
+              }
+          } else if (deleteButton) {
+              // Handle delete button click
+              const comprobanteId = deleteButton.getAttribute('data-id');
+              if (comprobanteId) {
+                  eliminarComprobante(comprobanteId);
+              } else {
+                  console.error('Comprobante ID not found for deletion.');
+                  alert('Error interno: No se pudo obtener el ID del comprobante para eliminar.');
               }
           }
       });

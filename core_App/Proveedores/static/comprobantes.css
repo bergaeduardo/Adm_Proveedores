@@ -29,3 +29,18 @@ body {
     .btn-upload {
       margin-top: 0.5rem;
     }
+
+    /* Status Badge Colors */
+    .badge-recibido {
+        background-color: #6c757d !important; /* Gris */
+    }
+    .badge-aceptado {
+        background-color: #0d6efd !important; /* Azul de Bootstrap primary */
+    }
+    .badge-rechazado {
+        background-color: #dc3545 !important; /* Rojo de Bootstrap danger */
+    }
+    /* Add more states here if needed */
+    .badge-otro {
+        background-color: #ffc107 !important; /* Ejemplo: Amarillo para otros estados */
+    }
