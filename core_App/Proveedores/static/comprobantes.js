@@ -17,6 +17,14 @@
       // Variable to store the status of the currently viewed comprobante
       let currentComprobanteStatus = null;
 
+      // Get filter elements
+      const filterFechaDesdeInput = document.getElementById('filterFechaDesde');
+      const filterFechaHastaInput = document.getElementById('filterFechaHasta');
+      const filterEstadoSelect = document.getElementById('filterEstado');
+      const filterTipoSelect = document.getElementById('filterTipo');
+      const filterSearchInput = document.getElementById('filterSearch');
+      const btnApplyFilters = document.getElementById('btnApplyFilters'); // Reference to the button
+
       // Initialize IMask for monto_total
       const montoMask = IMask(montoTotalInput, {
         mask: '$num',
@@ -35,6 +43,36 @@
           }
         }
       });
+
+      // Populate filter dropdowns
+      function populateFilterDropdowns() {
+          // Populate Tipo dropdown from the form's select options
+          const formTipoSelect = form.tipo;
+          const filterTipoSelect = document.getElementById('filterTipo');
+          // Clear existing options except "Todos"
+          filterTipoSelect.innerHTML = '<option value="">Todos</option>';
+          for (let i = 0; i < formTipoSelect.options.length; i++) {
+              const option = formTipoSelect.options[i];
+              if (option.value) { // Avoid adding the disabled "Seleccione..." option
+                  const newOption = document.createElement('option');
+                  newOption.value = option.value;
+                  newOption.textContent = option.textContent;
+                  filterTipoSelect.appendChild(newOption);
+              }
+          }
+
+          // Populate Estado dropdown (hardcoded for now based on requirements)
+          const estados = ["Recibido", "Aceptado", "Rechazado"]; // Add more states here if needed
+          const filterEstadoSelect = document.getElementById('filterEstado');
+           // Clear existing options except "Todos"
+          filterEstadoSelect.innerHTML = '<option value="">Todos</option>';
+          estados.forEach(estado => {
+              const option = document.createElement('option');
+              option.value = estado;
+              option.textContent = estado;
+              filterEstadoSelect.appendChild(option);
+          });
+      }
 
 
       function mostrarError(input, mensaje) {
@@ -140,9 +178,13 @@
           }
       }
 
-      async function listarComprobantes() {
+      async function listarComprobantes(filters = {}) {
+        listaComprobantes.innerHTML = '<div class="text-muted">Cargando comprobantes...</div>'; // Loading indicator
         try {
-          const resp = await fetch('/Proveedores/api/comprobantes/', {
+          const queryParams = new URLSearchParams(filters).toString();
+          const url = `/Proveedores/api/comprobantes/${queryParams ? '?' + queryParams : ''}`;
+
+          const resp = await fetch(url, {
             headers: {
               'Authorization': 'Bearer ' + jwt
             }
@@ -159,7 +201,7 @@
           }
           const data = await resp.json();
           if (data.length === 0) {
-            listaComprobantes.innerHTML = '<div class="text-muted">No hay comprobantes cargados.</div>';
+            listaComprobantes.innerHTML = '<div class="text-muted">No hay comprobantes cargados que coincidan con los filtros.</div>';
             return;
           }
           listaComprobantes.innerHTML = '';
@@ -196,6 +238,9 @@
 
         } catch (error) {
           listaComprobantes.innerHTML = '<div class="text-danger">Error de red al cargar comprobantes.</div>';
+        } finally {
+            // Update button state after loading data
+            updateFilterButtonState();
         }
       }
 
@@ -253,7 +298,8 @@
 
               // If successful (status 204 No Content is common for DELETE)
               alert('Comprobante eliminado correctamente.');
-              listarComprobantes(); // Refresh the list
+              // After deletion, apply current filters to refresh the list
+              applyFilters(); // Refresh the list with current filters
               return true;
 
           } catch (error) {
@@ -325,11 +371,90 @@
           alert('Comprobante cargado correctamente.');
           form.reset();
           montoMask.updateValue(''); // Reset the masked input value
-          listarComprobantes();
+          // After successful upload, switch to the "Ver Comprobantes" tab and apply filters
+          const verTab = document.getElementById('ver-tab');
+          const tab = new bootstrap.Tab(verTab);
+          tab.show();
+          // applyFilters() is called automatically by the 'shown.bs.tab' listener
         }
       });
 
-      listarComprobantes(); // Initial load of comprobantes
+      // Function to collect filter values and call listarComprobantes
+      function applyFilters() {
+          const filters = {};
+          if (filterFechaDesdeInput.value) {
+              filters.fecha_desde = filterFechaDesdeInput.value;
+          }
+          if (filterFechaHastaInput.value) {
+              filters.fecha_hasta = filterFechaHastaInput.value;
+          }
+          if (filterEstadoSelect.value) {
+              filters.estado = filterEstadoSelect.value;
+          }
+          if (filterTipoSelect.value) {
+              filters.tipo = filterTipoSelect.value;
+          }
+          if (filterSearchInput.value.trim()) {
+              filters.search = filterSearchInput.value.trim();
+          }
+          listarComprobantes(filters);
+      }
+
+      // Function to clear all filter inputs
+      function clearFilters() {
+          filterFechaDesdeInput.value = '';
+          filterFechaHastaInput.value = '';
+          filterEstadoSelect.value = '';
+          filterTipoSelect.value = '';
+          filterSearchInput.value = '';
+      }
+
+      // Function to update the state of the filter button (text and class)
+      function updateFilterButtonState() {
+          const filtersActive =
+              filterFechaDesdeInput.value ||
+              filterFechaHastaInput.value ||
+              filterEstadoSelect.value ||
+              filterTipoSelect.value ||
+              filterSearchInput.value.trim();
+
+          if (filtersActive) {
+              btnApplyFilters.textContent = 'Quitar Filtros';
+              btnApplyFilters.classList.remove('btn-primary');
+              btnApplyFilters.classList.add('btn-danger');
+          } else {
+              btnApplyFilters.textContent = 'Aplicar Filtros';
+              btnApplyFilters.classList.remove('btn-danger');
+              btnApplyFilters.classList.add('btn-primary');
+          }
+      }
+
+
+      // Add event listener to the Apply/Clear Filters button
+      btnApplyFilters.addEventListener('click', function() {
+          if (btnApplyFilters.classList.contains('btn-danger')) { // If currently "Quitar Filtros"
+              clearFilters();
+              // applyFilters() will be called below, which will then update the button state
+          }
+          // Always apply filters after a click (either with new values or cleared values)
+          applyFilters();
+          // updateFilterButtonState() is called inside listarComprobantes's finally block
+      });
+
+      // Initial actions when the page loads
+      populateFilterDropdowns();
+
+      // Load comprobantes when the "Ver Comprobantes" tab is shown for the first time
+      const verTabElement = document.getElementById('ver-tab');
+      verTabElement.addEventListener('shown.bs.tab', event => {
+          // Load comprobantes only when the tab is shown
+          applyFilters(); // This will load data and then update button state
+      });
+
+      // If the "Ver Comprobantes" tab is the default active one, call applyFilters() here:
+      // applyFilters(); // Uncomment this line if 'ver' tab is active by default in HTML
+
+
     })();
 
     // Funcion para volver al inicio

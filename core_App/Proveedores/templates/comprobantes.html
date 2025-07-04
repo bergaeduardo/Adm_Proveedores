@@ -11,67 +11,128 @@
     </head>
     <body>
       <div class="container">
-        <h1 class="mb-4">Carga de Comprobantes</h1>
+        <div class="row justify-content-center">
+          <div class="col-9">
+            <h1 class="mb-4">Gestión de Comprobantes</h1>
 
-        <div class="form-section">
-          <form id="comprobanteForm" novalidate>
-            <div class="mb-3">
-              <label for="tipo" class="form-label">Tipo de Comprobante <span class="text-danger">*</span></label>
-              <select class="form-select" id="tipo" name="tipo" required>
-                <option value="" selected disabled>Seleccione...</option>
-                <option value="Factura A">Factura A</option>
-                <option value="Factura B">Factura B</option>
-                <option value="Factura C">Factura C</option>
-                <option value="Nota de Crédito">Nota de Crédito</option>
-                <option value="Nota de Débito">Nota de Débito</option>
-              </select>
-              <div class="invalid-feedback">Seleccione un tipo válido.</div>
-            </div>
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs mb-4" id="comprobantesTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="cargar-tab" data-bs-toggle="tab" data-bs-target="#cargar" type="button" role="tab" aria-controls="cargar" aria-selected="true">Cargar Comprobante</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ver-tab" data-bs-toggle="tab" data-bs-target="#ver" type="button" role="tab" aria-controls="ver" aria-selected="false">Ver Comprobantes</button>
+              </li>
+            </ul>
 
-            <div class="mb-3">
-              <label for="numero" class="form-label">Número de Comprobante <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="numero" name="numero" required />
-              <small class="form-text text-muted">Ingrese el número completo, incluyendo ceros iniciales si los tiene.</small>
-              <div class="invalid-feedback">Ingrese el número de comprobante.</div>
-            </div>
+            <!-- Tabs Content -->
+            <div class="tab-content" id="comprobantesTabsContent">
+              <!-- Cargar Comprobante Tab -->
+              <div class="tab-pane fade show active" id="cargar" role="tabpanel" aria-labelledby="cargar-tab">
+                <div class="form-section">
+                  <h2>Cargar Nuevo Comprobante</h2>
+                  <form id="comprobanteForm" novalidate>
+                    <div class="mb-3">
+                      <label for="tipo" class="form-label">Tipo de Comprobante <span class="text-danger">*</span></label>
+                      <select class="form-select" id="tipo" name="tipo" required>
+                        <option value="" selected disabled>Seleccione...</option>
+                        <option value="Factura A">Factura A</option>
+                        <option value="Factura B">Factura B</option>
+                        <option value="Factura C">Factura C</option>
+                        <option value="Nota de Crédito">Nota de Crédito</option>
+                        <option value="Nota de Débito">Nota de Débito</option>
+                      </select>
+                      <div class="invalid-feedback">Seleccione un tipo válido.</div>
+                    </div>
 
-            <div class="mb-3">
-              <label for="fecha_emision" class="form-label">Fecha de Emisión <span class="text-danger">*</span></label>
-              <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" required />
-              <div class="invalid-feedback">Ingrese la fecha de emisión.</div>
-            </div>
+                    <div class="mb-3">
+                      <label for="numero" class="form-label">Número de Comprobante <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="numero" name="numero" required />
+                      <small class="form-text text-muted">Ingrese el número completo, incluyendo ceros iniciales si los tiene.</small>
+                      <div class="invalid-feedback">Ingrese el número de comprobante.</div>
+                    </div>
 
-            <div class="mb-3">
-              <label for="monto_total" class="form-label">Monto Total <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="monto_total" name="monto_total" required placeholder="$0.00" />
-              <div class="invalid-feedback">Ingrese un monto válido.</div>
-            </div>
+                    <div class="mb-3">
+                      <label for="fecha_emision" class="form-label">Fecha de Emisión <span class="text-danger">*</span></label>
+                      <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" required />
+                      <div class="invalid-feedback">Ingrese la fecha de emisión.</div>
+                    </div>
 
-            <div class="mb-3">
-              <label for="Num_Oc" class="form-label">Orden de Compra asociada</label>
-              <input type="text" class="form-control" id="Num_Oc" name="Num_Oc" maxlength="50" placeholder="Ingrese el número de OC" />
-              <div class="invalid-feedback">Ingrese un número de orden de compra válido.</div>
-            </div>
+                    <div class="mb-3">
+                      <label for="monto_total" class="form-label">Monto Total <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="monto_total" name="monto_total" required placeholder="$0.00" />
+                      <div class="invalid-feedback">Ingrese un monto válido.</div>
+                    </div>
 
-            <div class="mb-3">
-              <label for="archivo" class="form-label">Archivo adjunto (PDF, JPEG, PNG) <span class="text-danger">*</span></label>
-              <input type="file" class="form-control" id="archivo" name="archivo" accept=".pdf,.jpeg,.jpg,.png" required />
-              <div class="invalid-feedback">Seleccione un archivo válido.</div>
-            </div>
+                    <div class="mb-3">
+                      <label for="Num_Oc" class="form-label">Orden de Compra asociada</label>
+                      <input type="text" class="form-control" id="Num_Oc" name="Num_Oc" maxlength="50" placeholder="Ingrese el número de OC" />
+                      <div class="invalid-feedback">Ingrese un número de orden de compra válido.</div>
+                    </div>
 
-            <div class="d-flex justify-content-between">
-              <button type="button" class="btn btn-secondary" onclick="goToDashboard()">Volver al Inicio</button>
-              <button type="submit" class="btn btn-primary btn-upload">Cargar Comprobante</button>
-            </div>
-          </form>
-        </div>
+                    <div class="mb-3">
+                      <label for="archivo" class="form-label">Archivo adjunto (PDF, JPEG, PNG) <span class="text-danger">*</span></label>
+                      <input type="file" class="form-control" id="archivo" name="archivo" accept=".pdf,.jpeg,.jpg,.png" required />
+                      <div class="invalid-feedback">Seleccione un archivo válido.</div>
+                    </div>
 
-        <div class="comprobante-list">
-          <h2>Comprobantes Cargados</h2>
-          <div id="listaComprobantes" class="list-group">
-            <!-- Comprobantes cargados aparecerán aquí -->
+                    <div class="d-flex justify-content-between">
+                      <button type="button" class="btn btn-secondary" onclick="goToDashboard()">Volver al Inicio</button>
+                      <button type="submit" class="btn btn-primary btn-upload">Cargar Comprobante</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Ver Comprobantes Tab -->
+              <div class="tab-pane fade" id="ver" role="tabpanel" aria-labelledby="ver-tab">
+                <div class="comprobante-list">
+                  <h2>Comprobantes Cargados</h2>
+
+                  <!-- Filtering Section -->
+                  <div class="filter-section mb-4 p-3 border rounded bg-light">
+                      <h5>Filtrar Comprobantes</h5>
+                      <div class="row g-3">
+                          <div class="col-md-3">
+                              <label for="filterFechaDesde" class="form-label">Fecha Desde</label>
+                              <input type="date" class="form-control" id="filterFechaDesde">
+                          </div>
+                          <div class="col-md-3">
+                              <label for="filterFechaHasta" class="form-label">Fecha Hasta</label>
+                              <input type="date" class="form-control" id="filterFechaHasta">
+                          </div>
+                          <div class="col-md-3">
+                              <label for="filterEstado" class="form-label">Estado</label>
+                              <select class="form-select" id="filterEstado">
+                                  <option value="">Todos</option>
+                                  <!-- Options will be populated by JS -->
+                              </select>
+                          </div>
+                          <div class="col-md-3">
+                              <label for="filterTipo" class="form-label">Tipo</label>
+                              <select class="form-select" id="filterTipo">
+                                  <option value="">Todos</option>
+                                  <!-- Options will be populated by JS -->
+                              </select>
+                          </div>
+                          <div class="col-md-6">
+                              <label for="filterSearch" class="form-label">Buscar (Nº Comprobante / OC)</label>
+                              <input type="text" class="form-control" id="filterSearch" placeholder="Buscar...">
+                          </div>
+                          <div class="col-md-6 d-flex align-items-end">
+                              <button type="button" class="btn btn-primary w-100" id="btnApplyFilters">Aplicar Filtros</button>
+                          </div>
+                      </div>
+                  </div>
+                  <!-- End Filtering Section -->
+
+                  <div id="listaComprobantes" class="list-group">
+                    <!-- Comprobantes cargados aparecerán aquí -->
+                  </div>
+                </div>
+              </div>
+            </div>            
           </div>
-        </div>
       </div>
 
       <!-- Modal para visualizar y reemplazar documentos (Copied from mis_datos.html) -->

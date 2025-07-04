@@ -44,3 +44,8 @@ body {
     .badge-otro {
         background-color: #ffc107 !important; /* Ejemplo: Amarillo para otros estados */
     }
+
+    /* Filtering Section Styles */
+    .filter-section {
+        margin-bottom: 1.5rem;
+    }
