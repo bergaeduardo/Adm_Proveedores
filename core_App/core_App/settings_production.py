@@ -17,6 +17,8 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'S#perS3crEt_1122')
 DEBUG = True
 # ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 ALLOWED_HOSTS = ['*']
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 
 INSTALLED_APPS = [
