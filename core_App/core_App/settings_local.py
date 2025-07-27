@@ -16,7 +16,7 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    # Sessions removed to avoid cookie-based auth
+    'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
@@ -30,7 +30,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    # SessionMiddleware removed - APIs are stateless
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -152,9 +152,8 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 # X_FRAME_OPTIONS = ALLOWED_HOSTS
 
 # Cierra la sesión al cerrar el navegador
-# Sessions are disabled; API is stateless
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_COOKIE_AGE = 0
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 12 * 60 * 60
 
 """
 La expresión 12 * 60 * 60 se refiere a la cantidad de segundos que representa la duración de la sesión.
