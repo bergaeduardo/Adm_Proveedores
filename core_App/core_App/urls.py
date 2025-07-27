@@ -9,6 +9,7 @@ urlpatterns = [
     path('', login_view, name='acceder-proveedor-form'),
     path('admin/', admin.site.urls),
     path('Proveedores/', include('Proveedores.urls')),
+    path('administracion/', include('Administracion.urls')),
     path('api/usuarios-tango/', lista_usuarios_tango, name='lista_usuarios_tango'),
 ]
 

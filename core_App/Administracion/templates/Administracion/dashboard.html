@@ -1,0 +1,100 @@
+{% load static %}
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+      <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+      <title>Tablero de Control Moderno</title>
+      <!-- Updated static path -->
+      <link rel="stylesheet" href="../../static/Administracion/dashboard.css">
+    </head>
+    <body>
+      <div class="container mt-4 mb-5">
+        <div class="dashboard-header text-center">
+          <h1 class="display-4">Administración de proveedores</h1>
+        </div>
+
+        <div class="row justify-content-center">
+          <div class="col-md-6 col-lg-4 mb-4">
+            <!-- Modified: Removed href, added data-toggle/target for modal -->
+            <a href="#" class="dashboard-card card-mis-datos" data-toggle="modal" data-target="#providerSearchModal">
+              <i class="fas fa-user icon"></i>
+              <h5>Mis Datos</h5>
+            </a>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <!-- Updated static path -->
+            <a href="../comprobantes/" class="dashboard-card card-comprobantes">
+              <i class="fas fa-file-invoice icon"></i>
+              <h5>Comprobantes</h5>
+            </a>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4">
+            {# Enlace/Tarjeta para Resumen de Cuenta #}
+            <!-- Updated static path -->
+            <a href="{% url 'administracion:resumen-cuenta' %}" class="dashboard-card card-resumenCuentas">
+              <i class="fas fa-chart-line icon"></i>
+              <h5>Resumen de Cuenta</h5>
+            </a>
+          </div>
+          <!-- <div class="col-md-6 col-lg-4 mb-4">
+            <div class="dashboard-card disabled">
+              <i class="fas fa-cogs icon"></i>
+              <h5>Botón 4</h5>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="dashboard-card disabled">
+              <i class="fas fa-envelope icon"></i>
+              <h5>Botón 5</h5>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="dashboard-card disabled">
+              <i class="fas fa-question-circle icon"></i>
+              <h5>Botón 6</h5>
+            </div>
+          </div> -->
+        </div>
+
+        <div class="text-center mt-4 mb-4">
+            <button class="btn btn-outline-danger btn-logout" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+            </button>
+        </div>
+      </div>
+
+      <!-- Provider Search Modal -->
+      <div class="modal fade" id="providerSearchModal" tabindex="-1" role="dialog" aria-labelledby="providerSearchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="providerSearchModalLabel">Seleccionar Proveedor</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <input type="text" class="form-control mb-3" id="providerSearchInput" placeholder="Buscar por nombre o CUIT...">
+              <div id="providerSearchResults" class="list-group">
+                <!-- Search results will be loaded here -->
+              </div>
+              <div id="providerSearchStatus" class="mt-2"></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+      <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+      <!-- Updated static path -->
+      <script src="../../static/Administracion/dashboard.js" type="module"></script>
+    </body>
+    </html>

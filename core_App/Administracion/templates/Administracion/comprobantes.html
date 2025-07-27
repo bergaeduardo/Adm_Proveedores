@@ -1,0 +1,192 @@
+{% load static %}
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>Comprobantes - Carga y Listado</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+      <!-- Updated static paths -->
+      <link rel="stylesheet" href="../../static/Administracion/comprobantes.css">
+      <link rel="stylesheet" href="../../static/Administracion/mis_datos.css"> {# Include mis_datos.css for modal styles #}
+    </head>
+    <body>
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-9">
+            <h1 class="mb-4">Gestión de Comprobantes</h1>
+
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs mb-4" id="comprobantesTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="cargar-tab" data-bs-toggle="tab" data-bs-target="#cargar" type="button" role="tab" aria-controls="cargar" aria-selected="true">Cargar Comprobante</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ver-tab" data-bs-toggle="tab" data-bs-target="#ver" type="button" role="tab" aria-controls="ver" aria-selected="false">Ver Comprobantes</button>
+              </li>
+            </ul>
+
+            <!-- Tabs Content -->
+            <div class="tab-content" id="comprobantesTabsContent">
+              <!-- Cargar Comprobante Tab -->
+              <div class="tab-pane fade show active" id="cargar" role="tabpanel" aria-labelledby="cargar-tab">
+                <div class="form-section">
+                  <h2>Cargar Nuevo Comprobante</h2>
+                  <form id="comprobanteForm" novalidate>
+                    <div class="mb-3">
+                      <label for="tipo" class="form-label">Tipo de Comprobante <span class="text-danger">*</span></label>
+                      <select class="form-select" id="tipo" name="tipo" required>
+                        <option value="" selected disabled>Seleccione...</option>
+                        <option value="Factura A">Factura A</option>
+                        <option value="Factura B">Factura B</option>
+                        <option value="Factura C">Factura C</option>
+                        <option value="Nota de Crédito">Nota de Crédito</option>
+                        <option value="Nota de Débito">Nota de Débito</option>
+                      </select>
+                      <div class="invalid-feedback">Seleccione un tipo válido.</div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="numero" class="form-label">Número de Comprobante <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="numero" name="numero" required />
+                      <small class="form-text text-muted">Ingrese el número completo, incluyendo ceros iniciales si los tiene.</small>
+                      <div class="invalid-feedback">Ingrese el número de comprobante.</div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="fecha_emision" class="form-label">Fecha de Emisión <span class="text-danger">*</span></label>
+                      <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" required />
+                      <div class="invalid-feedback">Ingrese la fecha de emisión.</div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="monto_total" class="form-label">Monto Total <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="monto_total" name="monto_total" required placeholder="$0.00" />
+                      <div class="invalid-feedback">Ingrese un monto válido.</div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="Num_Oc" class="form-label">Orden de Compra asociada</label>
+                      <input type="text" class="form-control" id="Num_Oc" name="Num_Oc" maxlength="50" placeholder="Ingrese el número de OC" />
+                      <div class="invalid-feedback">Ingrese un número de orden de compra válido.</div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="archivo" class="form-label">Archivo adjunto (PDF, JPEG, PNG) <span class="text-danger">*</span></label>
+                      <input type="file" class="form-control" id="archivo" name="archivo" accept=".pdf,.jpeg,.jpg,.png" required />
+                      <div class="invalid-feedback">Seleccione un archivo válido.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                      <!-- Updated static path -->
+                      <button type="button" class="btn btn-secondary" onclick="window.location.href = '../dashboard/'">Volver al Inicio</button>
+                      <button type="submit" class="btn btn-primary btn-upload">Cargar Comprobante</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Ver Comprobantes Tab -->
+              <div class="tab-pane fade" id="ver" role="tabpanel" aria-labelledby="ver-tab">
+                <div class="comprobante-list">
+                  <h2>Comprobantes Cargados</h2>
+
+                  <!-- Filtering Section -->
+                  <div class="filter-section mb-4 p-3 border rounded bg-light">
+                      <h5>Filtrar Comprobantes</h5>
+                      <div class="row g-3">
+                          <div class="col-md-3">
+                              <label for="filterFechaDesde" class="form-label">Fecha Desde</label>
+                              <input type="date" class="form-control" id="filterFechaDesde">
+                          </div>
+                          <div class="col-md-3">
+                              <label for="filterFechaHasta" class="form-label">Fecha Hasta</label>
+                              <input type="date" class="form-control" id="filterFechaHasta">
+                          </div>
+                          <div class="col-md-3">
+                              <label for="filterEstado" class="form-label">Estado</label>
+                              <select class="form-select" id="filterEstado">
+                                  <option value="">Todos</option>
+                                  <!-- Options will be populated by JS -->
+                              </select>
+                          </div>
+                          <div class="col-md-3">
+                              <label for="filterTipo" class="form-label">Tipo</label>
+                              <select class="form-select" id="filterTipo">
+                                  <option value="">Todos</option>
+                                  <!-- Options will be populated by JS -->
+                              </select>
+                          </div>
+                          <div class="col-md-6">
+                              <label for="filterSearch" class="form-label">Buscar (Nº Comprobante / OC)</label>
+                              <input type="text" class="form-control" id="filterSearch" placeholder="Buscar...">
+                          </div>
+                          <div class="col-md-6 d-flex align-items-end">
+                              <button type="button" class="btn btn-primary w-100" id="btnApplyFilters">Aplicar Filtros</button>
+                          </div>
+                      </div>
+                  </div>
+                  <!-- End Filtering Section -->
+
+                  <div id="listaComprobantes" class="list-group">
+                    <!-- Comprobantes cargados aparecerán aquí -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+      </div>
+
+      <!-- Modal para visualizar y reemplazar documentos (Copied from mis_datos.html) -->
+      <div class="modal fade" id="documentViewerModal" tabindex="-1" aria-labelledby="documentViewerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="documentViewerModalLabel">Ver Documento</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-0" id="documentViewerModalBody">
+              <!-- Contenido del documento (imagen o embed PDF) se carga aquí -->
+            </div>
+            <div class="modal-footer d-flex justify-content-between" id="documentViewerModalFooter">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+              <!-- The replace button is not used in this context, but kept for compatibility with viewDocument -->
+              <button type="button" class="btn btn-primary" id="btnReplaceDocument" data-file-input-id="" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat me-1" viewBox="0 0 16 16">
+                  <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.92 2.9a.25.25 0 0 1-.41.192l-2.9-1.92a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.1a.25.25 0 0 0-.41-.192l-2.9 1.92A.25.25 0 0 0 .534 9z"/>
+                  <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818l-.597.914-.067.092a2.75 2.75 0 0 0-1.488 2.502H2.75a.75.75 0 0 0 0 1.5H.25a.25.25 0 0 0-.192.41l1.92 2.9a.25.25 0 0 0 .41.192l.942-.625A4.73 4.73 0 0 0 8 13c2.514 0 4.56-1.766 5.064-4.043.12-.54.68-.927 1.25-.927.8 0 1.4.67 1.4 1.5 0 1.59-.575 2.94-1.638 4.024A7.25 7.25 0 0 1 8 14.5a7.25 7.25 0 0 1-6.495-3.873.75.75 0 0 0-1.25-.918A8.75 8.75 0 0 0 8 16c3.968 0 7.25-3.232 7.25-7.25S11.968 1 8 1 1 4.232 1 8.25c0 .787.202 1.542.585 2.22l-.782 1.173a.25.25 0 0 0 .397.223l.967-.642c.38-.252.793-.462 1.222-.635a.75.75 0 0 0-.376-1.424 5.75 5.75 0 0 1-.84-.251l-.697-.62a.75.75 0 0 0-1.071 1.05zm-.105-9.155L.686 5.123a.25.25 0 0 0-.41.192l1.92 2.9a.25.25 0 0 0 .41-.192l-1.92-2.9zM8 2.5a5.5 5.5 0 0 0-5.5 5.5.75.75 0 0 0 1.5 0A4 4 0 0 1 8 4a.75.75 0 0 0 0-1.5z"/>
+                </svg>
+                Reemplazar Documento
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirmation Modal (Copied from mis_datos.html - needed by mis_datos.js) -->
+      <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="confirmationModalLabel">Confirmar Carga de Documento</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmationModalBody">
+              <!-- Message will be injected here by JS -->
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" class="btn btn-primary" id="btnConfirmUpload">Aceptar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <script src="https://unpkg.com/imask@6.0.7/dist/imask.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script> {# Ensure Bootstrap JS is loaded before mis_datos.js #}
+      <!-- Updated static paths -->
+      <script src="../../static/Administracion/mis_datos.js"></script> {# Include mis_datos.js for modal logic #}
+      <script src="../../static/Administracion/comprobantes.js"></script>
+    </body>
+    </html>

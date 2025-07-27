@@ -1,0 +1,62 @@
+body {
+      background-color: #f8f9fa; /* Un fondo suave */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente más moderna */
+    }
+
+    .dashboard-header {
+      padding-top: 30px;
+      padding-bottom: 30px;
+      color: #343a40;
+    }
+
+    .dashboard-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 180px; /* Aumentamos un poco la altura */
+      padding: 25px;
+      text-align: center;
+      color: white;
+      border-radius: 15px; /* Bordes más redondeados */
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      text-decoration: none; /* Para los 'a' que son cards */
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      text-decoration: none; /* Mantener sin subrayado en hover */
+      color: white; /* Asegurar que el color del texto no cambie en hover si es un 'a' */
+    }
+
+    .dashboard-card.disabled {
+      background-color: #e9ecef; /* Gris más claro para deshabilitados */
+      color: #6c757d; /* Texto más oscuro para contraste en fondo claro */
+      pointer-events: none;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Sombra más sutil */
+    }
+    .dashboard-card.disabled .icon {
+      color: #adb5bd; /* Icono más claro en deshabilitados */
+    }
+
+    .card-mis-datos { background: linear-gradient(45deg, #007bff, #0056b3); }
+    .card-comprobantes { background: linear-gradient(45deg, #343a40, #1d2124); } /* Un gris oscuro elegante */
+    .card-resumenCuentas { background: linear-gradient(45deg, #28a745, #1e7e34); }
+    /* Los botones deshabilitados usan .disabled, así que no necesitan color específico aquí */
+
+    .icon {
+      font-size: 48px; /* Iconos más grandes */
+      margin-bottom: 15px;
+    }
+
+    .dashboard-card h5 {
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+
+    .btn-logout {
+        padding: 10px 25px;
+        font-size: 1rem;
+    }
