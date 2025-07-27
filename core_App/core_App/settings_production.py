@@ -6,6 +6,9 @@ from datetime import timedelta # Importar timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# File containing admin API credentials
+ADMIN_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'core_App', 'Administracion', 'admin_credentials.json')
 env_path = os.path.join(BASE_DIR, '.env')
 
 # print(f"La ruta completa del archivo .env es: {env_path}")
@@ -25,9 +28,10 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
+    # Sessions removed to keep APIs stateless
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'Proveedores',
@@ -37,7 +41,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    # SessionMiddleware removed - APIs are stateless
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -120,10 +125,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 # X_FRAME_OPTIONS = ALLOWED_HOSTS
 
-# Cierra la sesión al cerrar el navegador
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-# Para que las sesiones duren 1 día:
-SESSION_COOKIE_AGE = 12 * 60 * 60
+# Sessions disabled for stateless APIs
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 0
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -168,3 +172,6 @@ REST_FRAMEWORK = {
 DATABASE_ROUTERS = ['core_App.db_routers.DatabaseRouter']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Allow all origins for API access
+CORS_ALLOW_ALL_ORIGINS = True

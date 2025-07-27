@@ -2,6 +2,7 @@
  * Frontend configuration file for API credentials.
  * Modify these values to change the username and password used for API authentication.
  */
+// Credentials will be loaded from a secure location in production.
 export const apiCredentials = {
     username: 'admin',
     password: 'extra,123',

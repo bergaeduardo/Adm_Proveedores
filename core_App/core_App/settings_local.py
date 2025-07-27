@@ -4,6 +4,9 @@ from datetime import timedelta # Importar timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# File containing admin API credentials
+ADMIN_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'core_App', 'Administracion', 'admin_credentials.json')
+
 SECRET_KEY = 'your-secret-key'
 DEBUG = True
 ALLOWED_HOSTS = ['*']
@@ -13,9 +16,10 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
+    # Sessions removed to avoid cookie-based auth
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'Administracion',
@@ -25,7 +29,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    # SessionMiddleware removed - APIs are stateless
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -147,9 +152,9 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 # X_FRAME_OPTIONS = ALLOWED_HOSTS
 
 # Cierra la sesión al cerrar el navegador
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-# Para que las sesiones duren 1 Hora:
-SESSION_COOKIE_AGE = 12 * 60 * 60
+# Sessions are disabled; API is stateless
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 0
 
 """
 La expresión 12 * 60 * 60 se refiere a la cantidad de segundos que representa la duración de la sesión.
@@ -163,3 +168,6 @@ Entonces, 12 * 60 * 60 es igual a 12 horas x 60 minutos/hora x 60 segundos/minut
 
 Por lo tanto, SESSION_COOKIE_AGE = 12 * 60 * 60 representa una duración de sesión de 12 horas.
 """
+
+# Allow all origins for API access
+CORS_ALLOW_ALL_ORIGINS = True
