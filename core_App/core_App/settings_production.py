@@ -11,7 +11,7 @@ CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # It can be overridden via the ADMIN_CREDENTIALS_FILE environment variable.
 ADMIN_CREDENTIALS_FILE = os.environ.get(
     'ADMIN_CREDENTIALS_FILE',
-    os.path.join(BASE_DIR, 'core_App', 'Administracion', 'admin_credentials.json')
+    os.path.join(BASE_DIR, 'Administracion', 'admin_credentials.json')
 )
 env_path = os.path.join(BASE_DIR, '.env')
 

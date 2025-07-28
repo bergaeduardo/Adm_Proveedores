@@ -31,6 +31,7 @@ def _load_admin_credentials():
             with open(creds_path, 'r') as f:
                 _ADMIN_CREDENTIALS = json.load(f)
         except FileNotFoundError:
+            # Bubble this up so check_admin_auth can return a clear response
             raise FileNotFoundError(
                 f"Admin credentials file not found at '{creds_path}'. "
                 "Create it from admin_credentials.example.json or set the "
@@ -46,7 +47,10 @@ def check_admin_auth(request):
     if not username or not password:
         return False, Response({'detail': 'Authentication credentials were not provided.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    creds = _load_admin_credentials()
+    try:
+        creds = _load_admin_credentials()
+    except FileNotFoundError as e:
+        return False, Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     if username != creds.get('username') or password != creds.get('password'):
         return False, Response({'detail': 'Invalid username/password.'}, status=status.HTTP_401_UNAUTHORIZED)
 
