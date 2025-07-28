@@ -1,4 +1,4 @@
-import { apiCredentials } from './config.js';
+import { apiCredentials, API_BASE_URL } from './config.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     const providerSearchModal = new bootstrap.Modal(document.getElementById('providerSearchModal'));
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
         providerSearchStatus.textContent = 'Buscando...';
         providerSearchResults.innerHTML = '';
 
-        const apiUrl = '/administracion/api/proveedor-search/'; // Update API URL
+        const apiUrl = `${API_BASE_URL}proveedor-search/`;
 
         try {
             const response = await fetch(apiUrl, {

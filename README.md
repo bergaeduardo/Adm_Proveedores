@@ -73,6 +73,10 @@ Luego abre `http://localhost:8080/templates/Administracion/dashboard.html` en tu
 navegador y la aplicación podrá comunicarse con el backend sin restricciones de
 CORS.
 
+Edita `administracion_frontend/static/administracion/config.js` para establecer
+las credenciales y la URL del backend (`API_BASE_URL`) si utilizas un puerto o
+host diferente.
+
 ## Créditos o Autores
 
 - Desarrollador Principal: [Tu Nombre]

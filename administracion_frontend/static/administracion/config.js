@@ -9,5 +9,8 @@ export const apiCredentials = {
     password: '',
 };
 
+// Base URL of the Django backend. Update the port if your backend runs
+// on a different host or port.
+export const API_BASE_URL = 'http://localhost:8000/administracion/api/';
+
 // You can add other configuration variables here if needed
-// export const API_BASE_URL = '/administracion/api/';
