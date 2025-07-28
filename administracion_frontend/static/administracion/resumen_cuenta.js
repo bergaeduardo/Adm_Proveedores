@@ -322,6 +322,6 @@ $(document).ready(function() {
 
     // Función auxiliar para el botón de "Volver" (si es que existe uno con este llamado)
     function goToDashboard() {
-      window.location.href = '/Proveedores/dashboard/';
+      window.location.href = 'dashboard.html';
     }
 });
