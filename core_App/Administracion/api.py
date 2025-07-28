@@ -80,18 +80,16 @@ class AdministracionProveedorViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         # check_admin_auth is called in dispatch
-        print(f"DEBUG: Entering AdministracionProveedorViewSet retrieve method.")
-        print(f"DEBUG: Received PK: {kwargs.get('pk')}")
         try:
             instance = self.get_object()
-            print(f"DEBUG: Successfully retrieved object: {instance}")
             serializer = self.get_serializer(instance)
-            print(f"DEBUG: Serializer data: {serializer.data}")
             return Response(serializer.data)
-        except Exception as e:
-            print(f"DEBUG: Error in retrieve method: {e}")
-            traceback.print_exc() # Print full traceback
-            return Response({"error": "Error retrieving provider data."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception:
+            traceback.print_exc()  # Log the error for debugging
+            return Response(
+                {"error": "Error retrieving provider data."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
     def create(self, request, *args, **kwargs):

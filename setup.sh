@@ -1,5 +1,7 @@
 #!/bin/bash
 # Setup script to initialize the Codex environment
+# Abort on any failure so errors are visible in CI logs
+set -e
 
 # Install Python dependencies
 python3 -m pip install -r core_App/requirements.txt
