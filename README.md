@@ -37,6 +37,13 @@ Este proyecto es una aplicación web desarrollada con Django que gestiona provee
    pip install -r requirements.txt
    ```
 
+5. Copia el archivo de credenciales de ejemplo y edítalo con tu usuario y contraseña para las APIs de administración:
+   ```bash
+   cp core_App/Administracion/admin_credentials.example.json core_App/Administracion/admin_credentials.json
+   # Edita el archivo resultante y reemplaza los valores por tus credenciales
+   ```
+   También puedes indicar la ruta del archivo mediante la variable de entorno `ADMIN_CREDENTIALS_FILE`.
+
 ## Instrucciones para Ejecutar el Proyecto
 
 1. Realiza las migraciones de la base de datos:
@@ -49,6 +56,22 @@ Este proyecto es una aplicación web desarrollada con Django que gestiona provee
    python manage.py runserver
    ```
 3. Accede a la aplicación en tu navegador en `http://localhost:8000`.
+
+### Uso del frontend de Administración
+
+Los archivos HTML y JavaScript de la app **Administracion** se encuentran en el
+directorio `administracion_frontend`. Para evitar errores de CORS, sirve estos
+archivos a través de un servidor web local en lugar de abrirlos directamente con
+`file://` en el navegador. Por ejemplo:
+
+```bash
+cd administracion_frontend
+python3 -m http.server 8080
+```
+
+Luego abre `http://localhost:8080/templates/Administracion/dashboard.html` en tu
+navegador y la aplicación podrá comunicarse con el backend sin restricciones de
+CORS.
 
 ## Créditos o Autores
 

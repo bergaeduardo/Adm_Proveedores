@@ -1,11 +1,12 @@
 /**
  * Frontend configuration file for API credentials.
- * Modify these values to change the username and password used for API authentication.
+ * Rellena estos valores con el usuario y la contraseña configurados en
+ * `admin_credentials.json` del backend.
+ * Es recomendable mantener este archivo fuera del control de versiones.
  */
-// Credentials will be loaded from a secure location in production.
 export const apiCredentials = {
-    username: 'admin',
-    password: 'extra,123',
+    username: '',
+    password: '',
 };
 
 // You can add other configuration variables here if needed
