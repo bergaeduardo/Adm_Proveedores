@@ -130,20 +130,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(url, options);
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const ct = response.headers.get("content-type");
+                let errorData;
+                if (ct && ct.includes("application/json")) {
+                    errorData = await response.json();
+                } else {
+                    errorData = await response.text();
+                }
                 console.error('API Error:', response.status, errorData);
                 // Handle specific error statuses (e.g., 401, 403, 400)
                 if (response.status === 401 || response.status === 403) {
                     displayMessage(formMsg, 'Error de autenticación. Verifique las credenciales.', 'danger');
-                } else if (response.status === 400) {
-                     // Display validation errors from the backend
+                } else if (response.status === 400 && typeof errorData === 'object') {
+                     // Display validation errors from the backend when JSON was returned
                      let errorMsg = 'Error de validación:';
                      for (const field in errorData) {
                          errorMsg += ` ${field}: ${errorData[field].join(', ')}`;
                      }
                      displayMessage(formMsg, errorMsg, 'danger');
-                }
-                 else {
+                } else {
                     displayMessage(formMsg, `Error en la solicitud: ${response.statusText}`, 'danger');
                 }
                 throw new Error(`API request failed with status ${response.status}`);
