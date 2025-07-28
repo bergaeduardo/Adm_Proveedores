@@ -27,8 +27,15 @@ def _load_admin_credentials():
     global _ADMIN_CREDENTIALS
     if _ADMIN_CREDENTIALS is None:
         creds_path = settings.ADMIN_CREDENTIALS_FILE
-        with open(creds_path, 'r') as f:
-            _ADMIN_CREDENTIALS = json.load(f)
+        try:
+            with open(creds_path, 'r') as f:
+                _ADMIN_CREDENTIALS = json.load(f)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Admin credentials file not found at '{creds_path}'. "
+                "Create it from admin_credentials.example.json or set the "
+                "ADMIN_CREDENTIALS_FILE environment variable."
+            )
     return _ADMIN_CREDENTIALS
 
 def check_admin_auth(request):

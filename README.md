@@ -43,6 +43,8 @@ Este proyecto es una aplicación web desarrollada con Django que gestiona provee
    # Edita el archivo resultante y reemplaza los valores por tus credenciales
    ```
    También puedes indicar la ruta del archivo mediante la variable de entorno `ADMIN_CREDENTIALS_FILE`.
+   Si la ruta especificada no contiene un archivo válido, el backend mostrará un
+   error indicando que no se encontró `admin_credentials.json`.
 
 ## Instrucciones para Ejecutar el Proyecto
 
