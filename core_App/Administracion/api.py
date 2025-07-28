@@ -23,20 +23,16 @@ from consultasTango.models import Cpa57 # Assuming this model is needed and acce
 _ADMIN_CREDENTIALS = None
 
 def _load_admin_credentials():
-    """Load admin credentials from JSON file defined in settings."""
+    """Return admin credentials loaded from JSON or ``None`` if unavailable."""
     global _ADMIN_CREDENTIALS
     if _ADMIN_CREDENTIALS is None:
         creds_path = settings.ADMIN_CREDENTIALS_FILE
         try:
-            with open(creds_path, 'r') as f:
+            with open(creds_path, "r") as f:
                 _ADMIN_CREDENTIALS = json.load(f)
-        except FileNotFoundError:
-            # Bubble this up so check_admin_auth can return a clear response
-            raise FileNotFoundError(
-                f"Admin credentials file not found at '{creds_path}'. "
-                "Create it from admin_credentials.example.json or set the "
-                "ADMIN_CREDENTIALS_FILE environment variable."
-            )
+        except (FileNotFoundError, json.JSONDecodeError):
+            # Credentials are missing or invalid
+            return None
     return _ADMIN_CREDENTIALS
 
 def check_admin_auth(request):
@@ -47,10 +43,9 @@ def check_admin_auth(request):
     if not username or not password:
         return False, Response({'detail': 'Authentication credentials were not provided.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    try:
-        creds = _load_admin_credentials()
-    except FileNotFoundError as e:
-        return False, Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    creds = _load_admin_credentials()
+    if not creds:
+        return False, Response({'detail': 'Admin credentials are not configured.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     if username != creds.get('username') or password != creds.get('password'):
         return False, Response({'detail': 'Invalid username/password.'}, status=status.HTTP_401_UNAUTHORIZED)
 
