@@ -36,6 +36,11 @@ Este proyecto es una aplicación web desarrollada con Django que gestiona provee
    ```bash
    pip install -r requirements.txt
    ```
+   También puedes ejecutar el script `setup.sh` incluido en la raíz del
+   repositorio para automatizar este paso en entornos como Codex:
+   ```bash
+   ./setup.sh
+   ```
 
 5. Copia el archivo de credenciales de ejemplo y edítalo con tu usuario y contraseña para las APIs de administración:
    ```bash
