@@ -1,4 +1,4 @@
-import { apiCredentials } from './config.js';
+import { apiCredentials, API_BASE_URL } from './config.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     const comprobanteForm = document.getElementById('comprobanteForm');
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!selectedProviderId) {
         // If no provider is selected, redirect back to the dashboard or show an error
         alert('No se ha seleccionado un proveedor.');
-        window.location.href = '../dashboard/'; // Update redirection path
+        window.location.href = 'dashboard.html';
         return; // Stop execution
     }
 
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData(comprobanteForm);
 
-        const apiUrl = '/administracion/api/comprobantes/'; // Update API URL
+        const apiUrl = `${API_BASE_URL}comprobantes/`;
 
         try {
             // makeAuthenticatedRequest handles adding credentials and provider_id
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Load Comprobantes List ---
     async function loadComprobantes(filters = {}) {
-        const apiUrl = '/administracion/api/comprobantes/'; // Update API URL
+        const apiUrl = `${API_BASE_URL}comprobantes/`;
 
         // Add provider_id and filter parameters to the request data
         const requestData = {
@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.goToDashboard = function() {
-         window.location.href = '../dashboard/'; // Update redirection path
+         window.location.href = 'dashboard.html';
     };
 
 

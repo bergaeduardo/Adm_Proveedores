@@ -3,8 +3,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
 from django.conf import settings
 from django.db import connections
 from datetime import datetime, date
@@ -22,28 +20,36 @@ from Proveedores.serializers import ProveedorSerializer, ComprobanteSerializer, 
 from consultasTango.models import Cpa57 # Assuming this model is needed and accessible
 
 # --- Custom Authentication Check ---
+_ADMIN_CREDENTIALS = None
+
+def _load_admin_credentials():
+    """Return admin credentials loaded from JSON or ``None`` if unavailable."""
+    global _ADMIN_CREDENTIALS
+    if _ADMIN_CREDENTIALS is None:
+        creds_path = settings.ADMIN_CREDENTIALS_FILE
+        try:
+            with open(creds_path, "r") as f:
+                _ADMIN_CREDENTIALS = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            # Credentials are missing or invalid
+            return None
+    return _ADMIN_CREDENTIALS
+
 def check_admin_auth(request):
-    """
-    Manually checks for 'admin'/'123456' credentials and superuser status.
-    Expects 'username' and 'password' in request.data or query_params.
-    """
-    # Prioritize data (body) for POST/PUT/PATCH, then query_params for GET
+    """Validate credentials provided in each request against config file."""
     username = request.data.get('username') or request.query_params.get('username')
     password = request.data.get('password') or request.query_params.get('password')
 
     if not username or not password:
-        return None, Response({'detail': 'Authentication credentials were not provided.'}, status=status.HTTP_401_UNAUTHORIZED)
+        return False, Response({'detail': 'Authentication credentials were not provided.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    user = authenticate(username=username, password=password)
+    creds = _load_admin_credentials()
+    if not creds:
+        return False, Response({'detail': 'Admin credentials are not configured.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    if username != creds.get('username') or password != creds.get('password'):
+        return False, Response({'detail': 'Invalid username/password.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    if user is None:
-        return None, Response({'detail': 'Invalid username/password.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-    if not user.is_superuser:
-        return None, Response({'detail': 'User is not a superuser.'}, status=status.HTTP_403_FORBIDDEN)
-
-    # Return the authenticated user if successful
-    return user, None
+    return True, None
 
 # --- Replicated and Adapted API Views ---
 
@@ -57,10 +63,9 @@ class AdministracionProveedorViewSet(viewsets.ModelViewSet):
 
     def dispatch(self, request, *args, **kwargs):
         # Apply custom authentication check before any http method handler
-        user, response = check_admin_auth(request)
-        if response:
+        ok, response = check_admin_auth(request)
+        if not ok:
             return response
-        request.user = user # Attach the authenticated user to the request
         return super().dispatch(request, *args, **kwargs)
 
     # Override methods to ensure custom auth is checked (dispatch handles this, but explicit is clearer)
@@ -70,38 +75,24 @@ class AdministracionProveedorViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         # check_admin_auth is called in dispatch
-        print(f"DEBUG: Entering AdministracionProveedorViewSet retrieve method.")
-        print(f"DEBUG: Received PK: {kwargs.get('pk')}")
         try:
             instance = self.get_object()
-            print(f"DEBUG: Successfully retrieved object: {instance}")
             serializer = self.get_serializer(instance)
-            print(f"DEBUG: Serializer data: {serializer.data}")
             return Response(serializer.data)
-        except Exception as e:
-            print(f"DEBUG: Error in retrieve method: {e}")
-            traceback.print_exc() # Print full traceback
-            return Response({"error": "Error retrieving provider data."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception:
+            traceback.print_exc()  # Log the error for debugging
+            return Response(
+                {"error": "Error retrieving provider data."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
     def create(self, request, *args, **kwargs):
         # check_admin_auth is called in dispatch
-        # Note: ProveedorRegistroView might be more appropriate for initial creation
-        # This method assumes creating a provider for an *existing* user (admin in this case)
-        user = request.user # User is attached by dispatch
-        # Check if the admin user already has a provider associated (assuming OneToOne or similar)
-        # This might not be the desired behavior for an admin creating providers for *other* users.
-        # If the admin is creating providers linked to *themselves*, this check is relevant.
-        # If the admin is creating providers linked to *other* users (which seems more likely for an admin panel),
-        # this check should be removed or modified.
-        # For now, keeping the check based on the original code's structure assumption.
-        if Proveedor.objects.filter(username_django=user).exists():
-             return Response({"detail": "Este usuario ya tiene un proveedor asociado."}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # Link to the authenticated admin user (adjust if admin creates for others)
-        serializer.save(username_django=user)
+        # Do not link to a Django user; admin credentials are external
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -175,17 +166,13 @@ class AdministracionCpaContactosProveedorHabitualViewSet(viewsets.ModelViewSet):
     serializer_class = CpaContactosProveedorHabitualSerializer
 
     def dispatch(self, request, *args, **kwargs):
-        user, response = check_admin_auth(request)
-        if response:
+        ok, response = check_admin_auth(request)
+        if not ok:
             return response
-        request.user = user
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        # Filter contacts by the authenticated admin user
-        user = self.request.user
-        # Assuming CpaContactosProveedorHabitual has a ForeignKey to User named 'username_django'
-        # Or filter by cod_provee if the admin user is linked to a specific provider
+        # Filter contacts only by the selected provider id
         # For admin, we might want to see ALL contacts or contacts for a SELECTED provider.
         # Based on the dashboard requirement, the frontend will select a provider.
         # We need to get the provider ID from the request (e.g., query param or body)
@@ -204,7 +191,7 @@ class AdministracionCpaContactosProveedorHabitualViewSet(viewsets.ModelViewSet):
             # Find the Proveedor instance based on the provided ID
             proveedor_instance = Proveedor.objects.get(id=provider_id)
             # Filter contacts for this specific provider
-            return CpaContactosProveedorHabitual.objects.filter(cod_provee=proveedor_instance.cod_cpa01) # Assuming cod_provee links to Proveedor.cod_cpa01
+            return CpaContactosProveedorHabitual.objects.filter(cod_provee=proveedor_instance.cod_cpa01)
         except Proveedor.DoesNotExist:
             return CpaContactosProveedorHabitual.objects.none() # Provider not found
 
@@ -217,8 +204,8 @@ class AdministracionCpaContactosProveedorHabitualViewSet(viewsets.ModelViewSet):
 
         try:
             proveedor_instance = Proveedor.objects.get(id=provider_id)
-            # Link the contact to the provider's cod_cpa01 and the admin user
-            serializer.save(cod_provee=proveedor_instance.cod_cpa01, username_django=self.request.user)
+            # Link the contact only to the provider
+            serializer.save(cod_provee=proveedor_instance.cod_cpa01)
         except Proveedor.DoesNotExist:
              raise serializers.ValidationError({"proveedor_id": "Invalid Proveedor ID."})
 
@@ -243,10 +230,9 @@ class AdministracionComprobanteViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
 
     def dispatch(self, request, *args, **kwargs):
-        user, response = check_admin_auth(request)
-        if response:
+        ok, response = check_admin_auth(request)
+        if not ok:
             return response
-        request.user = user
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -293,10 +279,9 @@ class AdministracionProveedorSearchView(APIView):
     API to search for Proveedores with custom admin authentication.
     """
     def post(self, request, *args, **kwargs):
-        user, response = check_admin_auth(request)
-        if response:
+        ok, response = check_admin_auth(request)
+        if not ok:
             return response
-        request.user = user # Attach the authenticated user
 
         query = request.data.get('query', '')
         if not query:
@@ -320,10 +305,9 @@ class AdministracionProvinciaListView(APIView):
   Replicated ProvinciaListView with custom admin authentication.
   """
   def dispatch(self, request, *args, **kwargs):
-      user, response = check_admin_auth(request)
-      if response:
+      ok, response = check_admin_auth(request)
+      if not ok:
           return response
-      request.user = user
       return super().dispatch(request, *args, **kwargs)
 
   def get(self, request):
@@ -338,10 +322,9 @@ class AdministracionCategoriaIVAListView(APIView):
   Replicated CategoriaIVAListView with custom admin authentication.
   """
   def dispatch(self, request, *args, **kwargs):
-      user, response = check_admin_auth(request)
-      if response:
+      ok, response = check_admin_auth(request)
+      if not ok:
           return response
-      request.user = user
       return super().dispatch(request, *args, **kwargs)
 
   def get(self, request):
@@ -361,10 +344,9 @@ class AdministracionIngresosBrutosListView(APIView):
   Replicated IngresosBrutosListView with custom admin authentication.
   """
   def dispatch(self, request, *args, **kwargs):
-      user, response = check_admin_auth(request)
-      if response:
+      ok, response = check_admin_auth(request)
+      if not ok:
           return response
-      request.user = user
       return super().dispatch(request, *args, **kwargs)
 
   def get(self, request):
@@ -384,14 +366,12 @@ class AdministracionResumenCuentaProveedorView(APIView):
   Requires 'proveedor_id' in query params or body.
   """
   def dispatch(self, request, *args, **kwargs):
-      user, response = check_admin_auth(request)
-      if response:
+      ok, response = check_admin_auth(request)
+      if not ok:
           return response
-      request.user = user
       return super().dispatch(request, *args, **kwargs)
 
   def get(self, request, *args, **kwargs):
-    user = request.user # Authenticated admin user
 
     # Get the selected provider ID from the request
     provider_id = request.query_params.get('proveedor_id')

@@ -18,7 +18,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         }
         const data = await resp.json();
         sessionStorage.setItem('jwt', data.access);
-        window.location.href = '/Proveedores/dashboard/';
+        window.location.href = 'dashboard.html';
       } catch (err) {
         errorDiv.textContent = 'No se pudo conectar con el servidor. Verifica tu conexión o inténtalo más tarde.';
         errorDiv.classList.remove('d-none');

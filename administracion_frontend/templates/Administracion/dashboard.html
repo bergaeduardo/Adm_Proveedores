@@ -1,4 +1,3 @@
-{% load static %}
     <!DOCTYPE html>
     <html lang="es">
     <head>
@@ -8,7 +7,7 @@
       <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
       <title>Tablero de Control Moderno</title>
       <!-- Updated static path -->
-      <link rel="stylesheet" href="../../static/Administracion/dashboard.css">
+      <link rel="stylesheet" href="../../static/administracion/dashboard.css">
     </head>
     <body>
       <div class="container mt-4 mb-5">
@@ -26,7 +25,7 @@
           </div>
           <div class="col-md-6 col-lg-4 mb-4">
             <!-- Updated static path -->
-            <a href="../comprobantes/" class="dashboard-card card-comprobantes">
+            <a href="comprobantes.html" class="dashboard-card card-comprobantes">
               <i class="fas fa-file-invoice icon"></i>
               <h5>Comprobantes</h5>
             </a>
@@ -34,7 +33,7 @@
           <div class="col-md-6 col-lg-4 mb-4">
             {# Enlace/Tarjeta para Resumen de Cuenta #}
             <!-- Updated static path -->
-            <a href="{% url 'administracion:resumen-cuenta' %}" class="dashboard-card card-resumenCuentas">
+            <a href="resumen_cuenta.html" class="dashboard-card card-resumenCuentas">
               <i class="fas fa-chart-line icon"></i>
               <h5>Resumen de Cuenta</h5>
             </a>
@@ -95,6 +94,6 @@
       <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
       <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
       <!-- Updated static path -->
-      <script src="../../static/Administracion/dashboard.js" type="module"></script>
+      <script src="../../static/administracion/dashboard.js" type="module"></script>
     </body>
     </html>

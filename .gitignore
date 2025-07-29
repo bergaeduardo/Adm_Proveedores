@@ -1,0 +1,14 @@
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+
+# Environment files
+.env
+
+# Local admin credentials
+core_App/Administracion/admin_credentials.json

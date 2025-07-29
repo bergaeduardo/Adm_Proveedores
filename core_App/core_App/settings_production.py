@@ -6,6 +6,13 @@ from datetime import timedelta # Importar timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# File containing admin API credentials
+# It can be overridden via the ADMIN_CREDENTIALS_FILE environment variable.
+ADMIN_CREDENTIALS_FILE = os.environ.get(
+    'ADMIN_CREDENTIALS_FILE',
+    os.path.join(BASE_DIR, 'Administracion', 'admin_credentials.json')
+)
 env_path = os.path.join(BASE_DIR, '.env')
 
 # print(f"La ruta completa del archivo .env es: {env_path}")
@@ -28,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'Proveedores',
@@ -37,6 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -122,7 +131,6 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Cierra la sesión al cerrar el navegador
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-# Para que las sesiones duren 1 día:
 SESSION_COOKIE_AGE = 12 * 60 * 60
 
 REST_FRAMEWORK = {
@@ -168,3 +176,6 @@ REST_FRAMEWORK = {
 DATABASE_ROUTERS = ['core_App.db_routers.DatabaseRouter']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Allow all origins for API access
+CORS_ALLOW_ALL_ORIGINS = True

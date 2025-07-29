@@ -36,6 +36,20 @@ Este proyecto es una aplicación web desarrollada con Django que gestiona provee
    ```bash
    pip install -r requirements.txt
    ```
+   También puedes ejecutar el script `setup.sh` incluido en la raíz del
+   repositorio para automatizar este paso en entornos como Codex:
+   ```bash
+   ./setup.sh
+   ```
+
+5. Copia el archivo de credenciales de ejemplo y edítalo con tu usuario y contraseña para las APIs de administración:
+   ```bash
+   cp core_App/Administracion/admin_credentials.example.json core_App/Administracion/admin_credentials.json
+   # Edita el archivo resultante y reemplaza los valores por tus credenciales
+   ```
+   También puedes indicar la ruta del archivo mediante la variable de entorno `ADMIN_CREDENTIALS_FILE`.
+   Si el backend no encuentra un archivo válido responderá con un error 500 indicando
+   que las credenciales de administración no están configuradas. Crea el archivo antes de iniciar el servidor.
 
 ## Instrucciones para Ejecutar el Proyecto
 
@@ -49,6 +63,26 @@ Este proyecto es una aplicación web desarrollada con Django que gestiona provee
    python manage.py runserver
    ```
 3. Accede a la aplicación en tu navegador en `http://localhost:8000`.
+
+### Uso del frontend de Administración
+
+Los archivos HTML y JavaScript de la app **Administracion** se encuentran en el
+directorio `administracion_frontend`. Para evitar errores de CORS, sirve estos
+archivos a través de un servidor web local en lugar de abrirlos directamente con
+`file://` en el navegador. Por ejemplo:
+
+```bash
+cd administracion_frontend
+python3 -m http.server 8080
+```
+
+Luego abre `http://localhost:8080/templates/Administracion/dashboard.html` en tu
+navegador y la aplicación podrá comunicarse con el backend sin restricciones de
+CORS.
+
+Edita `administracion_frontend/static/administracion/config.js` para establecer
+las credenciales y la URL del backend (`API_BASE_URL`) si utilizas un puerto o
+host diferente.
 
 ## Créditos o Autores
 

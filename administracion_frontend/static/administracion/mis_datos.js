@@ -1,4 +1,4 @@
-import { apiCredentials } from './config.js';
+import { apiCredentials, API_BASE_URL } from './config.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     const proveedorForm = document.getElementById('proveedorForm');
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!selectedProviderId) {
         // If no provider is selected, redirect back to the dashboard or show an error
         alert('No se ha seleccionado un proveedor.');
-        window.location.href = '../dashboard/'; // Update redirection path
+        window.location.href = 'dashboard.html';
         return; // Stop execution
     }
 
@@ -130,20 +130,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(url, options);
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const ct = response.headers.get("content-type");
+                let errorData;
+                if (ct && ct.includes("application/json")) {
+                    errorData = await response.json();
+                } else {
+                    errorData = await response.text();
+                }
                 console.error('API Error:', response.status, errorData);
                 // Handle specific error statuses (e.g., 401, 403, 400)
                 if (response.status === 401 || response.status === 403) {
                     displayMessage(formMsg, 'Error de autenticación. Verifique las credenciales.', 'danger');
-                } else if (response.status === 400) {
-                     // Display validation errors from the backend
+                } else if (response.status === 400 && typeof errorData === 'object') {
+                     // Display validation errors from the backend when JSON was returned
                      let errorMsg = 'Error de validación:';
                      for (const field in errorData) {
                          errorMsg += ` ${field}: ${errorData[field].join(', ')}`;
                      }
                      displayMessage(formMsg, errorMsg, 'danger');
-                }
-                 else {
+                } else {
                     displayMessage(formMsg, `Error en la solicitud: ${response.statusText}`, 'danger');
                 }
                 throw new Error(`API request failed with status ${response.status}`);
@@ -174,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Load Data ---
     async function loadProveedorData() {
-        const apiUrl = `/administracion/api/proveedores/${selectedProviderId}/`; // Update API URL
+        const apiUrl = `${API_BASE_URL}proveedores/${selectedProviderId}/`;
 
         try {
             // makeAuthenticatedRequest now sends credentials as query params for GET
@@ -220,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadDropdowns(proveedorData) {
         // Load Condición IVA
         const condicionIvaSelect = document.getElementById('condicionIva');
-        const ivaApiUrl = '/administracion/api/categorias-iva/'; // Update API URL
+        const ivaApiUrl = `${API_BASE_URL}categorias-iva/`;
         try {
             // makeAuthenticatedRequest now sends credentials as query params for GET
             const ivaData = await makeAuthenticatedRequest(ivaApiUrl, 'GET');
@@ -244,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Load Ingresos Brutos
         const ingresosBrutosSelect = document.getElementById('ingresosBrutos');
-        const iibbApiUrl = '/administracion/api/ingresos-brutos/'; // Update API URL
+        const iibbApiUrl = `${API_BASE_URL}ingresos-brutos/`;
         try {
             // makeAuthenticatedRequest now sends credentials as query params for GET
             const iibbData = await makeAuthenticatedRequest(iibbApiUrl, 'GET');
@@ -269,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     async function loadContactos() {
-        const apiUrl = `/administracion/api/contactos/?proveedor_id=${selectedProviderId}`; // Update API URL and add provider_id query param
+        const apiUrl = `${API_BASE_URL}contactos/?proveedor_id=${selectedProviderId}`;
 
         try {
             // makeAuthenticatedRequest now sends credentials as query params for GET
@@ -351,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
 
-        const apiUrl = `/administracion/api/proveedores/${selectedProviderId}/`; // Update API URL
+        const apiUrl = `${API_BASE_URL}proveedores/${selectedProviderId}/`;
 
         try {
             // makeAuthenticatedRequest handles adding credentials and provider_id to body for PATCH
@@ -382,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function handleEditContacto(event) {
         const contactoId = event.target.closest('button').dataset.id;
-        const apiUrl = `/administracion/api/contactos/${contactoId}/?proveedor_id=${selectedProviderId}`; // Update API URL and add provider_id
+        const apiUrl = `${API_BASE_URL}contactos/${contactoId}/?proveedor_id=${selectedProviderId}`;
 
         try {
             // makeAuthenticatedRequest now sends credentials as query params for GET
@@ -423,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const contactoId = document.getElementById('contactoId').value;
         const method = contactoId ? 'PUT' : 'POST'; // Use PUT for update, POST for create
-        const apiUrl = contactoId ? `/administracion/api/contactos/${contactoId}/` : '/administracion/api/contactos/'; // Update API URL
+        const apiUrl = contactoId ? `${API_BASE_URL}contactos/${contactoId}/` : `${API_BASE_URL}contactos/`;
 
         const formData = new FormData(contactoForm);
         // Handle checkboxes explicitly for 'S'/'N' values
@@ -537,7 +542,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         formData.append(fieldName, file);
 
-        const apiUrl = `/administracion/api/proveedores/${selectedProviderId}/`; // Update API URL
+        const apiUrl = `${API_BASE_URL}proveedores/${selectedProviderId}/`;
 
         displayMessage(documentUploadStatus, `Subiendo "${file.name}"...`, 'info');
 
@@ -658,7 +663,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // but optimize in a real application.
 
         // Refetch provider data to get the latest file URLs
-        makeAuthenticatedRequest(`/administracion/api/proveedores/${selectedProviderId}/`, 'GET')
+        makeAuthenticatedRequest(`${API_BASE_URL}proveedores/${selectedProviderId}/`, 'GET')
             .then(proveedorData => {
                 if (proveedorData && proveedorData[modelFieldName]) {
                     const fileUrl = proveedorData[modelFieldName];
