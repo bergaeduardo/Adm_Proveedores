@@ -13,8 +13,12 @@ python3 -m http.server 8080
 ```
 
 Abre en el navegador `http://localhost:8080/templates/Administracion/dashboard.html`.
-Asegúrate de rellenar `static/administracion/config.js` con el mismo usuario y
-contraseña que establezcas en `admin_credentials.json` del backend. También
-puedes modificar la variable `API_BASE_URL` en ese archivo para apuntar al
-backend de Django si se ejecuta en otro host o puerto (por defecto
+Para consultar los movimientos de cuenta puedes dirigirte a
+`http://localhost:8080/templates/Administracion/resumen_cuenta.html` una vez
+iniciado el mismo servidor estático.
+
+> **Advertencia**: antes de usar cualquiera de las páginas edita
+`static/administracion/config.js` e introduce las credenciales de
+`admin_credentials.json`. Aprovecha también para ajustar la variable
+`API_BASE_URL` si tu backend se ejecuta en otro host o puerto (por defecto
 `http://localhost:8000/administracion/api/`).
