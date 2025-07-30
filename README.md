@@ -68,3 +68,13 @@ frontend desacoplado. Configura las credenciales en un archivo `.env` (ver
 Define además la variable `API_BASE_URL` en `administracion_frontend/static/config.js`
 para apuntar al dominio y puerto donde corre Django (por defecto
 `http://localhost:8000/administracion/api/`).
+
+## Entorno de Pruebas
+
+Para ejecutar los tests unitarios de la app **Administracion** se
+incluye una configuración específica en `settings_test.py`. Usa el
+siguiente comando para correr las pruebas:
+
+```bash
+DJANGO_ENV=test python manage.py test
+```
