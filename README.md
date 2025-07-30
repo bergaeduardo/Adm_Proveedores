@@ -58,3 +58,10 @@ Este proyecto es una aplicación web desarrollada con Django que gestiona provee
 ## Licencia
 
 Este proyecto está licenciado bajo la Licencia MIT. Para más detalles, consulta el archivo `LICENSE`.
+
+## App "Administracion"
+
+El backend expone APIs en `/administracion/api/` para ser consumidas por un
+frontend desacoplado. Configura las credenciales en un archivo `.env` (ver
+`.env.example`). El código del frontend se encuentra en el directorio
+`administracion_frontend/` y puede servirse desde cualquier servidor estático.
