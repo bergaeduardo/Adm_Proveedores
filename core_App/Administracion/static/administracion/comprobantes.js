@@ -1,4 +1,4 @@
-import { apiCredentials } from './config.js';
+import { apiCredentials, API_BASE_URL } from './config.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     const comprobanteForm = document.getElementById('comprobanteForm');
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData(comprobanteForm);
 
-        const apiUrl = '/administracion/api/comprobantes/'; // Update API URL
+        const apiUrl = `${API_BASE_URL}comprobantes/`;
 
         try {
             // makeAuthenticatedRequest handles adding credentials and provider_id
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Load Comprobantes List ---
     async function loadComprobantes(filters = {}) {
-        const apiUrl = '/administracion/api/comprobantes/'; // Update API URL
+        const apiUrl = `${API_BASE_URL}comprobantes/`;
 
         // Add provider_id and filter parameters to the request data
         const requestData = {

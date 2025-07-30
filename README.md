@@ -65,3 +65,6 @@ El backend expone APIs en `/administracion/api/` para ser consumidas por un
 frontend desacoplado. Configura las credenciales en un archivo `.env` (ver
 `.env.example`). El código del frontend se encuentra en el directorio
 `administracion_frontend/` y puede servirse desde cualquier servidor estático.
+Define además la variable `API_BASE_URL` en `administracion_frontend/static/config.js`
+para apuntar al dominio y puerto donde corre Django (por defecto
+`http://localhost:8000/administracion/api/`).

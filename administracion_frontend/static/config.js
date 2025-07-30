@@ -7,5 +7,6 @@ export const apiCredentials = {
     password: 'extra,123',
 };
 
+export const API_BASE_URL = 'http://localhost:8000/administracion/api/';
+
 // You can add other configuration variables here if needed
-// export const API_BASE_URL = '/administracion/api/';
