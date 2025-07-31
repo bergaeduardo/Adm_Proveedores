@@ -1,6 +1,7 @@
-import { apiCredentials } from './config.js';
+import { loadCredentials, getCredentials } from './config.js';
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadCredentials();
     const proveedorForm = document.getElementById('proveedorForm');
     const configForm = document.getElementById('configForm');
     const contactoForm = document.getElementById('contactoForm');
@@ -20,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!selectedProviderId) {
         // If no provider is selected, redirect back to the dashboard or show an error
         alert('No se ha seleccionado un proveedor.');
-        window.location.href = '../dashboard/'; // Update redirection path
+        window.location.href = '../dashboard.html';
         return; // Stop execution
     }
 
@@ -87,9 +88,10 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         // Add credentials and provider_id based on method
+        const creds = getCredentials();
         const authParams = new URLSearchParams({
-            username: apiCredentials.username,
-            password: apiCredentials.password,
+            username: creds.username,
+            password: creds.password,
             proveedor_id: selectedProviderId // Include provider ID in all requests
         });
 
@@ -102,8 +104,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // For POST, PUT, PATCH, DELETE, add credentials and provider_id to the body (FormData)
             const body = new FormData();
-            body.append('username', apiCredentials.username);
-            body.append('password', apiCredentials.password);
+            body.append('username', creds.username);
+            body.append('password', creds.password);
             body.append('proveedor_id', selectedProviderId);
 
             if (data) {

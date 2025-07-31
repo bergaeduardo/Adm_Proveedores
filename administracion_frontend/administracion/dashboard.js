@@ -1,6 +1,7 @@
-import { apiCredentials } from './config.js';
+import { loadCredentials, getCredentials } from './config.js';
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadCredentials();
     const providerSearchModal = new bootstrap.Modal(document.getElementById('providerSearchModal'));
     const providerSearchInput = document.getElementById('providerSearchInput');
     const providerSearchResults = document.getElementById('providerSearchResults');
@@ -50,10 +51,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json',
                     // Add custom authentication headers/body
                 },
+                const creds = getCredentials();
                 body: JSON.stringify({
                     query: query,
-                    username: apiCredentials.username, // Include credentials in the body
-                    password: apiCredentials.password,
+                    username: creds.username,
+                    password: creds.password,
                 }),
             });
 
@@ -100,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('selectedProviderId', selectedProviderId);
 
             // Redirect to the mis_datos page
-            window.location.href = '../mis-datos/'; // Update redirection path
+            window.location.href = '../mis_datos.html';
         }
 
         providerSearchModal.hide(); // Hide the modal
