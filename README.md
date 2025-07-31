@@ -36,6 +36,12 @@ Este proyecto es una aplicación web desarrollada con Django que gestiona provee
    ```bash
    pip install -r requirements.txt
    ```
+5. Copia el archivo `.env.example` a `.env` y ajusta las credenciales que
+   utilizará la app **Administracion**:
+   ```bash
+   cp .env.example .env
+   # Edita .env y asigna los valores deseados
+   ```
 
 ## Instrucciones para Ejecutar el Proyecto
 
@@ -62,11 +68,13 @@ Este proyecto está licenciado bajo la Licencia MIT. Para más detalles, consult
 ## App "Administracion"
 
 El backend expone APIs en `/administracion/api/` para ser consumidas por un
-frontend desacoplado. Configura las credenciales en un archivo `.env` (ver
-`.env.example`). El código del frontend se encuentra en el directorio
-`administracion_frontend/` y puede servirse desde cualquier servidor estático.
-Define además la variable `API_BASE_URL` en `administracion_frontend/static/config.js`
-para apuntar al dominio y puerto donde corre Django (por defecto
+frontend desacoplado. Las credenciales utilizadas para autenticar cada
+petición se cargan desde un archivo `.env` ubicado en la raíz del proyecto
+(consulta `\.env.example` como referencia). El código del frontend se encuentra
+en el directorio `administracion_frontend/` y puede servirse desde cualquier
+servidor estático. Define además la variable `API_BASE_URL` en
+`administracion_frontend/static/config.js` para apuntar al dominio y puerto
+donde corre Django (por defecto
 `http://127.0.0.1:8000/administracion/api/`).
 
 ## Entorno de Pruebas

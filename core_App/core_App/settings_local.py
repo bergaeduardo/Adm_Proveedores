@@ -1,10 +1,11 @@
 import os
 from pathlib import Path
 from datetime import timedelta # Importar timedelta
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(os.path.join(BASE_DIR, '.env'))
+# Load environment variables from a .env file located at the project root.
+load_dotenv(find_dotenv())
 
 SECRET_KEY = 'your-secret-key'
 DEBUG = True

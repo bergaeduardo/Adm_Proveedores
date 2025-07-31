@@ -4,7 +4,8 @@
  */
 export const apiCredentials = {
     username: 'admin',
-    password: 'extra,123',
+    // Cambia este valor para coincidir con la contraseña definida en `.env`
+    password: 'change_me',
 };
 
 // Backend base URL for the API endpoints

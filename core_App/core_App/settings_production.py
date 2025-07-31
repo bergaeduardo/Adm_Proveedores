@@ -1,4 +1,4 @@
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import os
 from pathlib import Path
 from datetime import timedelta # Importar timedelta
@@ -6,11 +6,8 @@ from datetime import timedelta # Importar timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-env_path = os.path.join(BASE_DIR, '.env')
-
-# print(f"La ruta completa del archivo .env es: {env_path}")
-# Intenta con dotenv_path
-load_dotenv(dotenv_path=env_path, verbose=True)
+# Load environment variables from a .env file found by searching parent directories
+load_dotenv(find_dotenv(), verbose=True)
 
 # print("POSTGRES_DB:", os.environ.get("POSTGRES_DB"))
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'S#perS3crEt_1122')
