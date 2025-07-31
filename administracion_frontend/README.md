@@ -7,4 +7,4 @@ expuestas por el proyecto Django en `/administracion/api/`.
 
 Configura las credenciales de acceso y la URL base de la API en
 `static/config.js`. La variable `API_BASE_URL` debe apuntar al servidor donde
-corre el backend de Django (por defecto `http://localhost:8000/administracion/api/`).
+corre el backend de Django (por defecto `http://127.0.0.1:8000/administracion/api/`).

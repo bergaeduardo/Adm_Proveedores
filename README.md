@@ -48,7 +48,7 @@ Este proyecto es una aplicación web desarrollada con Django que gestiona provee
    ```bash
    python manage.py runserver
    ```
-3. Accede a la aplicación en tu navegador en `http://localhost:8000`.
+3. Accede a la aplicación en tu navegador en `http://127.0.0.1:8000`.
 
 ## Créditos o Autores
 
@@ -67,7 +67,7 @@ frontend desacoplado. Configura las credenciales en un archivo `.env` (ver
 `administracion_frontend/` y puede servirse desde cualquier servidor estático.
 Define además la variable `API_BASE_URL` en `administracion_frontend/static/config.js`
 para apuntar al dominio y puerto donde corre Django (por defecto
-`http://localhost:8000/administracion/api/`).
+`http://127.0.0.1:8000/administracion/api/`).
 
 ## Entorno de Pruebas
 
