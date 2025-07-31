@@ -1,0 +1,78 @@
+/* Estilos base (copiar los estilos de la sección 2 aquí) */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      align-items: center; /* Centrar verticalmente si el contenido es corto */
+      justify-content: center;
+      min-height: 100vh; /* Asegurar que el body ocupe al menos toda la altura de la pantalla */
+      padding-top: 30px; /* Espacio arriba */
+      padding-bottom: 30px; /* Espacio abajo */
+      box-sizing: border-box;
+    }
+    .card-auth {
+      border: none;
+      border-radius: 0.75rem;
+      box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+    }
+    .card-auth .card-header {
+      background-color: #0056b3;
+      color: white;
+      border-bottom: none;
+      border-top-left-radius: 0.75rem;
+      border-top-right-radius: 0.75rem;
+      padding-top: 20px;
+      padding-bottom: 15px;
+    }
+    .card-auth .card-body {
+      padding: 2rem;
+    }
+    .card-auth .card-footer {
+      background-color: #f8f9fa;
+      border-top: 1px solid #e9ecef;
+      border-bottom-left-radius: 0.75rem;
+      border-bottom-right-radius: 0.75rem;
+      padding: 1.25rem 2rem;
+    }
+    .form-control {
+      border-radius: 0.5rem;
+      padding: 0.85rem 1rem;
+      height: auto;
+      margin-bottom: 0; /* Quitar margen inferior para que el error-message quede más pegado */
+    }
+    .form-control:focus {
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      border-color: #80bdff;
+    }
+    .form-group {
+        margin-bottom: 1.25rem; /* Espacio entre grupos de formulario */
+    }
+    .btn-primary {
+      background-color: #0069d9;
+      border-color: #0062cc;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    .btn-primary:hover {
+      background-color: #0056b3;
+      border-color: #0050a6;
+    }
+    .error-message {
+      color: #dc3545;
+      font-size: 0.875em;
+      display: block;
+      min-height: 1.2em;
+      margin-top: 0.25rem; /* Pequeño margen superior */
+    }
+    .success-message { /* Lo mantengo por si se usa, aunque el modal es primario */
+      color: #2e7d32;
+      margin-top: 5px;
+    }
+    .modal-backdrop { opacity: 0.5 !important; } /* Como estaba en el original */
+    /* Fin de estilos base */
+
+    /* Estilos específicos para el logo si es necesario */
+    .xl-logo-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 32px; font-weight: bold; fill: #FFFFFF; dominant-baseline: central; }
+    .prov-logo-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; fill: #f0f0f0; dominant-baseline: central; letter-spacing: 0.5px;}

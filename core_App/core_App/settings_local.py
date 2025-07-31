@@ -1,8 +1,11 @@
 import os
 from pathlib import Path
 from datetime import timedelta # Importar timedelta
+from dotenv import load_dotenv, find_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Load environment variables from a .env file located at the project root.
+load_dotenv(find_dotenv())
 
 SECRET_KEY = 'your-secret-key'
 DEBUG = True
@@ -16,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'Administracion',
@@ -25,6 +29,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -163,3 +168,6 @@ Entonces, 12 * 60 * 60 es igual a 12 horas x 60 minutos/hora x 60 segundos/minut
 
 Por lo tanto, SESSION_COOKIE_AGE = 12 * 60 * 60 representa una duración de sesión de 12 horas.
 """
+
+# CORS configuration for decoupled frontend
+CORS_ALLOW_ALL_ORIGINS = True

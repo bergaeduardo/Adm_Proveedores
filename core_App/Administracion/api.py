@@ -3,10 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
 from django.conf import settings
 from django.db import connections
+from dotenv import load_dotenv, find_dotenv
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 import json
@@ -16,6 +15,12 @@ import re
 import traceback
 import decimal
 
+# Load environment variables for admin credentials
+load_dotenv(find_dotenv())
+
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+
 # Import models and serializers from the Proveedores app
 from Proveedores.models import Proveedor, Comprobante, CpaContactosProveedorHabitual
 from Proveedores.serializers import ProveedorSerializer, ComprobanteSerializer, CpaContactosProveedorHabitualSerializer, ProveedorRegistroSerializer # Keep ProveedorRegistroSerializer if needed for admin creation
@@ -23,27 +28,28 @@ from consultasTango.models import Cpa57 # Assuming this model is needed and acce
 
 # --- Custom Authentication Check ---
 def check_admin_auth(request):
-    """
-    Manually checks for 'admin'/'123456' credentials and superuser status.
-    Expects 'username' and 'password' in request.data or query_params.
-    """
-    # Prioritize data (body) for POST/PUT/PATCH, then query_params for GET
+    """Validate credentials sent with each API request using environment values."""
     username = request.data.get('username') or request.query_params.get('username')
     password = request.data.get('password') or request.query_params.get('password')
 
     if not username or not password:
         return None, Response({'detail': 'Authentication credentials were not provided.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    user = authenticate(username=username, password=password)
+    if ADMIN_USERNAME is None or ADMIN_PASSWORD is None:
+        return None, Response({'detail': 'Server credentials not configured.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    if user is None:
+    if username != ADMIN_USERNAME or password != ADMIN_PASSWORD:
         return None, Response({'detail': 'Invalid username/password.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    if not user.is_superuser:
-        return None, Response({'detail': 'User is not a superuser.'}, status=status.HTTP_403_FORBIDDEN)
+    # Create a simple user-like object for request.user compatibility
+    class SimpleUser:
+        def __init__(self, username):
+            self.username = username
 
-    # Return the authenticated user if successful
-    return user, None
+        def is_authenticated(self):
+            return True
+
+    return SimpleUser(username), None
 
 # --- Replicated and Adapted API Views ---
 
@@ -88,20 +94,10 @@ class AdministracionProveedorViewSet(viewsets.ModelViewSet):
         # check_admin_auth is called in dispatch
         # Note: ProveedorRegistroView might be more appropriate for initial creation
         # This method assumes creating a provider for an *existing* user (admin in this case)
-        user = request.user # User is attached by dispatch
-        # Check if the admin user already has a provider associated (assuming OneToOne or similar)
-        # This might not be the desired behavior for an admin creating providers for *other* users.
-        # If the admin is creating providers linked to *themselves*, this check is relevant.
-        # If the admin is creating providers linked to *other* users (which seems more likely for an admin panel),
-        # this check should be removed or modified.
-        # For now, keeping the check based on the original code's structure assumption.
-        if Proveedor.objects.filter(username_django=user).exists():
-             return Response({"detail": "Este usuario ya tiene un proveedor asociado."}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # Link to the authenticated admin user (adjust if admin creates for others)
-        serializer.save(username_django=user)
+        # Do not link to a Django user; providers are managed externally
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -217,8 +213,8 @@ class AdministracionCpaContactosProveedorHabitualViewSet(viewsets.ModelViewSet):
 
         try:
             proveedor_instance = Proveedor.objects.get(id=provider_id)
-            # Link the contact to the provider's cod_cpa01 and the admin user
-            serializer.save(cod_provee=proveedor_instance.cod_cpa01, username_django=self.request.user)
+            # Link the contact only to the provider. No Django user association
+            serializer.save(cod_provee=proveedor_instance.cod_cpa01)
         except Proveedor.DoesNotExist:
              raise serializers.ValidationError({"proveedor_id": "Invalid Proveedor ID."})
 
