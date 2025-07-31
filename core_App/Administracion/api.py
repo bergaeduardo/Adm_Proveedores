@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings
 from django.db import connections
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 import json
@@ -16,7 +16,7 @@ import traceback
 import decimal
 
 # Load environment variables for admin credentials
-load_dotenv()
+load_dotenv(find_dotenv())
 
 ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')

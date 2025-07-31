@@ -42,6 +42,8 @@ Este proyecto es una aplicación web desarrollada con Django que gestiona provee
    cp .env.example .env
    # Edita .env y asigna los valores deseados
    ```
+   Si las variables `ADMIN_USERNAME` y `ADMIN_PASSWORD` no están definidas el
+   backend responderá con el error `Server credentials not configured`.
 
 ## Instrucciones para Ejecutar el Proyecto
 
