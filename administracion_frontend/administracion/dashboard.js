@@ -42,21 +42,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         providerSearchStatus.textContent = 'Buscando...';
         providerSearchResults.innerHTML = '';
 
-        const apiUrl = '/administracion/api/proveedor-search/'; // Update API URL
+        const apiUrl = '/administracion/api/proveedor-search/';
+        const creds = getCredentials();
 
         try {
             const response = await fetch(apiUrl, {
-                method: 'POST', // Use POST as defined in api.py
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    // Add custom authentication headers/body
+                    'Content-Type': 'application/json'
                 },
-                const creds = getCredentials();
                 body: JSON.stringify({
                     query: query,
                     username: creds.username,
-                    password: creds.password,
-                }),
+                    password: creds.password
+                })
             });
 
             if (!response.ok) {
