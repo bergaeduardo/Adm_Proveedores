@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
+from django.http import Http404
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth.models import User
 from django.conf import settings
@@ -68,18 +69,21 @@ class AdministracionProveedorViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         # check_admin_auth is called in dispatch
-        print(f"DEBUG: Entering AdministracionProveedorViewSet retrieve method.")
+        print("DEBUG: Entering AdministracionProveedorViewSet retrieve method.")
         print(f"DEBUG: Received PK: {kwargs.get('pk')}")
         try:
             instance = self.get_object()
-            print(f"DEBUG: Successfully retrieved object: {instance}")
-            serializer = self.get_serializer(instance)
-            print(f"DEBUG: Serializer data: {serializer.data}")
-            return Response(serializer.data)
+        except Http404:
+            return Response({"detail": "Proveedor no encontrado."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             print(f"DEBUG: Error in retrieve method: {e}")
-            traceback.print_exc() # Print full traceback
+            traceback.print_exc()  # Print full traceback
             return Response({"error": "Error retrieving provider data."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        print(f"DEBUG: Successfully retrieved object: {instance}")
+        serializer = self.get_serializer(instance)
+        print(f"DEBUG: Serializer data: {serializer.data}")
+        return Response(serializer.data)
 
 
     def create(self, request, *args, **kwargs):
