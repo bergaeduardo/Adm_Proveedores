@@ -1,4 +1,4 @@
-import { loadCredentials, getCredentials } from './config.js';
+import { loadCredentials, getCredentials, getApiBaseUrl } from './config.js';
 
 document.addEventListener('DOMContentLoaded', async function() {
     await loadCredentials();
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         providerSearchStatus.textContent = 'Buscando...';
         providerSearchResults.innerHTML = '';
 
-        const apiUrl = '/administracion/api/proveedor-search/';
+        const apiUrl = `${getApiBaseUrl()}/administracion/api/proveedor-search/`;
         const creds = getCredentials();
 
         try {

@@ -2,7 +2,7 @@
  * Frontend configuration file for API credentials.
  * Modify these values to change the username and password used for API authentication.
  */
-let apiCredentials = { username: '', password: '' };
+let apiCredentials = { username: '', password: '', apiBaseUrl: '' };
 
 export async function loadCredentials() {
     try {
@@ -20,5 +20,7 @@ export function getCredentials() {
     return apiCredentials;
 }
 
-// You can add other configuration variables here if needed
-// export const API_BASE_URL = '/administracion/api/';
+export function getApiBaseUrl() {
+    return apiCredentials.apiBaseUrl || '';
+}
+

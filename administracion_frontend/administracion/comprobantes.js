@@ -1,4 +1,4 @@
-import { loadCredentials, getCredentials } from './config.js';
+import { loadCredentials, getCredentials, getApiBaseUrl } from './config.js';
 
 document.addEventListener('DOMContentLoaded', async function() {
     await loadCredentials();
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const formData = new FormData(comprobanteForm);
 
-        const apiUrl = '/administracion/api/comprobantes/'; // Update API URL
+        const apiUrl = `${getApiBaseUrl()}/administracion/api/comprobantes/`;
 
         try {
             // makeAuthenticatedRequest handles adding credentials and provider_id
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // --- Load Comprobantes List ---
     async function loadComprobantes(filters = {}) {
-        const apiUrl = '/administracion/api/comprobantes/'; // Update API URL
+        const apiUrl = `${getApiBaseUrl()}/administracion/api/comprobantes/`;
 
         // Add provider_id and filter parameters to the request data
         const requestData = {
