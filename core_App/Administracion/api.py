@@ -21,7 +21,7 @@ from Proveedores.serializers import ProveedorSerializer, ComprobanteSerializer, 
 from consultasTango.models import Cpa57 # Assuming this model is needed and accessible
 
 # --- Custom Authentication Check ---
-CREDENTIALS_PATH = os.path.join(settings.BASE_DIR, 'admin_credentials.json')
+CREDENTIALS_PATH = os.path.join(settings.BASE_DIR, r'Administracion\admin_credentials.json')
 try:
     with open(CREDENTIALS_PATH, 'r') as cred_file:
         ADMIN_CREDS = json.load(cred_file)
@@ -33,6 +33,8 @@ def check_admin_auth(request):
     """Simple credential check using values from admin_credentials.json."""
     username = request.data.get('username') or request.query_params.get('username')
     password = request.data.get('password') or request.query_params.get('password')
+    print(f"DEBUG: Received username: {username}, password: {password}")
+    print(f"DEBUG: Admin credentials: {ADMIN_CREDS}")
 
     if username != ADMIN_CREDS.get('username') or password != ADMIN_CREDS.get('password'):
         return None, Response({'detail': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)

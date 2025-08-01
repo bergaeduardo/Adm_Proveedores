@@ -6,7 +6,8 @@ let apiCredentials = { username: '', password: '', apiBaseUrl: '' };
 
 export async function loadCredentials() {
     try {
-        const resp = await fetch('./config.json');
+        // const resp = await fetch('../administracion_frontend/config.json');
+         const resp = await fetch('../config.json');
         if (resp.ok) {
             apiCredentials = await resp.json();
         }
