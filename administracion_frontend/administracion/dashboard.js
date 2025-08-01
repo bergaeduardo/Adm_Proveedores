@@ -1,6 +1,7 @@
-import { apiCredentials } from './config.js';
+import { loadCredentials, getCredentials, getApiBaseUrl } from './config.js';
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadCredentials();
     const providerSearchModal = new bootstrap.Modal(document.getElementById('providerSearchModal'));
     const providerSearchInput = document.getElementById('providerSearchInput');
     const providerSearchResults = document.getElementById('providerSearchResults');
@@ -41,20 +42,20 @@ document.addEventListener('DOMContentLoaded', function() {
         providerSearchStatus.textContent = 'Buscando...';
         providerSearchResults.innerHTML = '';
 
-        const apiUrl = '/administracion/api/proveedor-search/'; // Update API URL
+        const apiUrl = `${getApiBaseUrl()}/administracion/api/proveedor-search/`;
+        const creds = getCredentials();
 
         try {
             const response = await fetch(apiUrl, {
-                method: 'POST', // Use POST as defined in api.py
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    // Add custom authentication headers/body
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     query: query,
-                    username: apiCredentials.username, // Include credentials in the body
-                    password: apiCredentials.password,
-                }),
+                    username: creds.username,
+                    password: creds.password
+                })
             });
 
             if (!response.ok) {
@@ -100,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('selectedProviderId', selectedProviderId);
 
             // Redirect to the mis_datos page
-            window.location.href = '../mis-datos/'; // Update redirection path
+            window.location.href = 'mis_datos.html';
         }
 
         providerSearchModal.hide(); // Hide the modal

@@ -4,7 +4,6 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
 from django.conf import settings
 from django.db import connections
 from datetime import datetime, date
@@ -22,27 +21,43 @@ from Proveedores.serializers import ProveedorSerializer, ComprobanteSerializer, 
 from consultasTango.models import Cpa57 # Assuming this model is needed and accessible
 
 # --- Custom Authentication Check ---
+CREDENTIALS_PATH = os.path.join(settings.BASE_DIR, 'admin_credentials.json')
+try:
+    with open(CREDENTIALS_PATH, 'r') as cred_file:
+        ADMIN_CREDS = json.load(cred_file)
+except Exception:
+    ADMIN_CREDS = {'username': '', 'password': ''}
+
+
 def check_admin_auth(request):
-    """
-    Manually checks for 'admin'/'123456' credentials and superuser status.
-    Expects 'username' and 'password' in request.data or query_params.
-    """
-    # Prioritize data (body) for POST/PUT/PATCH, then query_params for GET
-    username = request.data.get('username') or request.query_params.get('username')
-    password = request.data.get('password') or request.query_params.get('password')
+    """Simple credential check using values from admin_credentials.json."""
+    username = None
+    password = None
 
-    if not username or not password:
-        return None, Response({'detail': 'Authentication credentials were not provided.'}, status=status.HTTP_401_UNAUTHORIZED)
+    if hasattr(request, 'data'):
+        try:
+            username = request.data.get('username')
+            password = request.data.get('password')
+        except Exception:
+            pass
 
-    user = authenticate(username=username, password=password)
+    if not username:
+        if hasattr(request, 'query_params'):
+            username = request.query_params.get('username')
+        else:
+            username = request.GET.get('username')
 
-    if user is None:
-        return None, Response({'detail': 'Invalid username/password.'}, status=status.HTTP_401_UNAUTHORIZED)
+    if not password:
+        if hasattr(request, 'query_params'):
+            password = request.query_params.get('password')
+        else:
+            password = request.GET.get('password')
 
-    if not user.is_superuser:
-        return None, Response({'detail': 'User is not a superuser.'}, status=status.HTTP_403_FORBIDDEN)
+    if username != ADMIN_CREDS.get('username') or password != ADMIN_CREDS.get('password'):
+        return None, Response({'detail': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    # Return the authenticated user if successful
+    # Ensure a User instance exists for FK relations
+    user, _ = User.objects.get_or_create(username=ADMIN_CREDS.get('username'))
     return user, None
 
 # --- Replicated and Adapted API Views ---

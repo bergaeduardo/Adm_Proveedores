@@ -1,6 +1,7 @@
-import { apiCredentials } from './config.js';
+import { loadCredentials, getCredentials, getApiBaseUrl } from './config.js';
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadCredentials();
     const comprobanteForm = document.getElementById('comprobanteForm');
     const listaComprobantes = document.getElementById('listaComprobantes');
     const filterFechaDesde = document.getElementById('filterFechaDesde');
@@ -16,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!selectedProviderId) {
         // If no provider is selected, redirect back to the dashboard or show an error
         alert('No se ha seleccionado un proveedor.');
-        window.location.href = '../dashboard/'; // Update redirection path
+        window.location.href = 'dashboard.html';
         return; // Stop execution
     }
 
@@ -26,8 +27,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const body = new FormData(); // Use FormData for files and other data
 
         // Add credentials to the body for authentication
-        body.append('username', apiCredentials.username);
-        body.append('password', apiCredentials.password);
+        const creds = getCredentials();
+        body.append('username', creds.username);
+        body.append('password', creds.password);
         body.append('proveedor_id', selectedProviderId); // Include provider ID in all requests
 
         if (data) {
@@ -114,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData(comprobanteForm);
 
-        const apiUrl = '/administracion/api/comprobantes/'; // Update API URL
+        const apiUrl = `${getApiBaseUrl()}/administracion/api/comprobantes/`;
 
         try {
             // makeAuthenticatedRequest handles adding credentials and provider_id
@@ -135,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Load Comprobantes List ---
     async function loadComprobantes(filters = {}) {
-        const apiUrl = '/administracion/api/comprobantes/'; // Update API URL
+        const apiUrl = `${getApiBaseUrl()}/administracion/api/comprobantes/`;
 
         // Add provider_id and filter parameters to the request data
         const requestData = {
@@ -275,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.goToDashboard = function() {
-         window.location.href = '../dashboard/'; // Update redirection path
+         window.location.href = 'dashboard.html';
     };
 
 
