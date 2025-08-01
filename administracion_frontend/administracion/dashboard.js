@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             localStorage.setItem('selectedProviderId', selectedProviderId);
 
             // Redirect to the mis_datos page
-            window.location.href = '../mis_datos.html';
+            window.location.href = 'mis_datos.html';
         }
 
         providerSearchModal.hide(); // Hide the modal

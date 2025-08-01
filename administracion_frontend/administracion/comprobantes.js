@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!selectedProviderId) {
         // If no provider is selected, redirect back to the dashboard or show an error
         alert('No se ha seleccionado un proveedor.');
-        window.location.href = '../dashboard.html';
+        window.location.href = 'dashboard.html';
         return; // Stop execution
     }
 
@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
 
     window.goToDashboard = function() {
-         window.location.href = '../dashboard.html';
+         window.location.href = 'dashboard.html';
     };
 
 
