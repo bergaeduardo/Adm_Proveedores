@@ -31,6 +31,11 @@ except Exception:
 
 def check_admin_auth(request):
     """Simple credential check using values from admin_credentials.json."""
+
+    # Allow unauthenticated CORS preflight requests
+    if request.method == 'OPTIONS':
+        return User.objects.get_or_create(username=ADMIN_CREDS.get('username'))[0], None
+
     username = None
     password = None
 
