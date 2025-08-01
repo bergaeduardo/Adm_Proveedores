@@ -16,6 +16,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'Administracion',
@@ -25,6 +26,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -163,3 +165,6 @@ Entonces, 12 * 60 * 60 es igual a 12 horas x 60 minutos/hora x 60 segundos/minut
 
 Por lo tanto, SESSION_COOKIE_AGE = 12 * 60 * 60 representa una duración de sesión de 12 horas.
 """
+
+# Allow cross-origin requests from any host during development
+CORS_ALLOW_ALL_ORIGINS = True

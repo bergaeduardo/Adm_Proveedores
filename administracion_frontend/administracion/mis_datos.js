@@ -1,6 +1,7 @@
-import { apiCredentials } from './config.js';
+import { loadCredentials, getCredentials, getApiBaseUrl } from './config.js';
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadCredentials();
     const proveedorForm = document.getElementById('proveedorForm');
     const configForm = document.getElementById('configForm');
     const contactoForm = document.getElementById('contactoForm');
@@ -20,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!selectedProviderId) {
         // If no provider is selected, redirect back to the dashboard or show an error
         alert('No se ha seleccionado un proveedor.');
-        window.location.href = '../dashboard/'; // Update redirection path
+        window.location.href = 'dashboard.html';
         return; // Stop execution
     }
 
@@ -87,9 +88,10 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         // Add credentials and provider_id based on method
+        const creds = getCredentials();
         const authParams = new URLSearchParams({
-            username: apiCredentials.username,
-            password: apiCredentials.password,
+            username: creds.username,
+            password: creds.password,
             proveedor_id: selectedProviderId // Include provider ID in all requests
         });
 
@@ -102,8 +104,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // For POST, PUT, PATCH, DELETE, add credentials and provider_id to the body (FormData)
             const body = new FormData();
-            body.append('username', apiCredentials.username);
-            body.append('password', apiCredentials.password);
+            body.append('username', creds.username);
+            body.append('password', creds.password);
             body.append('proveedor_id', selectedProviderId);
 
             if (data) {
@@ -174,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Load Data ---
     async function loadProveedorData() {
-        const apiUrl = `/administracion/api/proveedores/${selectedProviderId}/`; // Update API URL
+        const apiUrl = `${getApiBaseUrl()}/administracion/api/proveedores/${selectedProviderId}/`;
 
         try {
             // makeAuthenticatedRequest now sends credentials as query params for GET
@@ -220,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadDropdowns(proveedorData) {
         // Load Condición IVA
         const condicionIvaSelect = document.getElementById('condicionIva');
-        const ivaApiUrl = '/administracion/api/categorias-iva/'; // Update API URL
+        const ivaApiUrl = `${getApiBaseUrl()}/administracion/api/categorias-iva/`;
         try {
             // makeAuthenticatedRequest now sends credentials as query params for GET
             const ivaData = await makeAuthenticatedRequest(ivaApiUrl, 'GET');
@@ -244,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Load Ingresos Brutos
         const ingresosBrutosSelect = document.getElementById('ingresosBrutos');
-        const iibbApiUrl = '/administracion/api/ingresos-brutos/'; // Update API URL
+        const iibbApiUrl = `${getApiBaseUrl()}/administracion/api/ingresos-brutos/`;
         try {
             // makeAuthenticatedRequest now sends credentials as query params for GET
             const iibbData = await makeAuthenticatedRequest(iibbApiUrl, 'GET');
@@ -269,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     async function loadContactos() {
-        const apiUrl = `/administracion/api/contactos/?proveedor_id=${selectedProviderId}`; // Update API URL and add provider_id query param
+        const apiUrl = `${getApiBaseUrl()}/administracion/api/contactos/?proveedor_id=${selectedProviderId}`;
 
         try {
             // makeAuthenticatedRequest now sends credentials as query params for GET
@@ -351,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
 
-        const apiUrl = `/administracion/api/proveedores/${selectedProviderId}/`; // Update API URL
+        const apiUrl = `${getApiBaseUrl()}/administracion/api/proveedores/${selectedProviderId}/`;
 
         try {
             // makeAuthenticatedRequest handles adding credentials and provider_id to body for PATCH
@@ -382,7 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function handleEditContacto(event) {
         const contactoId = event.target.closest('button').dataset.id;
-        const apiUrl = `/administracion/api/contactos/${contactoId}/?proveedor_id=${selectedProviderId}`; // Update API URL and add provider_id
+        const apiUrl = `${getApiBaseUrl()}/administracion/api/contactos/${contactoId}/?proveedor_id=${selectedProviderId}`;
 
         try {
             // makeAuthenticatedRequest now sends credentials as query params for GET
@@ -423,7 +425,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const contactoId = document.getElementById('contactoId').value;
         const method = contactoId ? 'PUT' : 'POST'; // Use PUT for update, POST for create
-        const apiUrl = contactoId ? `/administracion/api/contactos/${contactoId}/` : '/administracion/api/contactos/'; // Update API URL
+        const apiUrl = contactoId ? `${getApiBaseUrl()}/administracion/api/contactos/${contactoId}/` : `${getApiBaseUrl()}/administracion/api/contactos/`;
 
         const formData = new FormData(contactoForm);
         // Handle checkboxes explicitly for 'S'/'N' values
@@ -537,7 +539,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         formData.append(fieldName, file);
 
-        const apiUrl = `/administracion/api/proveedores/${selectedProviderId}/`; // Update API URL
+        const apiUrl = `${getApiBaseUrl()}/administracion/api/proveedores/${selectedProviderId}/`;
 
         displayMessage(documentUploadStatus, `Subiendo "${file.name}"...`, 'info');
 
@@ -658,7 +660,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // but optimize in a real application.
 
         // Refetch provider data to get the latest file URLs
-        makeAuthenticatedRequest(`/administracion/api/proveedores/${selectedProviderId}/`, 'GET')
+        makeAuthenticatedRequest(`${getApiBaseUrl()}/administracion/api/proveedores/${selectedProviderId}/`, 'GET')
             .then(proveedorData => {
                 if (proveedorData && proveedorData[modelFieldName]) {
                     const fileUrl = proveedorData[modelFieldName];
