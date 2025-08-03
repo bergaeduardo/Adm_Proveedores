@@ -1,4 +1,4 @@
-import { apiCredentials } from './config.js';
+// No authentication credentials required for API access
 
 document.addEventListener('DOMContentLoaded', function() {
     const comprobanteForm = document.getElementById('comprobanteForm');
@@ -20,15 +20,12 @@ document.addEventListener('DOMContentLoaded', function() {
         return; // Stop execution
     }
 
-    // Helper function to make authenticated API requests
-    async function makeAuthenticatedRequest(url, method = 'GET', data = null, isFileUpload = false) {
-        const headers = {};
+    // Helper function to perform API requests
+    async function makeApiRequest(url, method = 'GET', data = null, isFileUpload = false) {
         const body = new FormData(); // Use FormData for files and other data
 
-        // Add credentials to the body for authentication
-        body.append('username', apiCredentials.username);
-        body.append('password', apiCredentials.password);
-        body.append('proveedor_id', selectedProviderId); // Include provider ID in all requests
+        // Include provider ID in all requests
+        body.append('proveedor_id', selectedProviderId);
 
         if (data) {
              if (isFileUpload) {
@@ -72,17 +69,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('API Error:', response.status, errorData);
-                // Handle specific error statuses (e.g., 401, 403, 400)
-                if (response.status === 401 || response.status === 403) {
-                    alert('Error de autenticación. Verifique las credenciales.'); // Use alert for simplicity here
-                } else if (response.status === 400) {
-                     let errorMsg = 'Error de validación:';
-                     for (const field in errorData) {
-                         errorMsg += ` ${field}: ${errorData[field].join(', ')}`;
-                     }
-                     alert(errorMsg);
-                }
-                 else {
+                if (response.status === 400) {
+                    let errorMsg = 'Error de validación:';
+                    for (const field in errorData) {
+                        errorMsg += ` ${field}: ${errorData[field].join(', ')}`;
+                    }
+                    alert(errorMsg);
+                } else {
                     alert(`Error en la solicitud: ${response.statusText}`);
                 }
                 throw new Error(`API request failed with status ${response.status}`);
@@ -117,8 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const apiUrl = '/administracion/api/comprobantes/'; // Update API URL
 
         try {
-            // makeAuthenticatedRequest handles adding credentials and provider_id
-            const data = await makeAuthenticatedRequest(apiUrl, 'POST', formData, true); // Indicate file upload
+            // makeApiRequest handles adding provider_id
+            const data = await makeApiRequest(apiUrl, 'POST', formData, true); // Indicate file upload
 
             if (data) {
                 alert('Comprobante cargado correctamente.');
@@ -129,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Error uploading comprobante:', error);
-            // Error message is displayed by makeAuthenticatedRequest
+            alert('Error al subir comprobante.');
         }
     });
 
@@ -144,8 +137,8 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         try {
-            // makeAuthenticatedRequest handles adding credentials and provider_id/filters for GET
-            const data = await makeAuthenticatedRequest(apiUrl, 'GET', requestData);
+            // makeApiRequest handles adding provider_id/filters for GET
+            const data = await makeApiRequest(apiUrl, 'GET', requestData);
 
             listaComprobantes.innerHTML = ''; // Clear existing list
 

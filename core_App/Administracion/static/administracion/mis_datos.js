@@ -1,4 +1,4 @@
-import { apiCredentials } from './config.js';
+// API interactions for Administración do not require credentials
 
 document.addEventListener('DOMContentLoaded', function() {
     const proveedorForm = document.getElementById('proveedorForm');
@@ -80,94 +80,62 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- API Calls ---
 
-    // Helper function to make authenticated API requests
-    async function makeAuthenticatedRequest(url, method = 'GET', data = null, isFileUpload = false) {
-        const options = {
-            method: method,
-        };
-
-        // Add credentials and provider_id based on method
-        const authParams = new URLSearchParams({
-            username: apiCredentials.username,
-            password: apiCredentials.password,
-            proveedor_id: selectedProviderId // Include provider ID in all requests
-        });
+    // Helper function for API requests without authentication
+    async function makeApiRequest(url, method = 'GET', data = null, isFileUpload = false) {
+        const options = { method };
 
         if (method === 'GET' || method === 'HEAD') {
-            // For GET/HEAD, add credentials and provider_id as query parameters
-            const urlObj = new URL(url, window.location.origin); // Use window.location.origin for base URL
-            urlObj.search = authParams.toString();
+            const params = new URLSearchParams({ proveedor_id: selectedProviderId });
+            if (data) {
+                for (const key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        params.append(key, data[key]);
+                    }
+                }
+            }
+            const urlObj = new URL(url, window.location.origin);
+            urlObj.search = params.toString();
             url = urlObj.toString();
-            // No body for GET/HEAD
         } else {
-            // For POST, PUT, PATCH, DELETE, add credentials and provider_id to the body (FormData)
             const body = new FormData();
-            body.append('username', apiCredentials.username);
-            body.append('password', apiCredentials.password);
             body.append('proveedor_id', selectedProviderId);
 
             if (data) {
-                 if (isFileUpload) {
-                     // If it's a file upload, data is expected to be a FormData object
-                     // Append its entries to the main body FormData
-                     for (const pair of data.entries()) {
-                         body.append(pair[0], pair[1]);
-                     }
-                 } else {
-                     // For non-file data (like JSON or form data), append as form fields
-                     for (const key in data) {
-                         if (data.hasOwnProperty(key)) {
-                             body.append(key, data[key]);
-                         }
-                     }
-                 }
+                if (isFileUpload) {
+                    for (const pair of data.entries()) {
+                        body.append(pair[0], pair[1]);
+                    }
+                } else {
+                    for (const key in data) {
+                        if (data.hasOwnProperty(key)) {
+                            body.append(key, data[key]);
+                        }
+                    }
+                }
             }
             options.body = body;
-            // Do NOT set Content-Type header for FormData, the browser sets it correctly
         }
 
         try {
             const response = await fetch(url, options);
-
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('API Error:', response.status, errorData);
-                // Handle specific error statuses (e.g., 401, 403, 400)
-                if (response.status === 401 || response.status === 403) {
-                    displayMessage(formMsg, 'Error de autenticación. Verifique las credenciales.', 'danger');
-                } else if (response.status === 400) {
-                     // Display validation errors from the backend
-                     let errorMsg = 'Error de validación:';
-                     for (const field in errorData) {
-                         errorMsg += ` ${field}: ${errorData[field].join(', ')}`;
-                     }
-                     displayMessage(formMsg, errorMsg, 'danger');
-                }
-                 else {
-                    displayMessage(formMsg, `Error en la solicitud: ${response.statusText}`, 'danger');
-                }
                 throw new Error(`API request failed with status ${response.status}`);
             }
 
-            // Handle 204 No Content for successful deletions (though delete is forbidden)
             if (response.status === 204) {
-                 return null; // No content to parse
+                return null;
             }
 
-            // Handle cases where the response might be empty but status is OK (e.g., 200 with no body)
             const contentType = response.headers.get("content-type");
             if (contentType && contentType.includes("application/json")) {
                 return await response.json();
-            } else {
-                // If not JSON, return response object or null
-                return response;
             }
-
-
+            return response;
         } catch (error) {
             console.error('Fetch error:', error);
-            displayMessage(formMsg, 'Error de conexión con el servidor.', 'danger');
-            throw error; // Re-throw to be caught by calling functions
+            throw error;
         }
     }
 
@@ -177,8 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const apiUrl = `/administracion/api/proveedores/${selectedProviderId}/`; // Update API URL
 
         try {
-            // makeAuthenticatedRequest now sends credentials as query params for GET
-            const data = await makeAuthenticatedRequest(apiUrl, 'GET');
+            const data = await makeApiRequest(apiUrl, 'GET');
 
             if (data) {
                 // Populate form fields with data
@@ -222,8 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const condicionIvaSelect = document.getElementById('condicionIva');
         const ivaApiUrl = '/administracion/api/categorias-iva/'; // Update API URL
         try {
-            // makeAuthenticatedRequest now sends credentials as query params for GET
-            const ivaData = await makeAuthenticatedRequest(ivaApiUrl, 'GET');
+            const ivaData = await makeApiRequest(ivaApiUrl, 'GET');
             condicionIvaSelect.innerHTML = '<option value="">Seleccione...</option>';
             if (ivaData) {
                 ivaData.forEach(item => {
@@ -246,8 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const ingresosBrutosSelect = document.getElementById('ingresosBrutos');
         const iibbApiUrl = '/administracion/api/ingresos-brutos/'; // Update API URL
         try {
-            // makeAuthenticatedRequest now sends credentials as query params for GET
-            const iibbData = await makeAuthenticatedRequest(iibbApiUrl, 'GET');
+            const iibbData = await makeApiRequest(iibbApiUrl, 'GET');
             ingresosBrutosSelect.innerHTML = '<option value="">Seleccione...</option>';
             if (iibbData) {
                 iibbData.forEach(item => {
@@ -272,8 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const apiUrl = `/administracion/api/contactos/?proveedor_id=${selectedProviderId}`; // Update API URL and add provider_id query param
 
         try {
-            // makeAuthenticatedRequest now sends credentials as query params for GET
-            const data = await makeAuthenticatedRequest(apiUrl, 'GET');
+            const data = await makeApiRequest(apiUrl, 'GET');
 
             tablaContactosBody.innerHTML = ''; // Clear existing rows
 
@@ -354,8 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const apiUrl = `/administracion/api/proveedores/${selectedProviderId}/`; // Update API URL
 
         try {
-            // makeAuthenticatedRequest handles adding credentials and provider_id to body for PATCH
-            const data = await makeAuthenticatedRequest(apiUrl, 'PATCH', formData, true); // Use PATCH for partial update, indicate file upload
+            const data = await makeApiRequest(apiUrl, 'PATCH', formData, true); // Use PATCH for partial update, indicate file upload
 
             if (data) {
                 displayMessage(formMsg, 'Datos de proveedor guardados correctamente.', 'success');
@@ -365,7 +328,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Error saving provider data:', error);
-            // Error message is displayed by makeAuthenticatedRequest
         }
     });
 
@@ -385,8 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const apiUrl = `/administracion/api/contactos/${contactoId}/?proveedor_id=${selectedProviderId}`; // Update API URL and add provider_id
 
         try {
-            // makeAuthenticatedRequest now sends credentials as query params for GET
-            const data = await makeAuthenticatedRequest(apiUrl, 'GET');
+            const data = await makeApiRequest(apiUrl, 'GET');
 
             if (data) {
                 // Populate contact form
@@ -430,10 +391,8 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.set('defecto', document.getElementById('contactoDefecto').checked ? 'S' : 'N');
         formData.set('envia_pdf_oc', document.getElementById('contactoEnviaPdfOc').checked ? 'S' : 'N');
         formData.set('envia_pdf_op', document.getElementById('contactoEnviaPdfOp').checked ? 'S' : 'N');
-
-        // makeAuthenticatedRequest handles adding credentials and provider_id to body for POST/PUT
         try {
-            const data = await makeAuthenticatedRequest(apiUrl, method, formData);
+            const data = await makeApiRequest(apiUrl, method, formData);
 
             if (data) {
                 displayMessage(mensajesStatus, `Contacto ${contactoId ? 'actualizado' : 'agregado'} correctamente.`, 'success');
@@ -442,7 +401,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Error saving contact:', error);
-            // Error message is displayed by makeAuthenticatedRequest
             displayMessage(contactoFormMsg, 'Error al guardar contacto.', 'danger');
         }
     });
@@ -542,8 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
         displayMessage(documentUploadStatus, `Subiendo "${file.name}"...`, 'info');
 
         try {
-            // makeAuthenticatedRequest handles adding credentials and provider_id to body for PATCH
-            const data = await makeAuthenticatedRequest(apiUrl, 'PATCH', formData, true); // Use PATCH for partial update, indicate file upload
+            const data = await makeApiRequest(apiUrl, 'PATCH', formData, true); // Use PATCH for partial update, indicate file upload
 
             if (data) {
                 displayMessage(documentUploadStatus, `Archivo "${file.name}" subido correctamente.`, 'success');
@@ -658,7 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // but optimize in a real application.
 
         // Refetch provider data to get the latest file URLs
-        makeAuthenticatedRequest(`/administracion/api/proveedores/${selectedProviderId}/`, 'GET')
+        makeApiRequest(`/administracion/api/proveedores/${selectedProviderId}/`, 'GET')
             .then(proveedorData => {
                 if (proveedorData && proveedorData[modelFieldName]) {
                     const fileUrl = proveedorData[modelFieldName];

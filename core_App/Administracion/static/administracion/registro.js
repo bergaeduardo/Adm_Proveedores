@@ -19,7 +19,7 @@
         const loadingMessageCuit = document.getElementById('error-n_cuit');
         if(loadingMessageCuit) loadingMessageCuit.textContent = 'Verificando CUIT...';
 
-        const resp = await fetch(`/Proveedores/api/validar-cuit/?n_cuit=${encodeURIComponent(cuit)}`);
+        const resp = await fetch(`/administracion/api/validar-cuit/?n_cuit=${encodeURIComponent(cuit)}`);
         if (!resp.ok) {
             if(loadingMessageCuit) loadingMessageCuit.textContent = ''; // Limpiar mensaje si hay error de red
             return false; // Asumir que no existe si hay error de red, o manejarlo diferente
@@ -103,7 +103,7 @@
 
 
       try {
-        const response = await fetch('/Proveedores/api/registro/', {
+        const response = await fetch('/administracion/api/registro/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
