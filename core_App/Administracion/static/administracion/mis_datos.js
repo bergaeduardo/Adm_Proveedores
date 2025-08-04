@@ -1,4 +1,197 @@
-// API interactions for Administración do not require credentials
+// API interactions for Administración do not require credenciales
+
+// Configuración de documentos y campos reutilizada de Proveedores
+let documentosRequeridosFijos = ['cuitFile', 'ingBrutosFile'];
+let documentosCondicionalesMap = {
+    'certExclGanancias': 'exclGananciasFile',
+    'certExclIIBB': 'exclIIBBFile',
+    'certNoRetGanancias': 'noRetGananciasFile',
+    'certNoRetIIBB': 'noRetIIBBFile'
+};
+
+const fileInputIdToModelFieldName = {
+    'cuitFile': 'cuit_file',
+    'ingBrutosFile': 'ing_brutos_file',
+    'exclGananciasFile': 'excl_ganancias_file',
+    'cm05File': 'cm05_file',
+    'noRetGananciasFile': 'no_ret_ganancias_file',
+    'exclIIBBFile': 'excl_iibb_file',
+    'noRetIIBBFile': 'no_ret_iibb_file',
+    'cbuFile': 'cbu_file',
+};
+
+const camposContactoObligatorios = ["nom_provee", "n_cuit", "telefono_1", "e_mail", "domicilio", "cbu"];
+
+const certificacionSwitches = [
+    { id: 'certExclGanancias', name: 'excl_ganancias_file', documentId: 'exclGananciasFile' },
+    { id: 'certExclIIBB', name: 'excl_iibb_file', documentId: 'exclIIBBFile' },
+    { id: 'certNoRetGanancias', name: 'no_ret_ganancias_file', documentId: 'noRetGananciasFile' },
+    { id: 'certNoRetIIBB', name: 'no_ret_iibb_file', documentId: 'noRetIIBBFile' }
+];
+
+function getDynamicRequiredDocumentIds() {
+    let dynamicRequired = [...documentosRequeridosFijos];
+    for (const switchId in documentosCondicionalesMap) {
+        const switchElement = document.getElementById(switchId);
+        if (switchElement && switchElement.checked) {
+            dynamicRequired.push(documentosCondicionalesMap[switchId]);
+        }
+    }
+    return dynamicRequired;
+}
+
+// Helper para actualizar la UI de cada tarjeta de documento
+function actualizarUICardDocumento(fileInputId, fileName, fileUrl, esRequerido) {
+    const input = document.getElementById(fileInputId);
+    if (!input) { return; }
+    const cardBody = input.closest('.document-card-body');
+    if (!cardBody) { return; }
+
+    const statusTextElement = cardBody.querySelector('.document-status-text');
+    const actionButton = cardBody.querySelector('.action-btn');
+    const documentCard = input.closest('.document-card');
+    const statusIconArea = cardBody.querySelector('.document-icon-area');
+    const requiredAsterisk = documentCard.querySelector('.required-asterisk');
+
+    if(!statusTextElement || !actionButton || !documentCard || !statusIconArea || !requiredAsterisk) { return; }
+
+    documentCard.classList.remove('status-required-missing', 'status-optional-missing', 'status-present', 'border', 'border-danger');
+    actionButton.classList.remove('btn-primary', 'btn-outline-primary', 'btn-outline-secondary');
+
+    actionButton.setAttribute('data-file-input-id', fileInputId);
+
+    if (esRequerido) {
+        requiredAsterisk.classList.remove('d-none');
+        if (fileName) {
+            statusTextElement.textContent = 'Archivo cargado: ' + fileName;
+            actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-1" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg> Ver Documento`;
+            actionButton.onclick = () => viewDocument(fileUrl, fileInputId);
+            actionButton.classList.add('btn-outline-secondary');
+            documentCard.classList.add('status-present');
+            statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill status-icon" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`;
+        } else {
+            statusTextElement.textContent = 'Pendiente de carga';
+            actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg> Cargar Archivo`;
+            actionButton.onclick = () => triggerUpload(fileInputId);
+            actionButton.classList.add('btn-primary');
+            documentCard.classList.add('status-required-missing');
+            statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill status-icon" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></svg>`;
+        }
+    } else {
+        requiredAsterisk.classList.add('d-none');
+        if (fileName) {
+            statusTextElement.textContent = 'Archivo cargado: ' + fileName;
+            actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-1" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg> Ver Documento`;
+            actionButton.onclick = () => viewDocument(fileUrl, fileInputId);
+            actionButton.classList.add('btn-outline-secondary');
+            documentCard.classList.add('status-present');
+            statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill status-icon" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`;
+        } else {
+            statusTextElement.textContent = 'Opcional, no cargado';
+            actionButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/></svg> Cargar (Opcional)`;
+            actionButton.onclick = () => triggerUpload(fileInputId);
+            actionButton.classList.add('btn-outline-primary');
+            documentCard.classList.add('status-optional-missing');
+            statusIconArea.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle-fill status-icon" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>`;
+        }
+    }
+}
+
+function gatherFormDataFromAllTabs() {
+    const formData = new FormData();
+    const formsToProcess = ['#proveedorForm', '#configForm'];
+    formsToProcess.forEach(formSelector => {
+        const formElements = document.querySelectorAll(`${formSelector} input:not([type="file"]), ${formSelector} select, ${formSelector} textarea`);
+        formElements.forEach(el => {
+            if ((el.name || el.id) && !el.disabled) {
+                const key = el.name || el.id;
+                if (el.type === 'checkbox' && (key === 'contactoDefecto' || key === 'contactoEnviaPdfOc' || key === 'contactoEnviaPdfOp' || certificacionSwitches.some(s => s.id === key))) {
+                    const formKey = certificacionSwitches.find(s => s.id === key)?.name || key;
+                    formData.append(formKey, el.checked ? 'S' : 'N');
+                } else if (el.type === 'checkbox') {
+                    formData.append(key, el.checked);
+                } else if (el.type === 'radio') {
+                    if (el.checked) { formData.append(key, el.value.trim() === "" ? '' : el.value.trim()); }
+                } else {
+                    formData.append(key, el.value.trim() === "" ? '' : el.value.trim());
+                }
+            }
+        });
+    });
+    if (formData.has('provincia_display')) { formData.delete('provincia_display'); }
+    const idCpa57Val = document.getElementById('id_cpa57').value;
+    const nomProvVal = document.getElementById('nom_prov').value;
+    formData.set('id_cpa57', idCpa57Val || '');
+    formData.set('nom_prov', nomProvVal || '');
+    formData.set('id_categoria_iva_cond_iva', document.getElementById('condicionIva').value || '');
+    if (formData.has('condicionIva')) formData.delete('condicionIva');
+    formData.set('tipo', document.getElementById('ingresosBrutos').value || '');
+    if (formData.has('ingresosBrutos')) formData.delete('ingresosBrutos');
+    const fileInputsDocumentos = document.querySelectorAll('#documents-tab-pane .file-input');
+    fileInputsDocumentos.forEach(input => {
+        const modelFieldName = fileInputIdToModelFieldName[input.id];
+        if (modelFieldName && input.files && input.files.length > 0) {
+            formData.append(modelFieldName, input.files[0], input.files[0].name);
+        }
+    });
+    return formData;
+}
+
+function triggerUpload(fileInputId) {
+    const input = document.getElementById(fileInputId);
+    if (input) { input.click(); }
+}
+
+let documentViewerModal;
+let documentViewerModalBody;
+let btnReplaceDocument;
+let documentViewerModalLabel;
+
+function viewDocument(fileUrl, fileInputId) {
+    const fileName = fileUrl ? fileUrl.split('/').pop() : '';
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    documentViewerModalLabel.textContent = `Ver Documento: ${fileName}`;
+    documentViewerModalBody.innerHTML = '';
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+        const img = document.createElement('img');
+        img.src = fileUrl;
+        img.classList.add('img-fluid', 'max-height-modal');
+        img.alt = fileName;
+        documentViewerModalBody.appendChild(img);
+    } else if (fileExtension === 'pdf') {
+        const embed = document.createElement('embed');
+        embed.src = fileUrl;
+        embed.type = 'application/pdf';
+        embed.width = '100%';
+        embed.height = '600px';
+        documentViewerModalBody.appendChild(embed);
+    } else {
+        const downloadLink = document.createElement('a');
+        downloadLink.href = fileUrl;
+        downloadLink.textContent = `Descargar "${fileName}"`;
+        downloadLink.setAttribute('download', '');
+        downloadLink.classList.add('btn', 'btn-primary');
+        documentViewerModalBody.appendChild(downloadLink);
+    }
+    btnReplaceDocument.dataset.fileInputId = fileInputId;
+    btnReplaceDocument.style.display = 'inline-block';
+    documentViewerModal.show();
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     const proveedorForm = document.getElementById('proveedorForm');
@@ -13,26 +206,51 @@ document.addEventListener('DOMContentLoaded', function() {
     const contactoFormMsg = document.getElementById('contactoFormMsg');
     const btnNuevoContacto = document.getElementById('btnNuevoContacto');
     const documentUploadStatus = document.getElementById('documentUploadStatus');
+    documentViewerModal = new bootstrap.Modal(document.getElementById('documentViewerModal'));
+    documentViewerModalBody = document.getElementById('documentViewerModalBody');
+    btnReplaceDocument = document.getElementById('btnReplaceDocument');
+    documentViewerModalLabel = document.getElementById('documentViewerModalLabel');
 
     // Get the selected provider ID from localStorage
     const selectedProviderId = localStorage.getItem('selectedProviderId');
 
     if (!selectedProviderId) {
-        // If no provider is selected, redirect back to the dashboard or show an error
         alert('No se ha seleccionado un proveedor.');
-        window.location.href = '../dashboard/'; // Update redirection path
-        return; // Stop execution
+        window.location.href = '../dashboard/';
+        return;
     }
 
-    // --- Tab Navigation Logic ---
-    const tabButtons = document.querySelectorAll('.card-header-tabs .nav-link');
-    const tabPanes = document.querySelectorAll('.tab-content .tab-pane');
+    let proveedorId = selectedProviderId ? parseInt(selectedProviderId) : null;
+    let userId = null;
+    let codCpa01Value = null;
+    let initialData = {};
+    let codPais = null;
+    let proveedorFileStates = {};
+
+    const camposBloquear = ["nom_provee","nom_fant","n_cuit"];
+    const camposPrincipalesEditables = [
+        { key: "nom_provee", label: "Razon social" }, { key: "n_cuit", label: "CUIT" },
+        { key: "domicilio", label: "Domicilio" }, { key: "localidad", label: "Localidad" },
+        { key: "c_postal", label: "Código postal" }, { key: "telefono_1", label: "Teléfono" },
+        { key: "telefono_2", label: "Teléfono 2" }, { key: "telefono_movil", label: "Teléfono móvil" },
+        { key: "e_mail", label: "Email" }, { key: "web", label: "Pagina Web" },
+        { key: "nom_fant", label: "Nombre comercial" }, { key: "domicilio_comercial", label: "Domicilio comercial" },
+        { key: "n_iva", label: "Actividad" },
+    ];
+
+    const steps = [
+        { id: 'step1', name: 'Datos de Empresa y Contacto', panelId: 'home-tab-pane', buttonId: 'home-tab-btn' },
+        { id: 'step2', name: 'Configuración y Datos Bancarios', panelId: 'config-tab-pane', buttonId: 'config-tab-btn' },
+        { id: 'step3', name: 'Contactos de Mensajería', panelId: 'messages-tab-pane', buttonId: 'messages-tab-btn' },
+        { id: 'step4', name: 'Documentos Adjuntos', panelId: 'documents-tab-pane', buttonId: 'documents-tab-btn' }
+    ];
+    let currentStepIndex = 0;
     const btnNextStep = document.getElementById('btnNextStep');
     const btnSave = document.querySelector('.btn-save');
+    const tabButtons = document.querySelectorAll('#myTab .nav-link');
+    const tabPanes = document.querySelectorAll('#myTabContent .tab-pane');
 
-    let currentTabIndex = 0;
-
-    function showTab(index) {
+    function showStep(index) {
         tabButtons.forEach((btn, i) => {
             if (i === index) {
                 btn.classList.add('active');
@@ -51,10 +269,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        currentTabIndex = index;
+        currentStepIndex = index;
 
-        // Manage button visibility
-        if (currentTabIndex === tabButtons.length - 1) {
+        if (currentStepIndex === tabButtons.length - 1) {
             btnNextStep.style.display = 'none';
             btnSave.style.display = 'inline-block';
         } else {
@@ -65,18 +282,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     tabButtons.forEach((button, index) => {
         button.addEventListener('click', () => {
-            showTab(index);
+            showStep(index);
         });
     });
 
     btnNextStep.addEventListener('click', () => {
-        if (currentTabIndex < tabButtons.length - 1) {
-            showTab(currentTabIndex + 1);
+        if (currentStepIndex < tabButtons.length - 1) {
+            showStep(currentStepIndex + 1);
         }
     });
 
-    // Initially show the first tab
-    showTab(0);
+    showStep(0);
 
     // --- API Calls ---
 
@@ -173,6 +389,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
                  // Update document cards based on loaded data
                  updateDocumentCards(data);
+
+                 // Store initial values for later comparison/validation
+                 initialData = {};
+                 for (const key in data) {
+                     if (data[key] !== null && data[key] !== undefined) {
+                         initialData[key] = data[key];
+                     }
+                 }
+                 Object.keys(fileInputIdToModelFieldName).forEach(inputId => {
+                     initialData[inputId] = data[fileInputIdToModelFieldName[inputId]] || '';
+                 });
+                 certificacionSwitches.forEach(sw => {
+                     initialData[sw.name] = data[sw.name] || 'N';
+                 });
+                 if (data.cod_pais) { codPais = data.cod_pais; }
 
                 displayMessage(formMsg, 'Datos de proveedor cargados.', 'success');
             } else {
@@ -286,48 +517,153 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Save Data ---
-    proveedorForm.addEventListener('submit', async function(event) {
-        event.preventDefault();
-        if (!proveedorForm.checkValidity()) {
-            event.stopPropagation();
-            proveedorForm.classList.add('was-validated');
-            displayMessage(formMsg, 'Por favor, complete los campos obligatorios.', 'warning');
-            return;
-        }
+    proveedorForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-        const formData = new FormData(proveedorForm);
-        // Add data from configForm as well
-        const configFormData = new FormData(configForm);
-        for (const pair of configFormData.entries()) {
-             // Handle checkboxes separately as FormData only includes checked ones
-             if (configForm.elements[pair[0]].type === 'checkbox') {
-                 formData.append(pair[0], configForm.elements[pair[0]].checked ? 'S' : 'N');
-             } else {
-                 formData.append(pair[0], pair[1]);
-             }
-        }
+        let finalValidationValid = true;
+        let finalValidationMessages = [];
+        let firstErrorStepIndex = -1;
 
-        // Add file inputs to the FormData
-        document.querySelectorAll('.file-input').forEach(input => {
-            if (input.files.length > 0) {
-                formData.append(input.name, input.files[0]);
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+        document.querySelectorAll('.document-card').forEach(card => card.classList.remove('border', 'border-danger'));
+
+        camposContactoObligatorios.forEach(campoKey => {
+            const input = document.getElementById(campoKey);
+            if (input && input.value.trim() === "") {
+                finalValidationValid = false;
+                const labelText = input.previousElementSibling?.textContent.replace('*', '').trim() || campoKey;
+                finalValidationMessages.push(`El campo "${labelText}" es obligatorio.`);
+                input.classList.add('is-invalid');
+                const feedbackEl = document.getElementById(`${campoKey}-invalid`) || input.nextElementSibling;
+                if (feedbackEl && feedbackEl.classList.contains('invalid-feedback')) feedbackEl.textContent = `Este campo es obligatorio.`;
+                const stepIndex = steps.findIndex(step => document.getElementById(step.panelId).contains(input));
+                if (firstErrorStepIndex === -1 && stepIndex !== -1) { firstErrorStepIndex = stepIndex; }
+            } else if (input) {
+                input.classList.remove('is-invalid');
+                const feedbackEl = document.getElementById(`${campoKey}-invalid`) || input.nextElementSibling;
+                if (feedbackEl && feedbackEl.classList.contains('invalid-feedback')) feedbackEl.textContent = "";
             }
         });
 
+        const cuitInputHTML = document.getElementById('n_cuit');
+        if (cuitInputHTML && cuitInputHTML.value.trim() !== "") {
+            const cuitPattern = /^\d{2}-\d{8}-\d{1}$/;
+            const feedbackEl = document.getElementById('n_cuit-invalid');
+            if (!cuitPattern.test(cuitInputHTML.value.trim())) {
+                finalValidationValid = false;
+                finalValidationMessages.push('El CUIT debe tener el formato XX-XXXXXXXX-X.');
+                cuitInputHTML.classList.add('is-invalid');
+                if (feedbackEl) feedbackEl.textContent = 'Formato inválido. Ejemplo: 20-31441849-3';
+                const stepIndex = steps.findIndex(step => document.getElementById(step.panelId).contains(cuitInputHTML));
+                if (firstErrorStepIndex === -1 && stepIndex !== -1) { firstErrorStepIndex = stepIndex; }
+            } else {
+                cuitInputHTML.classList.remove('is-invalid');
+                if (feedbackEl) feedbackEl.textContent = "";
+            }
+        }
 
-        const apiUrl = `/administracion/api/proveedores/${selectedProviderId}/`; // Update API URL
+        const requiredDocumentIds = getDynamicRequiredDocumentIds();
+        requiredDocumentIds.forEach(fileInputId => {
+            const fileInput = document.getElementById(fileInputId);
+            const documentCard = document.getElementById(`card-${fileInputId}`);
+            const documentTitleElement = documentCard ? documentCard.querySelector('.document-title') : null;
+            const documentName = documentTitleElement ? documentTitleElement.textContent.replace('*','').trim() : `Documento ${fileInputId}`;
+
+            const nuevoArchivoSeleccionado = fileInput && fileInput.files && fileInput.files.length > 0;
+            const yaCargadoPreviamente = initialData[fileInputId] && initialData[fileInputId] !== '';
+
+            if (!nuevoArchivoSeleccionado && !yaCargadoPreviamente) {
+                finalValidationValid = false;
+                finalValidationMessages.push(`El documento "${documentName}" es requerido.`);
+                if (documentCard) { documentCard.classList.add('border', 'border-danger'); }
+                const stepIndex = steps.findIndex(step => document.getElementById(step.panelId).contains(documentCard));
+                if (firstErrorStepIndex === -1 && stepIndex !== -1) { firstErrorStepIndex = stepIndex; }
+            } else if (documentCard) {
+                documentCard.classList.remove('border', 'border-danger');
+            }
+        });
+
+        const msgDiv = document.getElementById('formMsg');
+        if (!finalValidationValid) {
+            msgDiv.innerHTML = 'Errores encontrados:<br>' + finalValidationMessages.join('<br>');
+            msgDiv.className = 'alert alert-danger mt-0 mb-3';
+            msgDiv.classList.remove('d-none');
+            if (firstErrorStepIndex !== -1) { showStep(firstErrorStepIndex); }
+            return;
+        } else {
+            msgDiv.classList.add('d-none');
+            msgDiv.textContent = '';
+        }
+
+        const formDataToSave = gatherFormDataFromAllTabs();
+        const method = proveedorId ? 'PATCH' : 'POST';
+        let url = proveedorId ? `/administracion/api/proveedores/${proveedorId}/` : `/administracion/api/proveedores/`;
+        if (method === 'POST') {
+            if (userId) formDataToSave.append('user', userId);
+            if (codPais) formDataToSave.append('cod_pais', codPais);
+        }
+
+        msgDiv.textContent = 'Guardando datos...';
+        msgDiv.className = 'alert alert-info mt-0 mb-3';
+        msgDiv.classList.remove('d-none');
+        document.querySelector('.btn-save').disabled = true;
 
         try {
-            const data = await makeApiRequest(apiUrl, 'PATCH', formData, true); // Use PATCH for partial update, indicate file upload
+            const resp = await fetch(url, {
+                method: method,
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                body: formDataToSave
+            });
 
-            if (data) {
-                displayMessage(formMsg, 'Datos de proveedor guardados correctamente.', 'success');
-                 // Reload data to update document statuses and potentially other fields
-                 loadProveedorData();
+            if (resp.ok) {
+                const responseData = await resp.json();
+                if (method === 'POST' && responseData.id) {
+                    proveedorId = responseData.id;
+                    if (responseData.cod_cpa01) { codCpa01Value = responseData.cod_cpa01; camposBloquear.forEach(keyToBlock => { const inputToBlock = document.getElementById(keyToBlock); if (inputToBlock && codCpa01Value && codCpa01Value.trim() !== "") { inputToBlock.disabled = true; }}); }
+                    if (responseData.cod_pais) { codPais = responseData.cod_pais; }
+                }
+                for (const [key, value] of formDataToSave.entries()) {
+                    if (value instanceof File) continue;
+                    const certSwitchConfig = certificacionSwitches.find(s => s.name === key);
+                    if (certSwitchConfig) {
+                        initialData[key] = String(value);
+                    } else if (key === 'id_categoria_iva_cond_iva') {
+                        initialData['condicionIva'] = String(value);
+                    } else if (key === 'tipo') {
+                        initialData['ingresosBrutos'] = String(value);
+                    } else if (key === 'id_cpa57') {
+                        initialData['id_cpa57'] = String(value);
+                    } else if (key === 'nom_prov') {
+                        initialData['nom_prov'] = String(value);
+                    } else if (initialData.hasOwnProperty(key)) {
+                        initialData[key] = value === null ? '' : String(value);
+                    }
+                }
+                initialData[document.getElementById('provincia').name || document.getElementById('provincia').id] = formDataToSave.get('nom_prov') || '';
+                const fileInputs = document.querySelectorAll('#documents-tab-pane .file-input');
+                fileInputs.forEach(input => {
+                    if (input.id) {
+                        const modelFieldName = fileInputIdToModelFieldName[input.id];
+                        const docUrlFromServer = responseData[modelFieldName] || null;
+                        const docNameFromServer = docUrlFromServer ? docUrlFromServer.split('/').pop() : null;
+                        initialData[input.id] = docUrlFromServer || '';
+                        actualizarUICardDocumento(input.id, docNameFromServer, docUrlFromServer, getDynamicRequiredDocumentIds().includes(input.id));
+                    }
+                });
+                msgDiv.textContent = 'Datos guardados correctamente.';
+                msgDiv.className = 'alert alert-success mt-0 mb-3';
+            } else {
+                const errorData = await resp.json();
+                msgDiv.textContent = 'Error al guardar: ' + (errorData.detail || resp.statusText);
+                msgDiv.className = 'alert alert-danger mt-0 mb-3';
             }
-
         } catch (error) {
-            console.error('Error saving provider data:', error);
+            msgDiv.textContent = 'Error de red o problema al procesar la solicitud de guardado.';
+            msgDiv.className = 'alert alert-danger mt-0 mb-3';
+            msgDiv.classList.remove('d-none');
+        } finally {
+            document.querySelector('.btn-save').disabled = false;
         }
     });
 
@@ -406,10 +742,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // --- Document Upload/View ---
-    const documentViewerModal = new bootstrap.Modal(document.getElementById('documentViewerModal'));
-    const documentViewerModalBody = document.getElementById('documentViewerModalBody');
-    const documentViewerModalLabel = document.getElementById('documentViewerModalLabel');
-    const btnReplaceDocument = document.getElementById('btnReplaceDocument');
     const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
     const confirmationModalBody = document.getElementById('confirmationModalBody');
     const btnConfirmUpload = document.getElementById('btnConfirmUpload');
@@ -456,11 +788,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const statusText = documentCard.querySelector('.document-status-text').textContent;
 
         if (statusText.includes('Pendiente de carga') || button.textContent.includes('Cargar')) {
-            // If status is 'Pendiente de carga' or button is 'Cargar', trigger file input click
             document.getElementById(fileInputId).click();
         } else if (statusText.includes('Cargado') || button.textContent.includes('Ver')) {
-            // If status is 'Cargado' or button is 'Ver', open viewer modal
-            viewDocument(fileInputId);
+            const fileUrl = initialData[fileInputId] || '';
+            if (fileUrl) {
+                viewDocument(fileUrl, fileInputId);
+            }
         }
         // If status is 'Pendiente de validación' or 'Validado', no action on click? Or maybe view?
         // For now, only handle 'Cargar' and 'Ver'.
@@ -600,70 +933,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-
-    function viewDocument(fileInputId) {
-        const modelFieldName = document.getElementById(fileInputId).name;
-        // Assuming the file URL is available in the loaded proveedorData
-        // You would need to store the loaded data globally or fetch it again
-        // For simplicity, let's assume we refetch the provider data or have it available.
-        // A better approach is to get the URL from the initial loadProveedorData call.
-
-        // For now, let's assume we can get the URL from the data attribute of the card or refetch
-        // A more robust solution would involve the backend providing a temporary signed URL.
-        // Given the current API structure, the file URL is returned in the GET response for the provider.
-        // We need to access that data. Let's refetch for simplicity in this example,
-        // but optimize in a real application.
-
-        // Refetch provider data to get the latest file URLs
-        makeApiRequest(`/administracion/api/proveedores/${selectedProviderId}/`, 'GET')
-            .then(proveedorData => {
-                if (proveedorData && proveedorData[modelFieldName]) {
-                    const fileUrl = proveedorData[modelFieldName];
-                    const fileName = fileUrl.split('/').pop(); // Simple way to get filename from URL
-                    const fileExtension = fileName.split('.').pop().toLowerCase();
-
-                    documentViewerModalLabel.textContent = `Ver Documento: ${fileName}`;
-                    documentViewerModalBody.innerHTML = ''; // Clear previous content
-
-                    if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
-                        // Display image
-                        const img = document.createElement('img');
-                        img.src = fileUrl;
-                        img.classList.add('img-fluid', 'max-height-modal'); // Add a class for max height
-                        img.alt = fileName;
-                        documentViewerModalBody.appendChild(img);
-                    } else if (fileExtension === 'pdf') {
-                        // Embed PDF
-                        const embed = document.createElement('embed');
-                        embed.src = fileUrl;
-                        embed.type = 'application/pdf';
-                        embed.width = '100%';
-                        embed.height = '600px'; // Adjust height as needed
-                        documentViewerModalBody.appendChild(embed);
-                    } else {
-                        // Offer download for other file types
-                        const downloadLink = document.createElement('a');
-                        downloadLink.href = fileUrl;
-                        downloadLink.textContent = `Descargar "${fileName}"`;
-                        downloadLink.setAttribute('download', ''); // Suggest download
-                        downloadLink.classList.add('btn', 'btn-primary');
-                        documentViewerModalBody.appendChild(downloadLink);
-                    }
-
-                    // Set the file input ID on the replace button
-                    btnReplaceDocument.dataset.fileInputId = fileInputId;
-                    btnReplaceDocument.style.display = 'inline-block'; // Show replace button
-
-                    documentViewerModal.show();
-                } else {
-                    displayMessage(documentUploadStatus, 'No se encontró el documento para visualizar.', 'warning');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching provider data for document view:', error);
-                displayMessage(documentUploadStatus, 'Error al obtener la URL del documento.', 'danger');
-            });
-    }
 
 
     // --- Utility Functions ---
