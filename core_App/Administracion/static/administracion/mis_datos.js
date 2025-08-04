@@ -425,13 +425,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (ivaData) {
                 ivaData.forEach(item => {
                     const option = document.createElement('option');
-                    option.value = item.Cod_Categoria_IVA; // Assuming this is the value to save
-                    option.textContent = item.Desc_Categoria_IVA;
+                    option.value = item.id_categoria_iva; // Use ID from Administración API
+                    option.textContent = item.desc_categoria_iva;
                     condicionIvaSelect.appendChild(option);
                 });
                 // Set selected value if available in proveedorData
-                if (proveedorData && proveedorData.condicionIva) {
-                    condicionIvaSelect.value = proveedorData.condicionIva;
+                if (proveedorData && proveedorData.id_categoria_iva_cond_iva) {
+                    condicionIvaSelect.value = proveedorData.id_categoria_iva_cond_iva;
                 }
             }
         } catch (error) {
@@ -448,14 +448,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (iibbData) {
                 iibbData.forEach(item => {
                     const option = document.createElement('option');
-                    option.value = item.Cod_Ingresos_brutos; // Assuming this is the value to save
+                    option.value = item.Cod_Ingresos_brutos; // Codes from Administración API
                     option.textContent = item.Desc_Ingresos_brutos;
                     ingresosBrutosSelect.appendChild(option);
                 });
-                 // Set selected value if available in proveedorData
-                 if (proveedorData && proveedorData.ingresosBrutos) {
-                     ingresosBrutosSelect.value = proveedorData.ingresosBrutos;
-                 }
+                // Set selected value if available in proveedorData
+                if (proveedorData && proveedorData.tipo) {
+                    ingresosBrutosSelect.value = proveedorData.tipo;
+                }
             }
         } catch (error) {
             console.error('Error loading Ingresos Brutos:', error);
