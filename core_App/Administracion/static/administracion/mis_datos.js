@@ -112,54 +112,60 @@ function actualizarUICardDocumento(fileInputId, fileName, fileUrl, esRequerido) 
 }
 
 function gatherFormDataFromAllTabs() {
-    const formData = new FormData();
-    // Only include data from the main forms, not the contact modal form
-    const formsToProcess = ['#proveedorForm', '#configForm'];
+  const formData = new FormData();
+  const formsToProcess = ['#proveedorForm', '#configForm'];
 
-    formsToProcess.forEach(formSelector => {
-        const formElements = document.querySelectorAll(`${formSelector} input:not([type="file"]), ${formSelector} select, ${formSelector} textarea`);
-        formElements.forEach(el => {
-            if ((el.name || el.id) && !el.disabled) {
-                const key = el.name || el.id;
-                // Handle all checkboxes, including new certification switches
-                const certSwitch = certificacionSwitches.find(s => s.id === key);
-                if (el.type === 'checkbox' && certSwitch) {
-                     // For certification switches, use the model field name (s.name) for the form data key
-                     formData.append(certSwitch.name, el.checked ? 'S' : 'N');
-                } else if (el.type === 'checkbox') {
-                    formData.append(key, el.checked ? 'S' : 'N');
-                } else if (el.type === 'radio') {
-                    if (el.checked) { formData.append(key, el.value.trim()); }
-                } else {
-                    formData.append(key, el.value.trim());
-                }
-            }
-        });
-    });
-    // Handle specific fields that might not be directly in a form or have special names
-    if (formData.has('provincia_display')) { formData.delete('provincia_display'); } // Remove display field
-    const idCpa57Val = document.getElementById('id_cpa57').value;
-    const nomProvVal = document.getElementById('nom_prov').value;
-    formData.set('id_cpa57', idCpa57Val || '');
-    formData.set('nom_prov', nomProvVal || '');
+  formsToProcess.forEach(formSelector => {
+    const formElements = document.querySelectorAll(`${formSelector} input:not([type="file"]), ${formSelector} select, ${formSelector} textarea`);
+    formElements.forEach(el => {
+      if ((el.name || el.id) && !el.disabled) {
+        const key = el.name || el.id;
 
-    // Handle select values that map to different model fields
-    formData.set('id_categoria_iva_cond_iva', document.getElementById('condicionIva').value || '');
-    if (formData.has('condicionIva')) formData.delete('condicionIva'); // Remove the select's name if it conflicts
+        // 1) NUNCA mandar los switches de certificación al backend (son sólo de UI)
+        const isCertSwitch = certificacionSwitches.some(s => (s.id === (el.id || el.name)));
+        if (isCertSwitch) return; // omitir
 
-    formData.set('tipo', document.getElementById('ingresosBrutos').value || '');
-    if (formData.has('ingresosBrutos')) formData.delete('ingresosBrutos'); // Remove the select's name if it conflicts
-
-
-    // Agregar archivos al FormData usando los nombres de campo del modelo
-    const fileInputsDocumentos = document.querySelectorAll('#documents-tab-pane .file-input');
-    fileInputsDocumentos.forEach(input => {
-        const modelFieldName = fileInputIdToModelFieldName[input.id];
-        if (modelFieldName && input.files && input.files.length > 0) {
-            formData.append(modelFieldName, input.files[0], input.files[0].name);
+        if (el.type === 'checkbox') {
+          formData.append(key, el.checked ? 'S' : 'N');
+        } else if (el.type === 'radio') {
+          if (el.checked) formData.append(key, el.value.trim());
+        } else {
+          formData.append(key, el.value.trim());
         }
+      }
     });
-    return formData;
+  });
+
+  // 2) Campos especiales de provincia
+  if (formData.has('provincia_display')) formData.delete('provincia_display');
+  const idCpa57Val = document.getElementById('id_cpa57').value;
+  const nomProvVal = document.getElementById('nom_prov').value;
+  formData.set('id_cpa57', idCpa57Val || '');
+  formData.set('nom_prov', nomProvVal || '');
+
+  // 3) Selects que mapean a otros nombres en el modelo
+  formData.set('id_categoria_iva_cond_iva', document.getElementById('condicionIva').value || '');
+  if (formData.has('condicionIva')) formData.delete('condicionIva');
+  formData.set('tipo', document.getElementById('ingresosBrutos').value || '');
+  if (formData.has('ingresosBrutos')) formData.delete('ingresosBrutos');
+
+  // 4) Archivos: usar SIEMPRE la clave del *frontend* (id del input) para que la vista los procese
+  //    Ej.: 'cuitFile', 'ingBrutosFile', 'exclGananciasFile', etc.
+  const fileInputsDocumentos = document.querySelectorAll('#documents-tab-pane .file-input');
+  fileInputsDocumentos.forEach(input => {
+    if (input.files && input.files.length > 0) {
+      formData.append(input.id, input.files[0], input.files[0].name);
+    }
+  });
+
+  // 5) Saneado defensivo: si por algún motivo quedó un valor string en un nombre de FileField, eliminarlo
+  const fileFieldNames = Object.values(fileInputIdToModelFieldName); // ['cuit_file', 'ing_brutos_file', ...]
+  fileFieldNames.forEach(fieldName => {
+    const v = formData.get(fieldName);
+    if (v && !(v instanceof File)) formData.delete(fieldName);
+  });
+
+  return formData;
 }
 
 $(document).ready(function() {
@@ -361,17 +367,33 @@ $(document).ready(function() {
    * Este ID es guardado por dashboard.js al seleccionar un proveedor.
    */
   function getProveedorId() {
-    const selectedId = localStorage.getItem('selectedProviderId');
-    if (selectedId) {
-        console.log('Proveedor ID obtenido de localStorage:', selectedId);
-        return selectedId;
-    }
-    console.error('No se pudo encontrar el ID del proveedor en localStorage.');
-    // Redirigir si no hay ID, ya que la página no puede funcionar
-    alert('No se ha seleccionado un proveedor. Volviendo al listado.');
-    window.location.href = '../dashboard/'; // Ajusta esta ruta si es necesario
-    return null;
+  // 1) Prioridad: querystring
+  const qs = new URLSearchParams(window.location.search).get('proveedor_id');
+  if (qs) {
+    sessionStorage.setItem('proveedor_id', qs);
+    localStorage.setItem('proveedor_id', qs); // persistencia opcional
+    // limpiar clave legacy para que no vuelva a pisar
+    localStorage.removeItem('selectedProviderId');
+    return parseInt(qs, 10);
   }
+
+  // 2) Session/localStorage (clave nueva)
+  const fromStore = sessionStorage.getItem('proveedor_id') || localStorage.getItem('proveedor_id');
+  if (fromStore) return parseInt(fromStore, 10);
+
+  // 3) Fallback legacy (clave vieja del flujo anterior)
+  const legacy = localStorage.getItem('selectedProviderId');
+  if (legacy) {
+    sessionStorage.setItem('proveedor_id', legacy);
+    localStorage.setItem('proveedor_id', legacy);
+    localStorage.removeItem('selectedProviderId');
+    return parseInt(legacy, 10);
+  }
+
+  alert('No se ha seleccionado un proveedor. Volviendo al dashboard.');
+  window.location.href = '/administracion/dashboard/';
+  return null;
+}
 
   async function cargarDatos() {
     proveedorId = getProveedorId();
@@ -413,14 +435,16 @@ $(document).ready(function() {
             }
           });
           
+      // === IGNORAR switches de certificación al setear desde API ===
       const allFormInputs = document.querySelectorAll('#proveedorForm input, #proveedorForm select, #proveedorForm textarea, #configForm input, #configForm select, #configForm textarea');
       allFormInputs.forEach(input => {
         const key = input.name || input.id;
-        const certSwitch = certificacionSwitches.find(s => s.id === key);
-        const modelKey = certSwitch ? certSwitch.name : key;
-
-        if (proveedor.hasOwnProperty(modelKey)) {
-            const value = proveedor[modelKey];
+        const isCertificationSwitch = certificacionSwitches.some(s => s.id === key);
+        if (isCertificationSwitch) {
+          return; // no setear switches aquí, se sincronizan con archivos
+        }
+        if (Object.prototype.hasOwnProperty.call(proveedor, key)) {
+            const value = proveedor[key];
             if (input.type === 'checkbox' || input.type === 'switch') {
                  input.checked = (value === 'S' || value === true);
             } else {
@@ -437,8 +461,6 @@ $(document).ready(function() {
       idCpa57Input.value = proveedor.id_cpa57 || '';
       nomProvInput.value = proveedor.nom_prov || '';
 
-      // if (codPais) { await cambiarConexion(codPais); } // COMENTADO: API no existe en Administracion
-
       await cargarCondicionIva(proveedor.id_categoria_iva_cond_iva);
       await cargarIngresosBrutos(proveedor.tipo);
 
@@ -447,9 +469,9 @@ $(document).ready(function() {
       const allFileInputs = document.querySelectorAll('#documents-tab-pane .file-input');
       allFileInputs.forEach(input => {
           const modelFieldName = fileInputIdToModelFieldName[input.id];
-          if (modelFieldName && proveedor.hasOwnProperty(modelFieldName)) {
+          if (modelFieldName && Object.prototype.hasOwnProperty.call(proveedor, modelFieldName)) {
               proveedorFileStates[modelFieldName] = proveedor[modelFieldName] || null;
-          } else {
+          } else if (modelFieldName) {
                proveedorFileStates[modelFieldName] = null;
           }
       });
@@ -459,7 +481,7 @@ $(document).ready(function() {
       certificacionSwitches.forEach(s => {
           const switchElement = document.getElementById(s.id);
           const fileFieldName = s.name;
-          if (switchElement && proveedorFileStates.hasOwnProperty(fileFieldName)) {
+          if (switchElement && Object.prototype.hasOwnProperty.call(proveedorFileStates, fileFieldName)) {
               switchElement.checked = !!proveedorFileStates[fileFieldName];
           }
       });
@@ -716,15 +738,16 @@ $(document).ready(function() {
   });
 
   document.getElementById('provinciaList').addEventListener('click', function(e) {
-    if (e.target && e.target.matches('button.list-group-item')) {
-      const provinciaInput = document.getElementById('provincia');
-      provinciaInput.value = e.target.textContent;
-      document.getElementById('id_cpa57').value = e.target.getAttribute('data-id');
-      document.getElementById('nom_prov').value = e.target.getAttribute('data-nom');
-      provinciaListDiv.innerHTML = '';
-      $(provinciaInput).trigger('change');
-    }
-  });
+  if (e.target && e.target.matches('button.list-group-item')) {
+    const provinciaInput = document.getElementById('provincia');
+    const provinciaListDiv = document.getElementById('provinciaList');
+    provinciaInput.value = e.target.textContent;
+    document.getElementById('id_cpa57').value = e.target.getAttribute('data-id');
+    document.getElementById('nom_prov').value = e.target.getAttribute('data-nom');
+    provinciaListDiv.innerHTML = '';
+    $(provinciaInput).trigger('change');
+  }
+});
 
   document.querySelectorAll('.file-input').forEach(input => {
     input.addEventListener('change', function() {
@@ -742,122 +765,179 @@ $(document).ready(function() {
     });
   });
 
-  const contactoModal = new bootstrap.Modal(document.getElementById('contactoModal'));
-  const contactoForm = document.getElementById('contactoForm');
-  const mensajesStatusDiv = document.getElementById('mensajesStatus');
-  const contactoFormMsgDiv = document.getElementById('contactoFormMsg');
+  // === Contactos (Mis Datos) – BLOQUE COMPLETO ===
+// Reemplazá todo tu bloque actual de "Contactos" por este.
+// Ubicación sugerida: dentro de $(document).ready(...), después de definir `proveedorId`.
+// Requisitos: jQuery, Bootstrap, funciones utilitarias getCookie() y escapeHtml().
 
-  $('#btnNuevoContacto').on('click', function() {
-    contactoForm.reset();
-    $('#contactoId').val('');
-    $('#contactoModalLabel').text('Agregar Nuevo Contacto');
-    contactoForm.classList.remove('was-validated');
-    contactoFormMsgDiv.classList.add('d-none');
-    contactoModal.show();
+const contactoModal = new bootstrap.Modal(document.getElementById('contactoModal'));
+const contactoForm = document.getElementById('contactoForm');
+const mensajesStatusDiv = document.getElementById('mensajesStatus');
+const contactoFormMsgDiv = document.getElementById('contactoFormMsg');
+
+// Nuevo contacto
+$('#btnNuevoContacto').off('click').on('click', function () {
+  contactoForm.reset();
+  $('#contactoId').val('');
+  $('#contactoModalLabel').text('Agregar Nuevo Contacto');
+  contactoForm.classList.remove('was-validated');
+  contactoFormMsgDiv.classList.add('d-none');
+  contactoModal.show();
+});
+
+// Cargar contactos del proveedor
+async function cargarContactos() {
+  if (!proveedorId) return;
+  const tablaBody = $('#tablaContactosBody');
+  tablaBody.html('<tr><td colspan="8" class="text-center">Cargando contactos...</td></tr>');
+  try {
+    const resp = await fetch(`/administracion/api/contactos/?proveedor_id=${proveedorId}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const contactos = await resp.json();
+    renderContactos(contactos);
+  } catch (e) {
+    tablaBody.html('<tr><td colspan="8" class="text-center text-danger">Error al cargar contactos</td></tr>');
+  }
+}
+
+function renderContactos(contactos) {
+  const tablaBody = $('#tablaContactosBody');
+  tablaBody.empty();
+  if (!Array.isArray(contactos) || contactos.length === 0) {
+    tablaBody.html('<tr><td colspan="8" class="text-center">No hay contactos registrados.</td></tr>');
+    return;
+  }
+  contactos.forEach(c => {
+    const row = `
+      <tr>
+        <td>${escapeHtml(c.nombre || '')}</td>
+        <td>${escapeHtml(c.cargo || '')}</td>
+        <td>${escapeHtml(c.email || '')}</td>
+        <td>${escapeHtml(c.telefono || '')}</td>
+        <td class="text-center">${c.defecto === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+        <td class="text-center">${c.envia_pdf_oc === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+        <td class="text-center">${c.envia_pdf_op === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-primary btn-editar-contacto" data-id="${c.id}">Editar</button>
+          <button class="btn btn-sm btn-outline-danger btn-eliminar-contacto" data-id="${c.id}">Eliminar</button>
+        </td>
+      </tr>`;
+    tablaBody.append(row);
+  });
+}
+
+// Editar contacto (detalle)
+$('#tablaContactosBody')
+  .off('click', '.btn-editar-contacto')
+  .on('click', '.btn-editar-contacto', async function () {
+    const id = $(this).data('id');
+    try {
+      const resp = await fetch(`/administracion/api/contactos/${id}/?proveedor_id=${proveedorId}`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const c = await resp.json();
+
+      $('#contactoId').val(c.id || '');
+      $('#contactoModalLabel').text('Editar Contacto');
+      $('#contactoNombre').val(c.nombre || '');
+      $('#contactoCargo').val(c.cargo || '');
+      $('#contactoTelefono').val(c.telefono || '');
+      $('#contactoMovil').val(c.telefono_movil || '');
+      $('#contactoEmail').val(c.email || '');
+      $('#contactoObservaciones').val(c.observacion || '');
+      $('#contactoDefecto').prop('checked', c.defecto === 'S');
+      $('#contactoEnviaPdfOc').prop('checked', c.envia_pdf_oc === 'S');
+      $('#contactoEnviaPdfOp').prop('checked', c.envia_pdf_op === 'S');
+
+      contactoForm.classList.remove('was-validated');
+      contactoFormMsgDiv.classList.add('d-none');
+      contactoModal.show();
+    } catch (e) {
+      alert('No se pudo cargar el contacto.');
+    }
   });
 
-  async function cargarContactos() {
-    if (!proveedorId) return;
-    const tablaBody = $('#tablaContactosBody');
-    tablaBody.html('<tr><td colspan="8" class="text-center">Cargando contactos...</td></tr>');
+// Eliminar contacto
+$('#tablaContactosBody')
+  .off('click', '.btn-eliminar-contacto')
+  .on('click', '.btn-eliminar-contacto', async function () {
+    const id = $(this).data('id');
+    if (!confirm('¿Está seguro de eliminar este contacto?')) return;
     try {
-      // CORRECCIÓN: Usar URL en minúsculas
-      const resp = await fetch(`/administracion/api/contactos/?proveedor_id=${proveedorId}`);
-      if (!resp.ok) throw new Error(`Error HTTP ${resp.status}`);
-      const contactos = await resp.json();
-      renderContactos(contactos);
-    } catch (error) {
-      tablaBody.html(`<tr><td colspan="8" class="text-center text-danger">Error al cargar contactos</td></tr>`);
+      const resp = await fetch(`/administracion/api/contactos/${id}/?proveedor_id=${proveedorId}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+      });
+      if (resp.status !== 204) {
+        let extra = '';
+        try { extra = ': ' + JSON.stringify(await resp.json()); } catch {}
+        throw new Error(`HTTP ${resp.status}${extra}`);
+      }
+      cargarContactos();
+    } catch (e) {
+      alert('No se pudo eliminar el contacto.');
     }
-  }
+  });
 
-  function renderContactos(contactos) {
-    const tablaBody = $('#tablaContactosBody');
-    tablaBody.empty();
-    if (contactos.length === 0) {
-      tablaBody.html('<tr><td colspan="8" class="text-center">No hay contactos registrados.</td></tr>');
+// Guardar (crear/editar)
+$('#contactoForm')
+  .off('submit')
+  .on('submit', async function (event) {
+    event.preventDefault();
+    if (!contactoForm.checkValidity()) {
+      contactoForm.classList.add('was-validated');
       return;
     }
-    contactos.forEach(contacto => {
-      const row = `<tr>
-          <td>${escapeHtml(contacto.nombre)}</td> <td>${escapeHtml(contacto.cargo)}</td>
-          <td>${escapeHtml(contacto.email)}</td> <td>${escapeHtml(contacto.telefono)}</td>
-          <td class="text-center">${contacto.defecto === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
-          <td class="text-center">${contacto.envia_pdf_oc === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
-          <td class="text-center">${contacto.envia_pdf_op === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>'}</td>
-          <td class="text-center">
-            <button class="btn btn-sm btn-outline-primary btn-editar-contacto" data-id="${contacto.id}">Editar</button>
-            <button class="btn btn-sm btn-outline-danger btn-eliminar-contacto" data-id="${contacto.id}">Eliminar</button>
-          </td></tr>`;
-      tablaBody.append(row);
-    });
-  }
 
-  $('#tablaContactosBody').on('click', '.btn-editar-contacto', async function() {
-      const contactoId = $(this).data('id');
-      // CORRECCIÓN: Usar URL en minúsculas
-      const resp = await fetch(`/administracion/api/contactos/${contactoId}/`);
-      const contacto = await resp.json();
-      $('#contactoId').val(contacto.id);
-      $('#contactoModalLabel').text('Editar Contacto');
-      $('#contactoNombre').val(contacto.nombre);
-      $('#contactoCargo').val(contacto.cargo);
-      $('#contactoTelefono').val(contacto.telefono);
-      $('#contactoMovil').val(contacto.telefono_movil);
-      $('#contactoEmail').val(contacto.email);
-      $('#contactoObservaciones').val(contacto.observacion);
-      $('#contactoDefecto').prop('checked', contacto.defecto === 'S');
-      $('#contactoEnviaPdfOc').prop('checked', contacto.envia_pdf_oc === 'S');
-      $('#contactoEnviaPdfOp').prop('checked', contacto.envia_pdf_op === 'S');
-      contactoModal.show();
-  });
+    const id = $('#contactoId').val();
+    const creating = !id;
+    const url = creating
+      ? '/administracion/api/contactos/'
+      : `/administracion/api/contactos/${id}/?proveedor_id=${proveedorId}`;
+    const method = creating ? 'POST' : 'PATCH';
 
-  $('#tablaContactosBody').on('click', '.btn-eliminar-contacto', async function() {
-      const contactoId = $(this).data('id');
-      if (confirm('¿Está seguro de eliminar este contacto?')) {
-          // CORRECCIÓN: Usar URL en minúsculas
-          await fetch(`/administracion/api/contactos/${contactoId}/`, { method: 'DELETE', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
-          cargarContactos();
-      }
-  });
-
-  contactoForm.addEventListener('submit', async function(event) {
-    event.preventDefault();
-    if (!contactoForm.checkValidity()) { contactoForm.classList.add('was-validated'); return; }
-    
-    const contactoId = $('#contactoId').val();
-    // CORRECCIÓN: Usar URL en minúsculas
-    const url = contactoId ? `/administracion/api/contactos/${contactoId}/` : '/administracion/api/contactos/';
-    const method = contactoId ? 'PUT' : 'POST';
-    
     const data = {
-        proveedor: proveedorId,
-        nombre: $('#contactoNombre').val(),
-        cargo: $('#contactoCargo').val(),
-        telefono: $('#contactoTelefono').val(),
-        telefono_movil: $('#contactoMovil').val(),
-        email: $('#contactoEmail').val(),
-        observacion: $('#contactoObservaciones').val(),
-        defecto: $('#contactoDefecto').is(':checked') ? 'S' : 'N',
-        envia_pdf_oc: $('#contactoEnviaPdfOc').is(':checked') ? 'S' : 'N',
-        envia_pdf_op: $('#contactoEnviaPdfOp').is(':checked') ? 'S' : 'N'
+      proveedor_id: proveedorId,
+      nombre: $('#contactoNombre').val(),
+      cargo: $('#contactoCargo').val(),
+      telefono: $('#contactoTelefono').val(),
+      telefono_movil: $('#contactoMovil').val(),
+      email: $('#contactoEmail').val(),
+      observacion: $('#contactoObservaciones').val(),
+      defecto: $('#contactoDefecto').is(':checked') ? 'S' : 'N',
+      envia_pdf_oc: $('#contactoEnviaPdfOc').is(':checked') ? 'S' : 'N',
+      envia_pdf_op: $('#contactoEnviaPdfOp').is(':checked') ? 'S' : 'N'
     };
-    if (contactoId) data.id = contactoId;
+    if (!creating) data.id = id;
 
     try {
-        const resp = await fetch(url, { 
-            method, 
-            body: JSON.stringify(data), 
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') } 
-        });
-        if (!resp.ok) throw new Error('Error al guardar contacto');
-        contactoModal.hide();
-        cargarContactos();
-    } catch(error) {
-        contactoFormMsgDiv.textContent = error.message;
-        contactoFormMsgDiv.classList.remove('d-none');
+      const resp = await fetch(url, {
+        method,
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }
+      });
+
+      if (!resp.ok) {
+        let msg = `Error HTTP ${resp.status}`;
+        try { msg += ': ' + JSON.stringify(await resp.json()); } catch {}
+        throw new Error(msg);
+      }
+
+      contactoModal.hide();
+      cargarContactos();
+
+      mensajesStatusDiv.classList.remove('d-none', 'alert-danger');
+      mensajesStatusDiv.classList.add('alert', 'alert-success');
+      mensajesStatusDiv.textContent = creating ? 'Contacto creado.' : 'Contacto actualizado.';
+      setTimeout(() => mensajesStatusDiv.classList.add('d-none'), 3000);
+    } catch (e) {
+      contactoFormMsgDiv.classList.remove('d-none', 'alert-success');
+      contactoFormMsgDiv.classList.add('alert', 'alert-danger');
+      contactoFormMsgDiv.textContent = 'Error al guardar contacto.';
     }
   });
+
+// Llamada inicial (si ya hay proveedor)
+cargarContactos();
 
   function escapeHtml(unsafe) {
     if (unsafe === null || typeof unsafe === 'undefined') return '';

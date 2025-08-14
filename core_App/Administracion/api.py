@@ -7,6 +7,7 @@ from django.db.models import Q
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
+from .api_mixins import RequireProveedorMixin
 import re
 import traceback
 import decimal
@@ -53,6 +54,21 @@ class AdministracionProveedorViewSet(viewsets.ModelViewSet):
         data_for_serializer = request.data.copy()
         now = timezone.now()
 
+        # --- Saneado de payload para FileFields ---
+        file_boolean_like = {'s', 'n', 'true', 'false', '1', '0', 'on', 'off', '', 'none', 'null'}
+        for model_field_name in file_field_map.values():
+            # Si llega un valor string para un campo de archivo y NO hay archivo en request.FILES, descartar
+            if model_field_name in data_for_serializer and model_field_name not in request.FILES:
+                val = str(data_for_serializer.get(model_field_name)).strip().lower()
+                if val in file_boolean_like:
+                    data_for_serializer.pop(model_field_name, None)
+
+            # Por las dudas, limpiar también la clave *frontend* si viniera como string
+            # (los archivos válidos entran por request.FILES)
+            frontend_key = [k for k, v in file_field_map.items() if v == model_field_name][0]
+            if frontend_key in data_for_serializer and frontend_key not in request.FILES:
+                data_for_serializer.pop(frontend_key, None)
+
         max_file_size = 5 * 1024 * 1024  # 5MB
         allowed_content_types = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
 
@@ -86,35 +102,40 @@ class AdministracionProveedorViewSet(viewsets.ModelViewSet):
         return Response({'detail': 'Delete operations are not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-class AdministracionCpaContactosProveedorHabitualViewSet(viewsets.ModelViewSet):
+class AdministracionCpaContactosProveedorHabitualViewSet(RequireProveedorMixin, viewsets.ModelViewSet):
     queryset = CpaContactosProveedorHabitual.objects.all()
     serializer_class = CpaContactosProveedorHabitualSerializer
 
     def get_queryset(self):
-        provider_id = self.request.query_params.get('proveedor_id') or self.request.data.get('proveedor_id')
-        if not provider_id:
-            return CpaContactosProveedorHabitual.objects.none()
-        try:
-            proveedor_instance = Proveedor.objects.get(id=provider_id)
-            return CpaContactosProveedorHabitual.objects.filter(cod_provee=proveedor_instance.cod_cpa01)
-        except Proveedor.DoesNotExist:
-            return CpaContactosProveedorHabitual.objects.none()
+        # Para acciones de detalle, devolver todos (DRF filtrará por pk)
+        if getattr(self, 'action', None) in ['retrieve', 'update', 'partial_update', 'destroy']:
+            return CpaContactosProveedorHabitual.objects.all()
+        proveedor = self._get_proveedor_or_400(self.request)
+        return CpaContactosProveedorHabitual.objects.filter(cod_provee=proveedor.cod_cpa01)
 
-    def perform_create(self, serializer):
-        provider_id = self.request.data.get('proveedor_id')
-        if not provider_id:
-            raise serializers.ValidationError({"proveedor_id": "Proveedor ID is required."})
-        try:
-            proveedor_instance = Proveedor.objects.get(id=provider_id)
-            serializer.save(cod_provee=proveedor_instance.cod_cpa01)
-        except Proveedor.DoesNotExist:
-            raise serializers.ValidationError({"proveedor_id": "Invalid Proveedor ID."})
+    def create(self, request, *args, **kwargs):
+        proveedor = self._get_proveedor_or_400(request)
+        data = request.data.copy()
+        # No permitimos que el front setee cod_provee/username_django
+        if 'cod_provee' in data: data.pop('cod_provee')
+        if 'username_django' in data: data.pop('username_django')
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(cod_provee=proveedor.cod_cpa01, username_django=proveedor.username_django)
+        headers = self.get_success_headers(serializer.data)
+        return Response(self.get_serializer(instance).data, status=status.HTTP_201_CREATED, headers=headers)
 
-    def perform_update(self, serializer):
-        serializer.save()
+    def update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        return Response({'detail': 'Delete operations are not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        instance = self.get_object()
+        proveedor = self._get_proveedor_or_400(request)
+        if instance.cod_provee != proveedor.cod_cpa01:
+            return Response({'detail': 'El contacto no pertenece al proveedor indicado.'}, status=status.HTTP_403_FORBIDDEN)
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AdministracionComprobanteViewSet(viewsets.ModelViewSet):
@@ -127,26 +148,24 @@ class AdministracionComprobanteViewSet(viewsets.ModelViewSet):
         if not provider_id:
             return Comprobante.objects.none()
         try:
-            proveedor_instance = Proveedor.objects.get(id=provider_id)
-            return Comprobante.objects.filter(proveedor=proveedor_instance)
+            proveedor = Proveedor.objects.get(id=provider_id)
+            return Comprobante.objects.filter(proveedor=proveedor)
         except Proveedor.DoesNotExist:
             return Comprobante.objects.none()
 
-    def perform_create(self, serializer):
-        provider_id = self.request.data.get('proveedor_id')
+    def create(self, request, *args, **kwargs):
+        provider_id = request.data.get('proveedor_id')
         if not provider_id:
-            raise serializers.ValidationError({"proveedor_id": "Proveedor ID is required."})
+            return Response({"proveedor_id": "Proveedor ID is required."}, status=400)
         try:
-            proveedor_instance = Proveedor.objects.get(id=provider_id)
-            serializer.save(proveedor=proveedor_instance)
+            proveedor = Proveedor.objects.get(id=provider_id)
         except Proveedor.DoesNotExist:
-            raise serializers.ValidationError({"proveedor_id": "Invalid Proveedor ID."})
+            return Response({"proveedor_id": "Invalid Proveedor ID."}, status=400)
 
-    def perform_update(self, serializer):
-        serializer.save()
-
-    def destroy(self, request, *args, **kwargs):
-        return Response({'detail': 'Delete operations are not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        ser = self.get_serializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        instancia = ser.save(proveedor=proveedor)  # ← sin usuario actual
+        return Response(self.get_serializer(instancia).data, status=201)
 
 
 # --- New API for Provider Search ---
