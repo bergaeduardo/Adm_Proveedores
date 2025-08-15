@@ -153,13 +153,52 @@
   function debounce(fn, delay) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
   let abortCtrl;
 
-  // 1) ¡DRF usa por defecto ?search=, no ?q=!
+  async function changeDbConnection(codPais) {
+    console.log(`Enviando solicitud para cambiar la conexión a la DB para el país: ${codPais}`);
+    const apiUrl = `/administracion/api/cambiar-conexion/`;
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') // Include CSRF token for POST requests
+            },
+            body: JSON.stringify({ cod_pais: codPais }),
+        });
+        const responseData = await response.json();
+        if (!response.ok) {
+            console.error('Error en la API al cambiar la conexión:', response.status, responseData);
+            return false;
+        }
+        console.log('Respuesta del servidor al cambiar la conexión:', responseData);
+        return true;
+    } catch (error) {
+        console.error('Error de fetch al cambiar la conexión:', error);
+        return false;
+    }
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+  }
+
   async function fetchProveedores(q = '') {
     if (abortCtrl) abortCtrl.abort();
     abortCtrl = new AbortController();
 
     const url = new URL('/administracion/api/proveedores/', location.origin);
-    if (q) url.searchParams.set('search', q); // ← cambio clave: usar 'search'
+    if (q) url.searchParams.set('search', q);
 
     const r = await fetch(url, { signal: abortCtrl.signal, headers: { 'Accept': 'application/json' } });
     if (!r.ok) throw new Error('No se pudo cargar proveedores');
@@ -186,15 +225,22 @@
       a.href = '#';
       a.className = 'list-group-item list-group-item-action';
       a.textContent = `${codigo || '—'} – ${nombre || '—'}`;
-      a.addEventListener('click', e => {
+      a.dataset.providerId = p.id;
+      a.dataset.codPais = p.cod_pais;
+      a.addEventListener('click', async e => {
         e.preventDefault();
-        ProveedorScope.set(p.id, true);
-        modal.hide();
-        ProveedorScope.ensureOnLinks();
-        paintBadge(p.id, nombre);
-        const url = new URL(location.href);
-        url.searchParams.set('proveedor_id', p.id);
-        location.href = url.toString();
+        const connectionChanged = await changeDbConnection(p.cod_pais);
+        if (connectionChanged) {
+            ProveedorScope.set(p.id, true);
+            modal.hide();
+            ProveedorScope.ensureOnLinks();
+            paintBadge(p.id, nombre);
+            const url = new URL(location.href);
+            url.searchParams.set('proveedor_id', p.id);
+            location.href = url.toString();
+        } else {
+            alert('Error al cambiar la conexión de la base de datos. Por favor, revise la consola para más detalles.');
+        }
       });
       lista.appendChild(a);
     });
@@ -206,7 +252,6 @@
     try {
       const data = await fetchProveedores(q);
       const items = Array.isArray(data) ? data : (data.results || []);
-      // Fallback: si el backend no filtra por 'search', filtramos en el cliente
       const norm = s => (s || '').toString().toLowerCase();
       const filtered = q ? items.filter(p => {
         const nombre = norm(p.nom_provee || p.razon_social || p.nombre || p.display);
@@ -215,12 +260,11 @@
       }) : items;
       renderList(filtered);
     } catch (e) {
-      if (e.name === 'AbortError') return; // petición cancelada por nueva búsqueda
+      if (e.name === 'AbortError') return;
       lista.innerHTML = '<div class="p-3 text-danger">Error al cargar proveedores</div>';
     }
   }, 250);
 
-  // Soportar input/keyup/change para mayor compatibilidad
   ['input','keyup','change'].forEach(evt => search.addEventListener(evt, render));
 
   function openIfNeeded() {
