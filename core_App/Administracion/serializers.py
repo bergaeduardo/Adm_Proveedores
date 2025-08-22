@@ -14,7 +14,7 @@ class ComprobanteSerializer(serializers.ModelSerializer):
         model = Comprobante
         fields = ['id', 'tipo', 'numero', 'fecha_emision', 'monto_total',
                   'Num_Oc', 'archivo', 'estado', 'creado_en', 'proveedor']
-        read_only_fields = ['id', 'estado', 'creado_en', 'proveedor']
+        
 
 class CpaContactosProveedorHabitualSerializer(serializers.ModelSerializer):
     username_django = serializers.PrimaryKeyRelatedField(read_only=True)

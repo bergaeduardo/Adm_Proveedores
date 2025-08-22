@@ -123,5 +123,66 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
   <script src="/static/administracion/comprobantes-ui.js"></script>
+
+<!-- Modal de Edición -->
+<div class="modal" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Editar Comprobante</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formEditarComprobante" novalidate>
+          <input type="hidden" name="id" id="edit-id">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Tipo de Comprobante <span class="text-danger">*</span></label>
+              <select name="tipo" id="edit-tipo" class="form-select" required>
+                <option value="">Seleccione...</option>
+                <option>Factura A</option>
+                <option>Factura B</option>
+                <option>Nota de Crédito</option>
+                <option>Nota de Débito</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Número de Comprobante <span class="text-danger">*</span></label>
+              <input name="numero" id="edit-numero" class="form-control" placeholder="0001-00001234" required />
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Fecha de Emisión <span class="text-danger">*</span></label>
+              <input type="date" name="fecha_emision" id="edit-fecha_emision" class="form-control" required />
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Monto Total <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" name="total" id="edit-total" class="form-control" required />
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Orden de Compra asociada</label>
+              <input name="orden_compra" id="edit-orden_compra" class="form-control" placeholder="Ingrese el número de OC" />
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label">Estado</label>
+                <select name="estado" id="edit-estado" class="form-select">
+                    <option>Recibido</option>
+                    <option>Aceptado</option>
+                    <option>Rechazado</option>
+                </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnGuardarCambios">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

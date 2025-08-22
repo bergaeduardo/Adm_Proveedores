@@ -33,6 +33,9 @@ async function apiCrearComprobante(fd, proveedorId){
   if (fd.get('total') != null && !fd.get('monto_total')) {
     fd.set('monto_total', fd.get('total'));
   }
+  if (fd.get('orden_compra') != null && !fd.get('Num_Oc')) {
+    fd.set('Num_Oc', fd.get('orden_compra'));
+  }
   // Si existía validación de nombres en comentarios, ya no hace falta tocar nada más
 
   const r = await fetch('/administracion/api/comprobantes/', {
@@ -48,6 +51,32 @@ async function apiBorrarComprobante(id, proveedorId){
   const r = await fetch(`/administracion/api/comprobantes/${id}/?proveedor_id=${encodeURIComponent(proveedorId)}`, { method:'DELETE', headers:{ 'X-CSRFToken': getCookie('csrftoken')||'' } });
   if (!r.ok && r.status!==204) throw new Error('No se pudo eliminar');
 }
+
+async function apiGetComprobante(id, proveedorId) {
+  const url = new URL(`/administracion/api/comprobantes/${id}/`, location.origin);
+  url.searchParams.set('proveedor_id', proveedorId);
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('No se pudo cargar el comprobante');
+  return r.json();
+}
+
+async function apiUpdateComprobante(id, fd, proveedorId) {
+    fd.append('proveedor_id', proveedorId);
+    if (fd.get('total') != null && !fd.get('monto_total')) {
+        fd.set('monto_total', fd.get('total'));
+    }
+    if (fd.get('orden_compra') != null && !fd.get('Num_Oc')) {
+        fd.set('Num_Oc', fd.get('orden_compra'));
+    }
+  const r = await fetch(`/administracion/api/comprobantes/${id}/`, {
+    method: 'PUT',
+    body: fd,
+    headers: { 'X-CSRFToken': getCookie('csrftoken') || '' }
+  });
+  if (!r.ok){ let m = `Error HTTP ${r.status}`; try{ m += ': '+JSON.stringify(await r.json()); }catch{}; throw new Error(m); }
+  return r.json();
+}
+
 
 // ====== Render helpers ======
 function estadoBadgeClass(estado){
@@ -70,7 +99,7 @@ function pintarLista(payload){
     const nro = row.numero || row.nro || row.numero_comprobante || '';
     const fecha = row.fecha_emision || row.fecha || '';
     const total = row.total || row.monto || row.monto_total || '';
-    const oc = row.orden_compra || row.oc || '';
+    const oc = row.orden_compra || row.oc || row.Num_Oc || '';
     const estado = row.estado || '';
     let fileUrl = row.archivo_url || row.archivo || row.file_url || row.url || null;
     // si viene una ruta relativa (p.ej. "comprobantes/44/factura.pdf"), prefijar MEDIA_URL
@@ -91,10 +120,15 @@ function pintarLista(payload){
 
     const acc = document.createElement('div');
     acc.className = 'd-flex gap-2';
-    const btnDel = document.createElement('button');
-    btnDel.className = 'btn btn-outline-danger btn-sm';
-    btnDel.textContent = 'Eliminar';
-    btnDel.dataset.id = row.id;
+
+    if (estado !== 'Aceptado') {
+        const btnEditar = document.createElement('button');
+        btnEditar.className = 'btn btn-outline-secondary btn-sm btn-editar';
+        btnEditar.textContent = 'Editar';
+        btnEditar.dataset.id = row.id;
+        acc.append(btnEditar);
+    }
+
     const btnVer = document.createElement('a');
     btnVer.className = 'btn btn-outline-primary btn-sm';
     btnVer.textContent = 'Ver Archivo';
@@ -108,7 +142,7 @@ function pintarLista(payload){
       btnVer.classList.add('disabled');
       btnVer.tabIndex = -1;
     }
-    acc.append(btnDel, btnVer);
+    acc.append(btnVer);
 
     wrap.append(txt, acc);
     cont.appendChild(wrap);
@@ -208,5 +242,54 @@ document.addEventListener('DOMContentLoaded', async () => {
       await apiBorrarComprobante(id, proveedorId);
       await cargarListado();
     }catch(e){ alert('No se pudo eliminar'); }
+  });
+
+  // Editar
+  const editModalEl = document.getElementById('editModal');
+  const editModal = new bootstrap.Modal(editModalEl, { backdrop: 'static' });
+  const editForm = document.getElementById('formEditarComprobante');
+  let lastFocusedElement; // Variable to store the element that opened the modal
+
+  document.getElementById('listaComprobantes').addEventListener('click', async (ev) => {
+    const btn = ev.target.closest('.btn-editar');
+    if (!btn) return;
+    lastFocusedElement = btn;
+    const id = btn.dataset.id;
+    if (!id) return;
+
+    try {
+        const comprobante = await apiGetComprobante(id, proveedorId);
+        document.getElementById('edit-id').value = comprobante.id;
+        document.getElementById('edit-tipo').value = comprobante.tipo;
+        document.getElementById('edit-numero').value = comprobante.numero;
+        document.getElementById('edit-fecha_emision').value = comprobante.fecha_emision;
+        document.getElementById('edit-total').value = comprobante.monto_total;
+        document.getElementById('edit-orden_compra').value = comprobante.Num_Oc || '';
+        document.getElementById('edit-estado').value = comprobante.estado;
+
+        editModal.show();
+    } catch (e) {
+        alert('Error al cargar los datos del comprobante.');
+        console.error(e);
+    }
+  });
+
+  editModalEl.addEventListener('hidden.bs.modal', () => {
+    if (lastFocusedElement) {
+      lastFocusedElement.focus();
+    }
+  });
+
+  document.getElementById('btnGuardarCambios').addEventListener('click', async () => {
+    const id = document.getElementById('edit-id').value;
+    const fd = new FormData(editForm);
+    try {
+        await apiUpdateComprobante(id, fd, proveedorId);
+        editModal.hide();
+        await cargarListado();
+    } catch (e) {
+        alert('Error al guardar los cambios.');
+        console.error(e);
+    }
   });
 });
