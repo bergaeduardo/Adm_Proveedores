@@ -204,11 +204,22 @@
     if (!r.ok) throw new Error('No se pudo cargar proveedores');
     return r.json();
   }
+  
+  // NUEVA FUNCIÓN: Busca un proveedor por su ID
+  async function fetchProviderById(id) {
+    const url = new URL('/administracion/api/proveedores/', location.origin);
+    url.searchParams.set('search', id);
+    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) throw new Error('No se pudo cargar proveedor');
+    const data = await r.json();
+    const items = Array.isArray(data) ? data : (data.results || []);
+    return items.find(p => String(p.id) === String(id));
+  }
 
   function paintBadge(id, texto) {
     if (!badge) return;
     if (!id) { badge.classList.add('d-none'); return; }
-    badge.textContent = `Proveedor #${id}${texto ? ' – ' + texto : ''}`;
+    badge.textContent = `Proveedor: #${id}${texto ? ' – ' + texto : ''}`;
     badge.classList.remove('d-none');
   }
 
@@ -267,15 +278,28 @@
 
   ['input','keyup','change'].forEach(evt => search.addEventListener(evt, render));
 
-  function openIfNeeded() {
+  // FUNCIÓN CORREGIDA: Ahora busca el nombre si ya hay un proveedor seleccionado
+  async function openIfNeeded() {
     const id = ProveedorScope.get();
-    if (!id) { render(); modal.show(); }
-    else { ProveedorScope.ensureOnLinks(); paintBadge(id); }
+    if (!id) {
+        render();
+        modal.show();
+    } else {
+        ProveedorScope.ensureOnLinks();
+        try {
+            const provider = await fetchProviderById(id);
+            const nombre = provider ? (provider.nom_provee || provider.razon_social || provider.nombre || provider.display) : null;
+            paintBadge(id, nombre);
+        } catch (e) {
+            console.error('Error al obtener los detalles del proveedor:', e);
+            paintBadge(id, null); // Muestra solo el ID si falla la búsqueda del nombre
+        }
+    }
   }
 
   window.AbrirSelectorProveedor = () => { render(); modal.show(); };
   openIfNeeded();
 })();
-</script>
+  </script>
 </body>
 </html>
