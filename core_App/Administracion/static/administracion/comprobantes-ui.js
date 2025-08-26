@@ -27,7 +27,7 @@ async function apiListarComprobantes(proveedorId, params={}) {
 }
 
 async function apiCrearComprobante(fd, proveedorId){
-  fd.append('proveedor_id', proveedorId);
+  fd.append('proveedor', proveedorId);
 
   // ⬇⬇⬇ Agregar esta línea (mapea el campo del form al que espera el serializer)
   if (fd.get('total') != null && !fd.get('monto_total')) {

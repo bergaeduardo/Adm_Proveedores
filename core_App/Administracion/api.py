@@ -155,18 +155,26 @@ class AdministracionComprobanteViewSet(viewsets.ModelViewSet):
             return Comprobante.objects.none()
 
     def create(self, request, *args, **kwargs):
-        provider_id = request.data.get('proveedor_id')
+        # El frontend envía el ID del proveedor en el campo 'proveedor'.
+        # El ComprobanteSerializer ya espera este campo, por lo que podemos
+        # delegarle la validación directamente.
+        
+        # Primero, verificamos que el proveedor exista.
+        provider_id = request.data.get('proveedor')
         if not provider_id:
-            return Response({"proveedor_id": "Proveedor ID is required."}, status=400)
+            return Response({"proveedor": ["Este campo es requerido."]}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            proveedor = Proveedor.objects.get(id=provider_id)
+            Proveedor.objects.get(id=provider_id)
         except Proveedor.DoesNotExist:
-            return Response({"proveedor_id": "Invalid Proveedor ID."}, status=400)
+            return Response({"proveedor": ["ID de Proveedor inválido."]}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Pasamos los datos al serializador para que los valide y cree el objeto.
         ser = self.get_serializer(data=request.data)
         ser.is_valid(raise_exception=True)
-        instancia = ser.save(proveedor=proveedor)  # ← sin usuario actual
-        return Response(self.get_serializer(instancia).data, status=201)
+        self.perform_create(ser) # Usamos perform_create para guardar la instancia
+        
+        headers = self.get_success_headers(ser.data)
+        return Response(ser.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

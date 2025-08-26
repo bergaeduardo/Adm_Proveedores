@@ -52,7 +52,7 @@ async function apiListarComprobantes(proveedorId) {
 }
 
 async function apiCrearComprobante(fd, proveedorId) {
-  fd.append('proveedor_id', proveedorId);
+  fd.append('proveedor', proveedorId);
   const r = await fetch('/administracion/api/comprobantes/', {
     method: 'POST',
     body: fd,
