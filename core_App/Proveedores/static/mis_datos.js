@@ -109,6 +109,32 @@ function actualizarUICardDocumento(fileInputId, fileName, fileUrl, esRequerido) 
     }
 }
 
+// Función para sanitizar nombres de archivo
+function sanitizeFilename(filename) {
+    if (!filename) return filename;
+    
+    // Obtener la extensión del archivo
+    const lastDotIndex = filename.lastIndexOf('.');
+    const name = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+    const extension = lastDotIndex > 0 ? filename.substring(lastDotIndex) : '';
+    
+    // Reemplazar caracteres especiales y acentos en el nombre
+    let sanitizedName = name
+        .normalize('NFD') // Descomponer caracteres acentuados
+        .replace(/[\u0300-\u036f]/g, '') // Eliminar marcas diacríticas
+        .replace(/[^a-zA-Z0-9\-_\s]/g, '') // Solo permitir letras, números, guiones, guiones bajos y espacios
+        .replace(/\s+/g, '_') // Reemplazar espacios con guiones bajos
+        .replace(/_{2,}/g, '_') // Eliminar múltiples guiones bajos consecutivos
+        .trim();
+    
+    // Asegurar que no esté vacío
+    if (!sanitizedName) {
+        sanitizedName = 'documento';
+    }
+    
+    return sanitizedName + extension;
+}
+
 function gatherFormDataFromAllTabs() {
     const formData = new FormData();
     // Only include data from the main forms, not the contact modal form
@@ -154,7 +180,9 @@ function gatherFormDataFromAllTabs() {
     fileInputsDocumentos.forEach(input => {
         const modelFieldName = fileInputIdToModelFieldName[input.id];
         if (modelFieldName && input.files && input.files.length > 0) {
-            formData.append(modelFieldName, input.files[0], input.files[0].name);
+            const originalFilename = input.files[0].name;
+            const sanitizedFilename = sanitizeFilename(originalFilename);
+            formData.append(modelFieldName, input.files[0], sanitizedFilename);
         }
     });
     return formData;

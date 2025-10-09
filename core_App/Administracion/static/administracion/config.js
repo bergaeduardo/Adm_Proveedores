@@ -1,11 +1,5 @@
 /**
- * Frontend configuration file for API credentials.
- * Modify these values to change the username and password used for API authentication.
+ * Frontend configuration file for API settings.
+ * Adjust these values to update global frontend constants.
  */
-export const apiCredentials = {
-    username: 'admin',
-    password: 'extra,123',
-};
-
-// You can add other configuration variables here if needed
-// export const API_BASE_URL = '/administracion/api/';
+export const API_BASE_URL = '/administracion/api/';

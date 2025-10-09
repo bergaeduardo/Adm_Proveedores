@@ -1,4 +1,4 @@
-import { apiCredentials } from './config.js';
+import { API_BASE_URL } from './config.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     const providerSearchModal = new bootstrap.Modal(document.getElementById('providerSearchModal'));
@@ -41,29 +41,21 @@ document.addEventListener('DOMContentLoaded', function() {
         providerSearchStatus.textContent = 'Buscando...';
         providerSearchResults.innerHTML = '';
 
-        const apiUrl = '/administracion/api/proveedor-search/'; // Update API URL
+        const apiUrl = `${API_BASE_URL}proveedor-search/`;
 
         try {
             const response = await fetch(apiUrl, {
                 method: 'POST', // Use POST as defined in api.py
                 headers: {
                     'Content-Type': 'application/json',
-                    // Add custom authentication headers/body
                 },
                 body: JSON.stringify({
                     query: query,
-                    username: apiCredentials.username, // Include credentials in the body
-                    password: apiCredentials.password,
                 }),
             });
 
             if (!response.ok) {
-                 // Handle authentication errors or other API errors
-                 if (response.status === 401 || response.status === 403) {
-                     providerSearchStatus.textContent = 'Error de autenticación. Verifique las credenciales.';
-                 } else {
-                     providerSearchStatus.textContent = `Error al buscar proveedores: ${response.status}`;
-                 }
+                 providerSearchStatus.textContent = `Error al buscar proveedores: ${response.status}`;
                  console.error('API Error:', response.status, await response.text());
                  return;
             }
@@ -80,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     listItem.classList.add('list-group-item', 'list-group-item-action');
                     listItem.textContent = provider.display;
                     listItem.dataset.providerId = provider.id; // Store provider ID
+                    listItem.dataset.codPais = provider.cod_pais; // Store cod_pais
                     listItem.addEventListener('click', handleProviderSelect);
                     providerSearchResults.appendChild(listItem);
                 });
@@ -91,16 +84,46 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function handleProviderSelect(event) {
+    async function changeDbConnection(codPais) {
+        console.log(`Enviando solicitud para cambiar la conexión a la DB para el país: ${codPais}`);
+        const apiUrl = `${API_BASE_URL}cambiar-conexion/`;
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ cod_pais: codPais }),
+            });
+            const responseData = await response.json();
+            if (!response.ok) {
+                console.error('Error en la API al cambiar la conexión:', response.status, responseData);
+                return false;
+            }
+            console.log('Respuesta del servidor al cambiar la conexión:', responseData);
+            return true;
+        } catch (error) {
+            console.error('Error de fetch al cambiar la conexión:', error);
+            return false;
+        }
+    }
+
+    async function handleProviderSelect(event) {
         event.preventDefault();
         const selectedProviderId = event.target.dataset.providerId;
+        const selectedCodPais = event.target.dataset.codPais;
+
+        console.log(`Proveedor seleccionado: ID=${selectedProviderId}, CodPais=${selectedCodPais}`);
 
         if (selectedProviderId) {
-            // Store the selected provider ID (e.g., in localStorage)
-            localStorage.setItem('selectedProviderId', selectedProviderId);
-
-            // Redirect to the mis_datos page
-            window.location.href = '../mis-datos/'; // Update redirection path
+            const connectionChanged = await changeDbConnection(selectedCodPais);
+            if (connectionChanged) {
+                console.log('Conexión cambiada con éxito. Redirigiendo a mis-datos...');
+                localStorage.setItem('selectedProviderId', selectedProviderId);
+                window.location.href = '../mis-datos/';
+            } else {
+                alert('Error al cambiar la conexión de la base de datos. Por favor, revise la consola para más detalles.');
+            }
         }
 
         providerSearchModal.hide(); // Hide the modal

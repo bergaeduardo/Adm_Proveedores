@@ -31,6 +31,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'Administracion.middleware.ProveedorContextMiddleware',
+    'Administracion.middleware.IPWhitelistMiddleware',
 ]
 
 ROOT_URLCONF = 'core_App.urls'
@@ -163,3 +165,9 @@ Entonces, 12 * 60 * 60 es igual a 12 horas x 60 minutos/hora x 60 segundos/minut
 
 Por lo tanto, SESSION_COOKIE_AGE = 12 * 60 * 60 representa una duración de sesión de 12 horas.
 """
+
+ALLOWED_ADMIN_IPS = [
+    '127.0.0.1',  # Ejemplo: Tu propia IP local
+    '192.168.1.0/24',  # Ejemplo: Rango de IPs de tu red local
+    # Agrega aquí todas las IPs o rangos de red permitidos para el acceso a Administración
+]

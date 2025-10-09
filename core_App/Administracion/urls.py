@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/ingresos-brutos/', api.AdministracionIngresosBrutosListView.as_view(), name='api-ingresos-brutos'),
     path('api/resumen-cuenta/', api.AdministracionResumenCuentaProveedorView.as_view(), name='api-resumen-cuenta'),
     path('api/proveedor-search/', api.AdministracionProveedorSearchView.as_view(), name='api-proveedor-search'), # New search API
+    path('api/cambiar-conexion/', api.CambiarConexionAdministracionView.as_view(), name='api-cambiar-conexion'),
 
     # Template URLs (assuming simple rendering views exist or will be added)
     # These views would typically just render the HTML templates
