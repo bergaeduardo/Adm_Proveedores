@@ -38,7 +38,7 @@ class IPWhitelistMiddleware:
                 is_allowed = any(client_ip in net for net in self.allowed_networks)
 
                 if not is_allowed:
-                    return HttpResponseForbidden("Acceso denegado. Su dirección IP no está permitida para acceder a esta sección.")
+                    return HttpResponseForbidden(f"Acceso denegado. Su dirección IP ({request.META['REMOTE_ADDR']} - {ip}) no está permitida para acceder a esta sección.")
             else:
                 return HttpResponseForbidden("Acceso denegado. No se pudo determinar su dirección IP.")
 
