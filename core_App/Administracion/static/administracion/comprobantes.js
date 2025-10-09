@@ -1,3 +1,29 @@
+// Función para sanitizar nombres de archivo
+function sanitizeFilename(filename) {
+    if (!filename) return filename;
+    
+    // Obtener la extensión del archivo
+    const lastDotIndex = filename.lastIndexOf('.');
+    const name = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+    const extension = lastDotIndex > 0 ? filename.substring(lastDotIndex) : '';
+    
+    // Reemplazar caracteres especiales y acentos en el nombre
+    let sanitizedName = name
+        .normalize('NFD') // Descomponer caracteres acentuados
+        .replace(/[\u0300-\u036f]/g, '') // Eliminar marcas diacríticas
+        .replace(/[^a-zA-Z0-9\-_\s]/g, '') // Solo permitir letras, números, guiones, guiones bajos y espacios
+        .replace(/\s+/g, '_') // Reemplazar espacios con guiones bajos
+        .replace(/_{2,}/g, '_') // Eliminar múltiples guiones bajos consecutivos
+        .trim();
+    
+    // Asegurar que no esté vacío
+    if (!sanitizedName) {
+        sanitizedName = 'comprobante';
+    }
+    
+    return sanitizedName + extension;
+}
+
 // =============================
 // Utilidades de proveedor (idénticas al dashboard)
 // =============================
@@ -162,9 +188,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     msg.className = 'alert d-none';
 
     const fd = new FormData(form);
+    
+    // Sanitizar nombre de archivo si existe
+    const archivoInput = form.querySelector('input[name="archivo"]') || form.querySelector('input[name="file"]');
+    if (archivoInput && archivoInput.files && archivoInput.files.length > 0) {
+      const originalFile = archivoInput.files[0];
+      const sanitizedFilename = sanitizeFilename(originalFile.name);
+      
+      // Eliminar el archivo original del FormData y agregar el sanitizado
+      fd.delete('archivo');
+      fd.delete('file');
+      fd.append('archivo', originalFile, sanitizedFilename);
+    }
+    
     // Si tu backend usa otro nombre de archivo (p.ej. "file"), duplicalo:
     if (!fd.get('archivo') && form.querySelector('input[name="file"]').files[0]) {
-      fd.append('archivo', form.querySelector('input[name="file"]').files[0]);
+      const originalFile = form.querySelector('input[name="file"]').files[0];
+      const sanitizedFilename = sanitizeFilename(originalFile.name);
+      fd.append('archivo', originalFile, sanitizedFilename);
     }
 
     try {

@@ -4,16 +4,50 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 import os
 import datetime
+import unicodedata
+import re
+
+def sanitize_filename(filename):
+    """
+    Sanitiza el nombre del archivo eliminando caracteres especiales y acentos
+    """
+    if not filename:
+        return 'documento.pdf'
+    
+    # Separar nombre y extensión
+    name, extension = os.path.splitext(filename)
+    
+    # Normalizar caracteres unicode (convertir acentos)
+    name = unicodedata.normalize('NFD', name)
+    # Eliminar marcas diacríticas (acentos)
+    name = ''.join(c for c in name if unicodedata.category(c) != 'Mn')
+    
+    # Reemplazar caracteres especiales con guiones bajos
+    name = re.sub(r'[^a-zA-Z0-9\-_\s]', '', name)
+    # Reemplazar espacios y múltiples guiones/guiones bajos con un solo guión bajo
+    name = re.sub(r'[\s\-_]+', '_', name).strip('_')
+    
+    # Asegurar que no esté vacío
+    if not name:
+        name = 'documento'
+    
+    # Limitar la longitud del nombre del archivo
+    if len(name) > 50:
+        name = name[:50]
+    
+    return name + extension
 
 def documentos_upload_path(instance, filename):
     proveedor_identifier = instance.username_django.username if instance.username_django else 'sin_usuario'
     fecha_hoy = datetime.date.today()
-    return f'documentos/{proveedor_identifier}/{fecha_hoy.year}/{fecha_hoy.month:02d}/{fecha_hoy.day:02d}/{filename}'
+    sanitized_filename = sanitize_filename(filename)
+    return f'documentos/{proveedor_identifier}/{fecha_hoy.year}/{fecha_hoy.month:02d}/{fecha_hoy.day:02d}/{sanitized_filename}'
 
 def comprobante_upload_path(instance, filename):
     proveedor_identifier = instance.proveedor.username_django.username if instance.proveedor.username_django else 'sin_usuario'
     fecha_hoy = datetime.date.today()
-    return f'comprobantes/{proveedor_identifier}/{fecha_hoy.year}/{fecha_hoy.month:02d}/{fecha_hoy.day:02d}/{filename}'
+    sanitized_filename = sanitize_filename(filename)
+    return f'comprobantes/{proveedor_identifier}/{fecha_hoy.year}/{fecha_hoy.month:02d}/{fecha_hoy.day:02d}/{sanitized_filename}'
 
 
 class Proveedor(models.Model):
