@@ -407,23 +407,35 @@ $(document).ready(function() {
 
 
   async function obtenerUserId() {
-    const JW_TOKEN = sessionStorage.getItem('jwt');
-    if (!JW_TOKEN) {
-        console.warn('No se encontró JWT en sessionStorage. Redirigiendo a la página de acceso.');
-        window.location.href = '/Proveedores/acceder/';
-        return null;
+    // Para la carga inicial, usar fetch simple con token existente
+    const token = sessionStorage.getItem('jwt');
+    if (!token) {
+      console.error('No hay token disponible');
+      return null;
     }
+    
     try {
-      const resp = await fetch('/Proveedores/api/userid/', { headers: { 'Authorization': 'Bearer ' + JW_TOKEN }});
+      const resp = await fetch('/Proveedores/api/userid/', { 
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      
+      // Solo si falla por token, intentar con renovación
+      if (resp.status === 401 || resp.status === 403) {
+        console.log('Token inválido, intentando con renovación...');
+        const respWithRefresh = await AuthManager.authenticatedFetch('/Proveedores/api/userid/');
+        if (!respWithRefresh.ok) {
+          console.error(`Error al obtener User ID después de renovación. Estado: ${respWithRefresh.status}`);
+          return null;
+        }
+        const data = await respWithRefresh.json();
+        return data?.user_id || null;
+      }
+      
       if (!resp.ok) {
         console.error(`Error al obtener User ID. Estado: ${resp.status}, Texto: ${resp.statusText}`);
-        if (resp.status === 401 || resp.status === 403) {
-          console.log('Error de autenticación (401/403). Limpiando JWT y redirigiendo a la página de acceso.');
-          sessionStorage.removeItem('jwt');
-          window.location.href = '/Proveedores/acceder/';
-        }
         return null;
       }
+      
       const data = await resp.json();
       if (!data || data.user_id === undefined) {
           console.error('User ID no encontrado en la respuesta de /api/userid/. Respuesta:', data);
@@ -432,9 +444,7 @@ $(document).ready(function() {
       console.log('User ID obtenido:', data.user_id);
       return data.user_id;
     } catch (error) {
-      console.error('Error de red durante la obtención de User ID (/api/userid/):', error);
-      sessionStorage.removeItem('jwt');
-      window.location.href = '/Proveedores/acceder/';
+      console.error('Error durante la obtención de User ID:', error);
       return null;
     }
   }
@@ -463,7 +473,18 @@ $(document).ready(function() {
 
     let proveedor = {};
     try {
-      const resp = await fetch('/Proveedores/api/proveedores/' + userId + '/', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }});
+      // Usar fetch simple para carga inicial
+      const token = sessionStorage.getItem('jwt');
+      let resp = await fetch('/Proveedores/api/proveedores/' + userId + '/', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      
+      // Solo renovar si hay error de autenticación
+      if (resp.status === 401 || resp.status === 403) {
+        console.log('Renovando token para cargar datos del proveedor...');
+        resp = await AuthManager.authenticatedFetch('/Proveedores/api/proveedores/' + userId + '/');
+      }
+      
       if (!resp.ok) {
         if (resp.status === 404) {
           console.warn('No se encontraron datos de proveedor para el usuario. Se puede completar el formulario.');
@@ -587,7 +608,7 @@ $(document).ready(function() {
     const select = document.getElementById('condicionIva');
     select.innerHTML = '<option value="">Seleccione...</option>';
     try {
-      const resp = await fetch('/Proveedores/api/categoria-iva/', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }});
+      const resp = await AuthManager.authenticatedFetch('/Proveedores/api/categoria-iva/');
       if (resp.ok) {
         const categorias = await resp.json();
         categorias.forEach(cat => {
@@ -618,7 +639,7 @@ $(document).ready(function() {
     const select = document.getElementById('ingresosBrutos');
     select.innerHTML = '<option value="">Seleccione...</option>';
      try {
-      const resp = await fetch('/Proveedores/api/ingresos-brutos/', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }});
+      const resp = await AuthManager.authenticatedFetch('/Proveedores/api/ingresos-brutos/');
       if (resp.ok) {
         const ingresosBrutos = await resp.json();
         ingresosBrutos.forEach(ib => {
@@ -647,11 +668,10 @@ $(document).ready(function() {
   async function cambiarConexion(pais) {
       if (!pais) return;
       try {
-          const resp = await fetch('/Proveedores/api/cambiar-conexion/', {
+          const resp = await AuthManager.authenticatedFetch('/Proveedores/api/cambiar-conexion/', {
               method: 'POST',
               headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Bearer ' + sessionStorage.getItem('jwt')
+                  'Content-Type': 'application/json'
               },
               body: JSON.stringify({ cod_pais: pais })
           });
@@ -1113,7 +1133,18 @@ $(document).ready(function() {
     }
   });
 
-  cargarDatos(); // Iniciar la carga de datos al cargar la página
+  // Verificar autenticación de forma más permisiva
+  const jwt = sessionStorage.getItem('jwt');
+  const refresh = sessionStorage.getItem('refresh_token');
+  
+  if (!jwt || !refresh) {
+    console.log('No se encontraron tokens, redirigiendo al login');
+    alert('Debe iniciar sesión para acceder a esta página.');
+    window.location.href = '/Proveedores/acceder/';
+  } else {
+    console.log('Tokens encontrados, cargando datos...');
+    cargarDatos(); // Iniciar la carga de datos al cargar la página
+  }
 
   // Listener for file inputs
   document.querySelectorAll('.file-input').forEach(input => {

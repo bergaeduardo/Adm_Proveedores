@@ -1,20 +1,20 @@
 $(document).ready(function() {
+    // Verificación simple de autenticación
+    const jwt = sessionStorage.getItem('jwt');
+    const refresh = sessionStorage.getItem('refresh_token');
+    
+    if (!jwt || !refresh) {
+        alert('Debe iniciar sesión para acceder a esta página.');
+        window.location.href = '/Proveedores/acceder/';
+        return;
+    }
+
     // Seleccionar todos los elementos del DOM que vamos a manipular
     const loadingMessage = $('#loading-message');
     const errorMessage = $('#error-message');
     const noDataMessage = $('#no-data-message');
     const resumenCuentaTable = $('#resumenCuentaTable');
     const tableContainer = $('.table-responsive'); // Contenedor que envuelve la tabla
-
-    // Obtener el token JWT de la sesión del navegador
-    const jwt = sessionStorage.getItem('jwt');
-
-    // Si no hay token, el usuario no está autenticado. Redirigir al login.
-    if (!jwt) {
-      alert('Debe iniciar sesión para acceder a esta página.');
-      window.location.href = '/Proveedores/acceder/';
-      return; // Detener la ejecución del script
-    }
 
     // --- Estado inicial de la interfaz ---
     // Mostrar el mensaje de "cargando" y ocultar todo lo demás
@@ -26,21 +26,10 @@ $(document).ready(function() {
     // --- Funciones para obtener User ID y cambiar conexión (copiadas de mis_datos.js) ---
 
     async function obtenerUserId() {
-        const JW_TOKEN = sessionStorage.getItem('jwt');
-        if (!JW_TOKEN) {
-            console.warn('No se encontró JWT en sessionStorage. Redirigiendo a la página de acceso.');
-            // Redirection is handled at the start of $(document).ready, but good to have this check
-            return null;
-        }
         try {
-          const resp = await fetch('/Proveedores/api/userid/', { headers: { 'Authorization': 'Bearer ' + JW_TOKEN }});
+          const resp = await AuthManager.authenticatedFetch('/Proveedores/api/userid/');
           if (!resp.ok) {
             console.error(`Error al obtener User ID. Estado: ${resp.status}, Texto: ${resp.statusText}`);
-            if (resp.status === 401 || resp.status === 403) {
-              console.log('Error de autenticación (401/403). Limpiando JWT y redirigiendo a la página de acceso.');
-              sessionStorage.removeItem('jwt');
-              window.location.href = '/Proveedores/acceder/';
-            }
             return null;
           }
           const data = await resp.json();
@@ -65,11 +54,10 @@ $(document).ready(function() {
             return;
         }
         try {
-            const resp = await fetch('/Proveedores/api/cambiar-conexion/', {
+            const resp = await AuthManager.authenticatedFetch('/Proveedores/api/cambiar-conexion/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt'),
                     'X-CSRFToken': getCookie('csrftoken') // Assuming getCookie is available or defined elsewhere
                 },
                 body: JSON.stringify({ cod_pais: pais })
@@ -113,9 +101,7 @@ $(document).ready(function() {
     // --- Nueva función para cargar los datos del proveedor ---
     async function fetchProveedorData(userId) {
         try {
-            const resp = await fetch('/Proveedores/api/proveedores/' + userId + '/', {
-                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt') }
-            });
+            const resp = await AuthManager.authenticatedFetch('/Proveedores/api/proveedores/' + userId + '/');
             if (!resp.ok) {
                 if (resp.status === 404) {
                     console.warn('No se encontraron datos de proveedor para el usuario.');

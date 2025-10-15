@@ -18,6 +18,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         }
         const data = await resp.json();
         sessionStorage.setItem('jwt', data.access);
+        sessionStorage.setItem('refresh_token', data.refresh);
         window.location.href = '/Proveedores/dashboard/';
       } catch (err) {
         errorDiv.textContent = 'No se pudo conectar con el servidor. Verifica tu conexión o inténtalo más tarde.';

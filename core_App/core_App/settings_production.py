@@ -131,10 +131,10 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # Configuración para extender la duración del token JWT
+    # Configuración JWT simplificada - solo tokens estándar
     'SIMPLE_JWT': {
-        'ACCESS_TOKEN_LIFETIME': timedelta(days=1), # Token de acceso válido por 24 horas
-        'REFRESH_TOKEN_LIFETIME': timedelta(days=7), # Opcional: Token de refresco válido por 7 días
+        'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),  # 24 horas
+        'REFRESH_TOKEN_LIFETIME': timedelta(days=7),   # 7 días
         'ROTATE_REFRESH_TOKENS': False,
         'BLACKLIST_AFTER_ROTATION': False,
         'UPDATE_LAST_LOGIN': False,
@@ -159,11 +159,8 @@ REST_FRAMEWORK = {
         'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
 
         'JTI_CLAIM': 'jti',
-
-        'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
-        'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-        'SLIDING_TOKEN_OBTAIN_PAIR_CLASS': 'rest_framework_simplejwt.tokens.SlidingToken',
-        'SLIDING_TOKEN_REFRESH_PAIR_CLASS': 'rest_framework_simplejwt.tokens.SlidingToken',
+        
+        # Removidas todas las configuraciones de SLIDING_TOKEN
     }
 }
 

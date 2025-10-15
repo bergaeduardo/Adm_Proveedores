@@ -25,8 +25,11 @@ function sanitizeFilename(filename) {
 }
 
 (function() {
+      // Verificación simple de tokens
       const jwt = sessionStorage.getItem('jwt');
-      if (!jwt) {
+      const refresh = sessionStorage.getItem('refresh_token');
+      
+      if (!jwt || !refresh) {
         alert('Debe iniciar sesión para acceder a esta página.');
         window.location.href = '/Proveedores/acceder/';
         return;
@@ -210,18 +213,19 @@ function sanitizeFilename(filename) {
           const queryParams = new URLSearchParams(filters).toString();
           const url = `/Proveedores/api/comprobantes/${queryParams ? '?' + queryParams : ''}`;
 
-          const resp = await fetch(url, {
-            headers: {
-              'Authorization': 'Bearer ' + jwt
-            }
+          // Usar fetch simple para carga inicial
+          const token = sessionStorage.getItem('jwt');
+          let resp = await fetch(url, {
+            headers: { 'Authorization': 'Bearer ' + token }
           });
+          
+          // Solo renovar si hay error de autenticación
+          if (resp.status === 401 || resp.status === 403) {
+            console.log('Renovando token para cargar comprobantes...');
+            resp = await AuthManager.authenticatedFetch(url);
+          }
+          
           if (!resp.ok) {
-             // If unauthorized, redirect to login
-            if (resp.status === 401) {
-               alert('Sesión expirada o no autorizada. Por favor, inicie sesión nuevamente.');
-               window.location.href = '/Proveedores/acceder/';
-               return;
-            }
             listaComprobantes.innerHTML = '<div class="text-danger">Error al cargar comprobantes.</div>';
             return;
           }
@@ -294,20 +298,11 @@ function sanitizeFilename(filename) {
           }
 
           try {
-              const resp = await fetch(`/Proveedores/api/comprobantes/${comprobanteId}/`, {
-                  method: 'DELETE',
-                  headers: {
-                      'Authorization': 'Bearer ' + jwt
-                  }
+              const resp = await AuthManager.authenticatedFetch(`/Proveedores/api/comprobantes/${comprobanteId}/`, {
+                  method: 'DELETE'
               });
 
               if (!resp.ok) {
-                  // Handle specific error statuses if needed
-                  if (resp.status === 401) {
-                      alert('Sesión expirada o no autorizada. Por favor, inicie sesión nuevamente.');
-                      window.location.href = '/Proveedores/acceder/';
-                      return;
-                  }
                   // Attempt to read error message from response body
                   const errorText = await resp.text(); // Read as text first
                   let errorMessage = 'Error al eliminar comprobante.';
