@@ -16,3 +16,6 @@ def comprobantes_view(request):
 def resumen_cuenta_view(request):
     # Assuming you have a template for resumen_cuenta
     return render(request, 'Administracion/resumen_cuenta.html')
+
+def administrar_usuarios_view(request):
+    return render(request, 'Administracion/administrar_usuarios.html')

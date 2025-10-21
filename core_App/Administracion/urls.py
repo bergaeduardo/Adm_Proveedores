@@ -20,6 +20,7 @@ urlpatterns = [
     path('api/resumen-cuenta/', api.AdministracionResumenCuentaProveedorView.as_view(), name='api-resumen-cuenta'),
     path('api/proveedor-search/', api.AdministracionProveedorSearchView.as_view(), name='api-proveedor-search'), # New search API
     path('api/cambiar-conexion/', api.CambiarConexionAdministracionView.as_view(), name='api-cambiar-conexion'),
+    path('api/administrar-usuarios/', api.AdministracionUsuariosView.as_view(), name='api-administrar-usuarios'),
 
     # Template URLs (assuming simple rendering views exist or will be added)
     # These views would typically just render the HTML templates
@@ -27,4 +28,5 @@ urlpatterns = [
     path('mis-datos/', views.mis_datos_view, name='mis-datos'),
     path('comprobantes/', views.comprobantes_view, name='comprobantes'),
     path('resumen-cuenta/', views.resumen_cuenta_view, name='resumen-cuenta'), # Assuming a view for this template
+    path('administrar-usuarios/', views.administrar_usuarios_view, name='administrar-usuarios'),
 ]

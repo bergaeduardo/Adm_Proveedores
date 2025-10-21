@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrar Usuarios - Panel de Administración</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'administracion/administrar_usuarios.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-users"></i> Administrar Usuarios</h1>
+                <div class="header-actions">
+                    <button id="refreshBtn" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                    <a href="/administracion/dashboard/" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search and Filters -->
+        <div class="search-section">
+            <div class="search-filters-row">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar por usuario o nombre de proveedor..." class="search-input">
+                    <button id="clearSearchBtn" class="clear-search-btn" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="statusFilter">Filtrar por estado:</label>
+                    <select id="statusFilter" class="form-control filter-select">
+                        <option value="all">Todos</option>
+                        <option value="active">Solo Activos</option>
+                        <option value="inactive">Solo Inactivos</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-item">
+                    <span class="stat-label">Total:</span>
+                    <span id="totalUsers" class="stat-value">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Activos:</span>
+                    <span id="activeUsers" class="stat-value">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Inactivos:</span>
+                    <span id="inactiveUsers" class="stat-value">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" class="loading-indicator">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Cargando usuarios...</span>
+        </div>
+
+        <!-- Error message -->
+        <div id="errorMessage" class="error-message" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="errorText"></span>
+        </div>
+
+        <!-- Users Table -->
+        <div class="table-container">
+            <table id="usersTable" class="users-table">
+                <thead>
+                    <tr>
+                        <th>Proveedor</th>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Fecha Alta</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <!-- Usuarios se cargarán aquí dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- No results message -->
+        <div id="noResultsMessage" class="no-results" style="display: none;">
+            <i class="fas fa-search"></i>
+            <h3>No se encontraron usuarios</h3>
+            <p>Intenta con diferentes términos de búsqueda o verifica los filtros aplicados.</p>
+        </div>
+    </div>
+
+    <!-- Modal para cambiar contraseña -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-key"></i> Cambiar Contraseña</h3>
+                <button class="modal-close" id="closePasswordModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label for="username">Usuario:</label>
+                        <input type="text" id="modalUsername" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Nueva Contraseña:</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="newPassword" class="form-control" placeholder="Mínimo 6 caracteres" required>
+                            <button type="button" class="toggle-password" data-target="newPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirmar Contraseña:</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="confirmPassword" class="form-control" placeholder="Repetir la contraseña" required>
+                            <button type="button" class="toggle-password" data-target="confirmPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="cancelPasswordBtn" class="btn btn-secondary">Cancelar</button>
+                <button type="button" id="savePasswordBtn" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Cambiar Contraseña
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para confirmar acciones -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="confirmTitle"><i class="fas fa-question-circle"></i> Confirmar Acción</h3>
+                <button class="modal-close" id="closeConfirmModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="cancelConfirmBtn" class="btn btn-secondary">Cancelar</button>
+                <button type="button" id="confirmActionBtn" class="btn btn-primary">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <i id="toastIcon" class="fas fa-check-circle"></i>
+            <span id="toastMessage"></span>
+        </div>
+        <button id="toastClose" class="toast-close">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Inline CONFIG definition for reliability -->
+    <script>
+        window.CONFIG = {
+            API_BASE: '/administracion/api',
+            API_BASE_URL: '/administracion/api/'
+        };
+        console.log('CONFIG defined inline:', window.CONFIG);
+    </script>
+    <script src="{% static 'administracion/administrar_usuarios.js' %}" onerror="console.error('Failed to load administrar_usuarios.js')"></script>
+</body>
+</html>

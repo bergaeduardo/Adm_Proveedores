@@ -7,6 +7,7 @@ from django.db.models import Q
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
+from django.contrib.auth.models import User
 from .api_mixins import RequireProveedorMixin
 import re
 import traceback
@@ -401,3 +402,136 @@ def format_currency_ars(value):
 # are not strictly needed for the replication of existing provider/comprobante/contact management for this app.
 # If the admin needs to create new providers via this decoupled frontend, ProveedorRegistroView would need to be adapted.
 # If needed, authentication checks can be added in the future.
+
+
+# --- Nueva API para Administración de Usuarios ---
+
+class AdministracionUsuariosView(APIView):
+    """
+    API para la administración de usuarios/proveedores con funcionalidades de:
+    - Listar proveedores con información del usuario Django asociado
+    - Buscar por nombre de usuario o nombre de proveedor
+    - Habilitar/deshabilitar proveedores
+    - Cambiar contraseñas
+    """
+    
+    def get(self, request):
+        """Obtener lista de proveedores con información de usuario"""
+        try:
+            # Parámetros de búsqueda
+            search = request.query_params.get('search', '').strip()
+            
+            # Query base - obtener proveedores con usuario Django asociado
+            queryset = Proveedor.objects.select_related('username_django').filter(
+                username_django__isnull=False
+            )
+            
+            # Aplicar filtro de búsqueda
+            if search:
+                queryset = queryset.filter(
+                    Q(username_django__username__icontains=search) |
+                    Q(nom_provee__icontains=search)
+                )
+            
+            # Ordenar por nombre de usuario
+            queryset = queryset.order_by('username_django__username')
+            
+            # Construir respuesta con datos del proveedor y usuario
+            data = []
+            for proveedor in queryset:
+                user = proveedor.username_django
+                data.append({
+                    'id': proveedor.id,
+                    'cod_cpa01': proveedor.cod_cpa01,
+                    'nom_provee': proveedor.nom_provee,
+                    'fecha_alta': proveedor.fecha_alta.isoformat() if proveedor.fecha_alta else None,
+                    'user_id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'is_active': user.is_active,
+                    'date_joined': user.date_joined.isoformat() if user.date_joined else None,
+                    'last_login': user.last_login.isoformat() if user.last_login else None,
+                })
+            
+            return Response({
+                'success': True,
+                'data': data,
+                'count': len(data)
+            })
+            
+        except Exception as e:
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error al obtener usuarios: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def patch(self, request):
+        """Actualizar estado del usuario o cambiar contraseña"""
+        try:
+            user_id = request.data.get('user_id')
+            action = request.data.get('action')  # 'toggle_active' o 'change_password'
+            
+            if not user_id:
+                return Response({
+                    'success': False,
+                    'error': 'ID de usuario requerido'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Obtener usuario
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'error': 'Usuario no encontrado'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            if action == 'toggle_active':
+                # Cambiar estado activo/inactivo
+                user.is_active = not user.is_active
+                user.save()
+                
+                return Response({
+                    'success': True,
+                    'message': f'Usuario {"habilitado" if user.is_active else "deshabilitado"} correctamente',
+                    'is_active': user.is_active
+                })
+                
+            elif action == 'change_password':
+                # Cambiar contraseña
+                new_password = request.data.get('new_password')
+                if not new_password:
+                    return Response({
+                        'success': False,
+                        'error': 'Nueva contraseña requerida'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                if len(new_password) < 6:
+                    return Response({
+                        'success': False,
+                        'error': 'La contraseña debe tener al menos 6 caracteres'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                user.set_password(new_password)
+                user.save()
+                
+                return Response({
+                    'success': True,
+                    'message': 'Contraseña cambiada correctamente'
+                })
+            
+            else:
+                return Response({
+                    'success': False,
+                    'error': 'Acción no válida'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error al actualizar usuario: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
