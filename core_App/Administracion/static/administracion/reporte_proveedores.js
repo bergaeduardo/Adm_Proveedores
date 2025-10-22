@@ -253,7 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
             row.innerHTML = `
                 <td><strong>${escapeHtml(proveedor.cod_cpa01 || '-')}</strong></td>
                 <td>${escapeHtml(proveedor.nom_provee)}</td>
-                <td>${escapeHtml(proveedor.n_cuit || '-')}</td>
                 <td><span class="badge bg-primary">${escapeHtml(proveedor.username || '-')}</span></td>
                 <td class="text-center">
                     <span class="badge ${badgeClass} fs-6">
