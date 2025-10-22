@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db import connections
-from django.db.models import Q
+from django.db.models import Q, Count
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
@@ -534,4 +534,186 @@ class AdministracionUsuariosView(APIView):
             return Response({
                 'success': False,
                 'error': f'Error al actualizar usuario: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# --- API para Reporte de Proveedores con Comprobantes ---
+
+class AdministracionProveedoresConComprobantesView(APIView):
+    """
+    API para obtener listado de proveedores activos con el total de comprobantes
+    en estado 'Recibido' filtrados por rango de fechas.
+    """
+    
+    def get(self, request):
+        """
+        Obtener proveedores con total de comprobantes filtrados
+        Query params:
+        - fecha_desde: fecha inicial (formato YYYY-MM-DD)
+        - fecha_hasta: fecha final (formato YYYY-MM-DD)
+        - search: búsqueda por nombre de proveedor
+        """
+        try:
+            # Obtener parámetros de filtro
+            fecha_desde_str = request.query_params.get('fecha_desde', '')
+            fecha_hasta_str = request.query_params.get('fecha_hasta', '')
+            search = request.query_params.get('search', '').strip()
+            
+            # Query base - todos los proveedores con usuario Django
+            queryset = Proveedor.objects.filter(
+                username_django__isnull=False
+            ).select_related('username_django')
+            
+            # Aplicar filtro de búsqueda
+            if search:
+                queryset = queryset.filter(
+                    Q(nom_provee__icontains=search) |
+                    Q(cod_cpa01__icontains=search) |
+                    Q(username_django__username__icontains=search)
+                )
+            
+            # Construir respuesta con datos del proveedor y conteo de comprobantes
+            data = []
+            for proveedor in queryset:
+                # Filtrar comprobantes por estado 'Recibido'
+                comprobantes_query = Comprobante.objects.filter(
+                    proveedor=proveedor,
+                    estado='Recibido'
+                )
+                
+                # Aplicar filtros de fecha si se proporcionan
+                if fecha_desde_str:
+                    try:
+                        fecha_desde = datetime.strptime(fecha_desde_str, '%Y-%m-%d').date()
+                        comprobantes_query = comprobantes_query.filter(fecha_emision__gte=fecha_desde)
+                    except ValueError:
+                        pass
+                
+                if fecha_hasta_str:
+                    try:
+                        fecha_hasta = datetime.strptime(fecha_hasta_str, '%Y-%m-%d').date()
+                        comprobantes_query = comprobantes_query.filter(fecha_emision__lte=fecha_hasta)
+                    except ValueError:
+                        pass
+                
+                # Contar comprobantes
+                total_comprobantes = comprobantes_query.count()
+                
+                data.append({
+                    'id': proveedor.id,
+                    'cod_cpa01': proveedor.cod_cpa01,
+                    'nom_provee': proveedor.nom_provee,
+                    'n_cuit': proveedor.n_cuit,
+                    'e_mail': proveedor.e_mail,
+                    'telefono_1': proveedor.telefono_1,
+                    'username': proveedor.username_django.username if proveedor.username_django else None,
+                    'total_comprobantes_recibidos': total_comprobantes,
+                    'fecha_alta': proveedor.fecha_alta.isoformat() if proveedor.fecha_alta else None,
+                })
+            
+            # Ordenar por total de comprobantes (mayor a menor) y luego por nombre
+            data.sort(key=lambda x: (-x['total_comprobantes_recibidos'], x['nom_provee']))
+            
+            return Response({
+                'success': True,
+                'data': data,
+                'count': len(data),
+                'filters': {
+                    'fecha_desde': fecha_desde_str,
+                    'fecha_hasta': fecha_hasta_str,
+                    'search': search
+                }
+            })
+            
+        except Exception as e:
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error al obtener proveedores: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdministracionComprobantesProveedorFiltradosView(APIView):
+    """
+    API para obtener comprobantes de un proveedor específico
+    filtrados por rango de fechas y estado 'Recibido'
+    """
+    
+    def get(self, request):
+        """
+        Obtener comprobantes filtrados
+        Query params:
+        - proveedor_id: ID del proveedor (requerido)
+        - fecha_desde: fecha inicial (formato YYYY-MM-DD, opcional)
+        - fecha_hasta: fecha final (formato YYYY-MM-DD, opcional)
+        """
+        try:
+            # Obtener parámetros
+            proveedor_id = request.query_params.get('proveedor_id')
+            fecha_desde_str = request.query_params.get('fecha_desde', '')
+            fecha_hasta_str = request.query_params.get('fecha_hasta', '')
+            
+            if not proveedor_id:
+                return Response({
+                    'success': False,
+                    'error': 'Se requiere el ID del proveedor'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Verificar que el proveedor existe
+            try:
+                proveedor = Proveedor.objects.get(id=proveedor_id)
+            except Proveedor.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'error': 'Proveedor no encontrado'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Filtrar comprobantes por estado 'Recibido'
+            comprobantes_query = Comprobante.objects.filter(
+                proveedor=proveedor,
+                estado='Recibido'
+            )
+            
+            # Aplicar filtros de fecha si se proporcionan
+            if fecha_desde_str:
+                try:
+                    fecha_desde = datetime.strptime(fecha_desde_str, '%Y-%m-%d').date()
+                    comprobantes_query = comprobantes_query.filter(fecha_emision__gte=fecha_desde)
+                except ValueError:
+                    pass
+            
+            if fecha_hasta_str:
+                try:
+                    fecha_hasta = datetime.strptime(fecha_hasta_str, '%Y-%m-%d').date()
+                    comprobantes_query = comprobantes_query.filter(fecha_emision__lte=fecha_hasta)
+                except ValueError:
+                    pass
+            
+            # Ordenar por fecha de emisión (más reciente primero)
+            comprobantes_query = comprobantes_query.order_by('-fecha_emision')
+            
+            # Serializar comprobantes
+            serializer = ComprobanteSerializer(comprobantes_query, many=True)
+            
+            return Response({
+                'success': True,
+                'data': serializer.data,
+                'count': len(serializer.data),
+                'proveedor': {
+                    'id': proveedor.id,
+                    'cod_cpa01': proveedor.cod_cpa01,
+                    'nom_provee': proveedor.nom_provee,
+                    'n_cuit': proveedor.n_cuit,
+                },
+                'filters': {
+                    'fecha_desde': fecha_desde_str,
+                    'fecha_hasta': fecha_hasta_str,
+                }
+            })
+            
+        except Exception as e:
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error al obtener comprobantes: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

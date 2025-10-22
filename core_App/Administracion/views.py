@@ -19,3 +19,11 @@ def resumen_cuenta_view(request):
 
 def administrar_usuarios_view(request):
     return render(request, 'Administracion/administrar_usuarios.html')
+
+def reporte_proveedores_view(request):
+    """Vista para el reporte de proveedores con comprobantes"""
+    return render(request, 'Administracion/reporte_proveedores.html')
+
+def comprobantes_proveedor_view(request):
+    """Vista para mostrar comprobantes filtrados de un proveedor"""
+    return render(request, 'Administracion/comprobantes_proveedor.html')
