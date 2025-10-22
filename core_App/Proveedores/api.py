@@ -365,7 +365,8 @@ class ResumenCuentaProveedorView(APIView):
       today = date.today()
       first_day_current_month = today.replace(day=1)
       last_day_previous_month = first_day_current_month - relativedelta(days=1)
-      fecha_hasta_default = last_day_previous_month.strftime('%Y-%m-%d')
+      # fecha_hasta_default = last_day_previous_month.strftime('%Y-%m-%d')
+      fecha_hasta_default = today.strftime('%Y-%m-%d')
 
       fecha_desde_obj = first_day_current_month - relativedelta(months=3)
       fecha_desde_default = fecha_desde_obj.strftime('%Y-%m-%d')
