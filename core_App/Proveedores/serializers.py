@@ -235,7 +235,7 @@ def query_and_map_proveedor_data_sync(n_cuit, proveedor_instance):
 
 class ComprobanteSerializer(serializers.ModelSerializer):
   archivo_url = serializers.SerializerMethodField(read_only=True)
-  Num_Oc = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+  Num_Oc = serializers.CharField(required=True, allow_blank=False, allow_null=False)
   # Quitar write_only de archivo si quieres que el serializador lo maneje en create/update
   # archivo = serializers.FileField()
 
@@ -297,6 +297,8 @@ class ProveedorRegistroSerializer(serializers.ModelSerializer):
       raise serializers.ValidationError("El nombre de usuario ya está en uso.")
     if not value or len(value.strip()) == 0:
       raise serializers.ValidationError("El nombre de usuario es obligatorio.")
+    if not re.match(r'^[a-zA-Z0-9]+$', value):
+      raise serializers.ValidationError("El usuario solo puede contener letras y números.")
     return value
 
   def validate_contrasena(self, value):
