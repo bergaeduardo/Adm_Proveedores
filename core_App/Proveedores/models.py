@@ -37,14 +37,34 @@ def sanitize_filename(filename):
     
     return name + extension
 
+def sanitize_username_for_path(username):
+    """
+    Convierte el username a un identificador seguro para rutas de archivo,
+    eliminando acentos, espacios y caracteres especiales.
+    """
+    if not username:
+        return 'sin_usuario'
+    # Descomponer caracteres Unicode (á → a + acento combinatorio)
+    normalized = unicodedata.normalize('NFD', username)
+    # Eliminar las marcas diacríticas (acentos, diéresis, etc.)
+    without_accents = ''.join(c for c in normalized if unicodedata.category(c) != 'Mn')
+    # Reemplazar espacios y caracteres no permitidos por guión bajo
+    safe = re.sub(r'[^a-zA-Z0-9_\-\.]', '_', without_accents)
+    # Colapsar múltiples guiones bajos consecutivos
+    safe = re.sub(r'_+', '_', safe).strip('_')
+    return safe or 'sin_usuario'
+
+
 def documentos_upload_path(instance, filename):
-    proveedor_identifier = instance.username_django.username if instance.username_django else 'sin_usuario'
+    username = instance.username_django.username if instance.username_django else 'sin_usuario'
+    proveedor_identifier = sanitize_username_for_path(username)
     fecha_hoy = datetime.date.today()
     sanitized_filename = sanitize_filename(filename)
     return f'documentos/{proveedor_identifier}/{fecha_hoy.year}/{fecha_hoy.month:02d}/{fecha_hoy.day:02d}/{sanitized_filename}'
 
 def comprobante_upload_path(instance, filename):
-    proveedor_identifier = instance.proveedor.username_django.username if instance.proveedor.username_django else 'sin_usuario'
+    username = instance.proveedor.username_django.username if instance.proveedor.username_django else 'sin_usuario'
+    proveedor_identifier = sanitize_username_for_path(username)
     fecha_hoy = datetime.date.today()
     sanitized_filename = sanitize_filename(filename)
     return f'comprobantes/{proveedor_identifier}/{fecha_hoy.year}/{fecha_hoy.month:02d}/{fecha_hoy.day:02d}/{sanitized_filename}'

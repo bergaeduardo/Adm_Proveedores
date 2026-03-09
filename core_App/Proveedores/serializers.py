@@ -309,10 +309,17 @@ class ProveedorRegistroSerializer(serializers.ModelSerializer):
     ]
 
   def validate_usuario(self, value):
-    if User.objects.filter(username=value).exists():
-      raise serializers.ValidationError("El nombre de usuario ya está en uso.")
     if not value or len(value.strip()) == 0:
       raise serializers.ValidationError("El nombre de usuario es obligatorio.")
+    if not re.match(r'^[a-zA-Z0-9_\-\.]+$', value):
+      raise serializers.ValidationError(
+        "El usuario solo puede contener letras sin acentos (a-z, A-Z), números, guiones (-), "
+        "puntos (.) y guiones bajos (_). No se permiten espacios ni caracteres especiales."
+      )
+    if len(value) > 150:
+      raise serializers.ValidationError("El usuario no puede tener más de 150 caracteres.")
+    if User.objects.filter(username=value).exists():
+      raise serializers.ValidationError("El nombre de usuario ya está en uso.")
     return value
 
   def validate_contrasena(self, value):
