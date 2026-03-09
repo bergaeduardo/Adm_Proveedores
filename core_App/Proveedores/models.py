@@ -184,7 +184,7 @@ class Comprobante(models.Model):
   numero = models.CharField(max_length=50)
   fecha_emision = models.DateField()
   monto_total = models.DecimalField(max_digits=14, decimal_places=2)
-  Num_Oc = models.CharField(max_length=50, blank=True, null=True, verbose_name="Orden de Compra asociada")  # NUEVO CAMPO
+  Num_Oc = models.JSONField(blank=True, null=True, verbose_name="Órdenes de Compra asociadas")  # Almacena lista de números de OC
   archivo = models.FileField(upload_to=comprobante_upload_path)
   estado = models.CharField(max_length=20, default='Recibido')
   creado_en = models.DateTimeField(auto_now_add=True)

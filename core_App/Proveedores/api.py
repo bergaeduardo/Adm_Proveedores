@@ -251,6 +251,47 @@ class IngresosBrutosListView(APIView):
   def get(self, request):
     data = [{'Cod_Ingresos_brutos': key, 'Desc_Ingresos_brutos': value} for key, value in Ingresos_brutos.items()]
     return Response(data, status=status.HTTP_200_OK)
+
+
+class OrdenesCompraView(APIView):
+  """Devuelve las OC pendientes del proveedor autenticado consultando SQL Server."""
+  permission_classes = [IsAuthenticated]
+
+  def get(self, request):
+    user = request.user
+    try:
+      proveedor = Proveedor.objects.get(username_django=user)
+    except Proveedor.DoesNotExist:
+      return Response([], status=status.HTTP_200_OK)
+
+    cod_provee = proveedor.cod_cpa01
+    if not cod_provee:
+      return Response([], status=status.HTTP_200_OK)
+
+    try:
+      with connections['sqlserver'].cursor() as cursor:
+        cursor.execute(
+          """
+          SELECT CPA35.N_ORDEN_CO
+          FROM CPA35
+          LEFT JOIN CPA50 ON (CPA35.COD_COMPRA = CPA50.COD_COMPRA)
+          INNER JOIN CPA01 ON CPA01.COD_PROVEE = CPA35.COD_PROVEE
+          LEFT JOIN SUCURSAL ON SUCURSAL.ID_SUCURSAL = CPA35.ID_SUCURSAL_DESTINO
+          WHERE CPA35.COD_PROVEE = %s
+          AND CPA35.ESTADO IN ('1', '2', '3')
+          ORDER BY CPA35.N_ORDEN_CO
+          """,
+          [cod_provee]
+        )
+        rows = cursor.fetchall()
+        data = [
+          {'nro_orden_co': str(row[0]).strip()}
+          for row in rows
+          if row[0] is not None and str(row[0]).strip()
+        ]
+      return Response(data, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({'error': f'Error al consultar ordenes de compra: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
 # --- Funciones de Formateo ---
 

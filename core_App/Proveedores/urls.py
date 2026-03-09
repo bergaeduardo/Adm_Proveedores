@@ -11,7 +11,8 @@ from .api import (
   IngresosBrutosListView,
   ComprobanteViewSet,
   CpaContactosProveedorHabitualViewSet,
-  ResumenCuentaProveedorView
+  ResumenCuentaProveedorView,
+  OrdenesCompraView
 )
 from .views import register, login_view, mis_datos_view, dashboard_view
 from django.views.generic import TemplateView
@@ -42,4 +43,5 @@ urlpatterns = [
   path('api/cambiar-conexion/', CambiarConexionView.as_view(), name='cambiar-conexion'),
   path('api/categoria-iva/', CategoriaIVAListView.as_view(), name='categoria_iva_list'),
   path('api/ingresos-brutos/', IngresosBrutosListView.as_view(), name='ingresos_brutos_list'),
+  path('api/ordenes-compra/', OrdenesCompraView.as_view(), name='ordenes_compra'),
 ]
