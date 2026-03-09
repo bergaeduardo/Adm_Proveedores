@@ -240,8 +240,8 @@ function confirmarEliminacion(mensaje) {
             mostrarError(form.archivo, 'Formato no permitido. Solo PDF, JPEG y PNG.');
             valido = false;
           }
-          if (archivo.size > 10 * 1024 * 1024) {
-            mostrarError(form.archivo, 'Archivo demasiado grande. Máximo 10MB.');
+          if (archivo.size > 5 * 1024 * 1024) {
+            mostrarError(form.archivo, 'Archivo demasiado grande. Máximo 5MB.');
             valido = false;
           }
         }

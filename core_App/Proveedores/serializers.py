@@ -278,8 +278,8 @@ class ComprobanteSerializer(serializers.ModelSerializer):
     valid_mime_types = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
     if value.content_type not in valid_mime_types:
       raise serializers.ValidationError("Formato de archivo no permitido. Solo PDF, JPEG, PNG, DOC, DOCX.")
-    if value.size > 10 * 1024 * 1024:  # 10MB max
-      raise serializers.ValidationError("El archivo es demasiado grande. Máximo 10MB.")
+    if value.size > 5 * 1024 * 1024:  # 5MB max
+      raise serializers.ValidationError("El archivo es demasiado grande. Máximo 5MB.")
 
     # Limpiar nombre de archivo
     value.name = get_valid_filename(value.name)
