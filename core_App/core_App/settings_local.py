@@ -58,18 +58,18 @@ WSGI_APPLICATION = 'core_App.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'proveedores_xl',
-        'USER': 'postgres',
-        'PASSWORD': 'extra,123',
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '5432',
     },
     'sqlserver': {
         'ENGINE': 'mssql',
-        'NAME': 'LAKER_SA',
-        'USER': 'sa',
-        'PASSWORD': 'Axoft1988',
-        'HOST': 'SERVIDOR',
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
         'PORT': '1433',
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
