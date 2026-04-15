@@ -84,7 +84,7 @@ DATABASES = {
         'HOST': os.environ.get('MSSQL_HOST'),
         'PORT': os.environ.get('MSSQL_PORT'),
         'OPTIONS': {
-            'driver': 'ODBC Driver 13 for SQL Server',
+            'driver': 'ODBC Driver 17 for SQL Server',
         },
     },
 }
@@ -172,6 +172,7 @@ ALLOWED_ADMIN_IPS = [
     '127.0.0.1',  # Ejemplo: Tu propia IP local
     '192.168.1.0/24',  # Ejemplo: Rango de IPs de tu red local
     '192.168.0.1/24',  # Ejemplo: Rango de IPs de tu red local
+    '192.168.0.9/24',  # Ejemplo: Rango de IPs de tu red local
     # Agrega aquí todas las IPs o rangos de red permitidos para el acceso a Administración
 ]
 
