@@ -24,20 +24,102 @@ function sanitizeFilename(filename) {
     return sanitizedName + extension;
 }
 
+// --- Sistema de notificaciones moderno (Bootstrap Toasts) ---
+function mostrarToast(mensaje, tipo = 'success', duracion = 4500) {
+  const container = document.getElementById('toastContainer');
+  if (!container) { console.warn(mensaje); return; }
+  const id = 'toast_' + Date.now();
+  const iconos = {
+    success: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-check-circle-fill flex-shrink-0 me-2" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>',
+    danger:  '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-x-circle-fill flex-shrink-0 me-2" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/></svg>',
+    warning: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>',
+    info:    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-info-circle-fill flex-shrink-0 me-2" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>',
+  };
+  const colores = { success: 'text-bg-success', danger: 'text-bg-danger', warning: 'text-bg-warning text-dark', info: 'text-bg-info text-dark' };
+  container.insertAdjacentHTML('beforeend', `
+    <div id="${id}" class="toast align-items-center ${colores[tipo] || 'text-bg-secondary'} border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="${duracion}">
+      <div class="d-flex">
+        <div class="toast-body d-flex align-items-start" style="font-size:.95rem">${iconos[tipo] || ''}${mensaje}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+      </div>
+    </div>`);
+  const toastEl = document.getElementById(id);
+  const toast = new bootstrap.Toast(toastEl);
+  toast.show();
+  toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+// Confirmación de eliminación mediante modal Bootstrap (retorna Promise<boolean>)
+function confirmarEliminacion(mensaje) {
+  return new Promise(resolve => {
+    const modalEl = document.getElementById('deleteConfirmModal');
+    document.getElementById('deleteConfirmModalBody').textContent = mensaje;
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    const btnConfirm = document.getElementById('btnDeleteConfirm');
+    const btnCancel  = document.getElementById('btnDeleteCancel');
+
+    function cleanup(result) {
+      btnConfirm.removeEventListener('click', onConfirm);
+      btnCancel.removeEventListener('click', onCancel);
+      bsModal.hide();
+      resolve(result);
+    }
+    function onConfirm() { cleanup(true); }
+    function onCancel()  { cleanup(false); }
+
+    modalEl.addEventListener('hidden.bs.modal', () => resolve(false), { once: true });
+    btnConfirm.addEventListener('click', onConfirm, { once: true });
+    btnCancel.addEventListener('click',  onCancel,  { once: true });
+    bsModal.show();
+  });
+}
+
 (function() {
       // Verificación simple de tokens
       const jwt = sessionStorage.getItem('jwt');
       const refresh = sessionStorage.getItem('refresh_token');
       
       if (!jwt || !refresh) {
-        alert('Debe iniciar sesión para acceder a esta página.');
-        window.location.href = '/Proveedores/acceder/';
+        mostrarToast('Debe iniciar sesión para acceder a esta página.', 'warning', 3000);
+        setTimeout(() => { window.location.href = '/Proveedores/acceder/'; }, 1500);
         return;
       }
 
       const form = document.getElementById('comprobanteForm');
       const listaComprobantes = document.getElementById('listaComprobantes');
       const montoTotalInput = document.getElementById('monto_total');
+      const selectOC = document.getElementById('Num_Oc');
+
+      // Carga las OC pendientes del proveedor desde SQL Server
+      async function cargarOrdenesCompra() {
+        try {
+          const resp = await AuthManager.authenticatedFetch('/Proveedores/api/ordenes-compra/');
+          if (!resp.ok) throw new Error('Respuesta no exitosa: ' + resp.status);
+          const data = await resp.json();
+          selectOC.innerHTML = '';
+          if (data.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.disabled = true;
+            opt.textContent = 'No hay órdenes de compra pendientes';
+            selectOC.appendChild(opt);
+          } else {
+            data.forEach(oc => {
+              const opt = document.createElement('option');
+              opt.value = oc.nro_orden_co;
+              opt.textContent = oc.nro_orden_co;
+              selectOC.appendChild(opt);
+            });
+          }
+        } catch (error) {
+          selectOC.innerHTML = '<option value="" disabled>Error al cargar órdenes de compra</option>';
+          console.error('Error cargando OC:', error);
+          const authErrors = ['Token inválido o expirado', 'Autenticación fallida después de refresh', 'No se pudo renovar el token'];
+          if (!authErrors.includes(error.message)) {
+            mostrarToast('No se pudieron cargar las órdenes de compra. Intente recargar la página.', 'warning');
+          }
+        }
+      }
 
       // Get the modal element and the replace button
       const documentViewerModal = document.getElementById('documentViewerModal');
@@ -106,13 +188,13 @@ function sanitizeFilename(filename) {
 
       function mostrarError(input, mensaje) {
         input.classList.add('is-invalid');
-        const feedback = input.nextElementSibling;
-        // Check if the next sibling is the small text instruction for 'numero'
-        if (input.id === 'numero' && feedback && feedback.tagName === 'SMALL') {
-             const invalidFeedback = feedback.nextElementSibling;
-             if(invalidFeedback) invalidFeedback.textContent = mensaje;
-        } else if (feedback) {
-            feedback.textContent = mensaje;
+        let feedback = input.nextElementSibling;
+        // Si el siguiente elemento es un <small> de ayuda, saltarlo
+        if (feedback && feedback.tagName === 'SMALL') {
+          feedback = feedback.nextElementSibling;
+        }
+        if (feedback) {
+          feedback.textContent = mensaje;
         }
       }
 
@@ -158,10 +240,17 @@ function sanitizeFilename(filename) {
             mostrarError(form.archivo, 'Formato no permitido. Solo PDF, JPEG y PNG.');
             valido = false;
           }
-          if (archivo.size > 10 * 1024 * 1024) {
-            mostrarError(form.archivo, 'Archivo demasiado grande. Máximo 10MB.');
+          if (archivo.size > 5 * 1024 * 1024) {
+            mostrarError(form.archivo, 'Archivo demasiado grande. Máximo 5MB.');
             valido = false;
           }
+        }
+
+        // Validar que el operador haya seleccionado al menos una Orden de Compra
+        const selectedOCs = Array.from(selectOC.selectedOptions).filter(o => o.value);
+        if (selectedOCs.length === 0) {
+          mostrarError(selectOC, 'Debe seleccionar al menos una Orden de Compra.');
+          valido = false;
         }
 
         return valido;
@@ -169,25 +258,25 @@ function sanitizeFilename(filename) {
 
       async function cargarComprobante(formData) {
         try {
-          const resp = await fetch('/Proveedores/api/comprobantes/', {
+          const resp = await AuthManager.authenticatedFetch('/Proveedores/api/comprobantes/', {
             method: 'POST',
-            headers: {
-              'Authorization': 'Bearer ' + jwt
-            },
             body: formData
           });
           if (!resp.ok) {
             const errorData = await resp.json();
-            let mensajes = [];
-            for (const key in errorData) {
-              mensajes.push(`${key}: ${Array.isArray(errorData[key]) ? errorData[key].join(', ') : errorData[key]}`);
-            }
-            alert('Error al cargar comprobante:\n' + mensajes.join('\n'));
+            const mensajes = Object.values(errorData)
+              .map(v => Array.isArray(v) ? v.join(', ') : String(v))
+              .join(' | ');
+            mostrarToast('Error al cargar comprobante: ' + mensajes, 'danger', 7000);
             return false;
           }
           return true;
         } catch (error) {
-          alert('Error de red al cargar comprobante.');
+          console.error('Error cargando comprobante:', error);
+          const authErrors = ['Token inválido o expirado', 'Autenticación fallida después de refresh', 'No se pudo renovar el token'];
+          if (!authErrors.includes(error.message)) {
+            mostrarToast('Error de red al cargar comprobante. Verifique su conexión.', 'danger');
+          }
           return false;
         }
       }
@@ -253,7 +342,7 @@ function sanitizeFilename(filename) {
               <div>
                 <strong>${c.tipo}</strong> - Nº ${c.numero} <br />
                 Fecha: ${fecha} - Monto: $${parseFloat(c.monto_total).toFixed(2)} <br />
-                Orden de Compra: ${c.Num_Oc || 'N/A'} <br />
+                Órdenes de Compra: ${(c.Num_Oc && c.Num_Oc.length > 0) ? (Array.isArray(c.Num_Oc) ? c.Num_Oc.join(', ') : c.Num_Oc) : 'N/A'} <br />
                 Estado: <span class="badge ${statusClass}">${c.estado}</span>
               </div>
               <div>
@@ -293,9 +382,8 @@ function sanitizeFilename(filename) {
 
       // Function to handle comprobante deletion
       async function eliminarComprobante(comprobanteId) {
-          if (!confirm('¿Está seguro de que desea eliminar este comprobante? Esta acción no se puede deshacer.')) {
-              return; // User cancelled
-          }
+          const confirmado = await confirmarEliminacion('¿Está seguro de que desea eliminar este comprobante? Esta acción no se puede deshacer.');
+          if (!confirmado) return;
 
           try {
               const resp = await AuthManager.authenticatedFetch(`/Proveedores/api/comprobantes/${comprobanteId}/`, {
@@ -303,29 +391,26 @@ function sanitizeFilename(filename) {
               });
 
               if (!resp.ok) {
-                  // Attempt to read error message from response body
-                  const errorText = await resp.text(); // Read as text first
-                  let errorMessage = 'Error al eliminar comprobante.';
+                  const errorText = await resp.text();
+                  let errorMessage = 'No se pudo eliminar el comprobante.';
                   try {
                       const errorJson = JSON.parse(errorText);
-                      errorMessage = errorJson.detail || JSON.stringify(errorJson); // Use detail or stringify
-                  } catch (e) {
-                      // If parsing fails, use the raw text
-                      errorMessage = `Error al eliminar comprobante: ${errorText}`;
-                  }
-                  alert(errorMessage);
+                      errorMessage = errorJson.detail || 'No se pudo eliminar el comprobante.';
+                  } catch (e) {}
+                  mostrarToast(errorMessage, 'danger');
                   return false;
               }
 
-              // If successful (status 204 No Content is common for DELETE)
-              alert('Comprobante eliminado correctamente.');
-              // After deletion, apply current filters to refresh the list
-              applyFilters(); // Refresh the list with current filters
+              mostrarToast('Comprobante eliminado correctamente.', 'success');
+              applyFilters();
               return true;
 
           } catch (error) {
               console.error('Error deleting comprobante:', error);
-              alert('Error de red al eliminar comprobante.');
+              const authErrors = ['Token inválido o expirado', 'Autenticación fallida después de refresh', 'No se pudo renovar el token'];
+              if (!authErrors.includes(error.message)) {
+                  mostrarToast('Error de red al eliminar comprobante.', 'danger');
+              }
               return false;
           }
       }
@@ -348,15 +433,14 @@ function sanitizeFilename(filename) {
                   // Store the status before opening the modal
                   currentComprobanteStatus = status;
                   // Call the global viewDocument function from mis_datos.js
-                  // This function is expected to open the modal
                   if (typeof viewDocument === 'function') {
                       viewDocument(fileUrl);
                   } else {
                       console.error('viewDocument function not found. Ensure mis_datos.js is loaded.');
-                      alert('Error interno: No se pudo abrir el visor de documentos.');
+                      mostrarToast('Error interno: No se pudo abrir el visor de documentos.', 'danger');
                   }
               } else {
-                  alert('No hay archivo adjunto para este comprobante.');
+                  mostrarToast('No hay archivo adjunto para este comprobante.', 'info');
               }
           } else if (deleteButton) {
               // Handle delete button click
@@ -365,7 +449,7 @@ function sanitizeFilename(filename) {
                   eliminarComprobante(comprobanteId);
               } else {
                   console.error('Comprobante ID not found for deletion.');
-                  alert('Error interno: No se pudo obtener el ID del comprobante para eliminar.');
+                  mostrarToast('Error interno: No se pudo obtener el ID del comprobante.', 'danger');
               }
           }
       });
@@ -385,15 +469,21 @@ function sanitizeFilename(filename) {
         const originalFile = form.archivo.files[0];
         const sanitizedFilename = sanitizeFilename(originalFile.name);
         formData.append('archivo', originalFile, sanitizedFilename);
-        formData.append('Num_Oc', document.getElementById('Num_Oc').value.trim()); // Trim OC field
+        // Recopilar las OC seleccionadas y enviarlas como JSON
+        const selectedOCs = Array.from(selectOC.selectedOptions)
+          .map(opt => opt.value)
+          .filter(v => v);
+        formData.append('Num_Oc', JSON.stringify(selectedOCs));
 
         form.querySelector('button[type="submit"]').disabled = true;
         const exito = await cargarComprobante(formData);
         form.querySelector('button[type="submit"]').disabled = false;
 
         if (exito) {
-          alert('Comprobante cargado correctamente.');
+          mostrarToast('Comprobante cargado correctamente.', 'success');
           form.reset();
+          // Deseleccionar todas las opciones del select múltiple de OC
+          Array.from(selectOC.options).forEach(opt => { opt.selected = false; });
           montoMask.updateValue(''); // Reset the masked input value
           // After successful upload, switch to the "Ver Comprobantes" tab and apply filters
           const verTab = document.getElementById('ver-tab');
@@ -467,6 +557,7 @@ function sanitizeFilename(filename) {
 
       // Initial actions when the page loads
       populateFilterDropdowns();
+      cargarOrdenesCompra(); // Cargar OC pendientes al inicio
 
       // Load comprobantes when the "Ver Comprobantes" tab is shown for the first time
       const verTabElement = document.getElementById('ver-tab');

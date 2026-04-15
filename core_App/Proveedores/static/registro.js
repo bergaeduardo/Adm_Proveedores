@@ -53,6 +53,10 @@
       if (!data.usuario) {
         document.getElementById('error-usuario').textContent = 'El usuario es obligatorio.';
         hayError = true;
+      } else if (!/^[a-zA-Z0-9_\-\.]+$/.test(data.usuario)) {
+        document.getElementById('error-usuario').textContent =
+          'Solo letras sin acentos (a-z, A-Z), números, guiones (-), puntos (.) y guión bajo (_). Sin espacios ni caracteres especiales.';
+        hayError = true;
       }
       if (!data.contrasena || data.contrasena.length < 6) {
         document.getElementById('error-contrasena').textContent = 'La contraseña debe tener al menos 6 caracteres.';

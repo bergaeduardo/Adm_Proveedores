@@ -235,22 +235,38 @@ def query_and_map_proveedor_data_sync(n_cuit, proveedor_instance):
 
 class ComprobanteSerializer(serializers.ModelSerializer):
   archivo_url = serializers.SerializerMethodField(read_only=True)
-  Num_Oc = serializers.CharField(required=True, allow_blank=False, allow_null=False)
-  # Quitar write_only de archivo si quieres que el serializador lo maneje en create/update
-  # archivo = serializers.FileField()
+  # Num_Oc se recibe como string JSON desde multipart/form-data y se parsea en validate_Num_Oc
+  Num_Oc = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
   class Meta:
     model = Comprobante
     fields = ['id', 'tipo', 'numero', 'fecha_emision', 'monto_total', 'archivo', 'archivo_url', 'estado', 'creado_en', 'Num_Oc']
     read_only_fields = ['estado', 'creado_en', 'archivo_url']
-    # Si el archivo se maneja en la vista (como en ProveedorViewSet), puede ser read_only aquí también
-    # o excluido de fields si solo se usa para la subida y no se devuelve su data binaria.
 
   def get_archivo_url(self, obj):
     request = self.context.get('request')
     if obj.archivo and hasattr(obj.archivo, 'url') and request:
       return request.build_absolute_uri(obj.archivo.url)
     return None
+
+  def validate_Num_Oc(self, value):
+    """Parsea el string JSON enviado desde multipart/form-data a lista de OC."""
+    import json as _json
+    if not value:
+      return None
+    try:
+      parsed = _json.loads(value)
+      if isinstance(parsed, list):
+        return parsed
+    except (ValueError, TypeError):
+      pass
+    return value
+
+  def to_representation(self, instance):
+    """Asegura que Num_Oc se serializa correctamente desde JSONField (lista o None)."""
+    ret = super().to_representation(instance)
+    ret['Num_Oc'] = instance.Num_Oc
+    return ret
 
   def validate_tipo(self, value):
     tipos_validos = [choice[0] for choice in Comprobante.TipoComprobante.choices]
@@ -262,8 +278,8 @@ class ComprobanteSerializer(serializers.ModelSerializer):
     valid_mime_types = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
     if value.content_type not in valid_mime_types:
       raise serializers.ValidationError("Formato de archivo no permitido. Solo PDF, JPEG, PNG, DOC, DOCX.")
-    if value.size > 10 * 1024 * 1024:  # 10MB max
-      raise serializers.ValidationError("El archivo es demasiado grande. Máximo 10MB.")
+    if value.size > 5 * 1024 * 1024:  # 5MB max
+      raise serializers.ValidationError("El archivo es demasiado grande. Máximo 5MB.")
 
     # Limpiar nombre de archivo
     value.name = get_valid_filename(value.name)
@@ -293,12 +309,17 @@ class ProveedorRegistroSerializer(serializers.ModelSerializer):
     ]
 
   def validate_usuario(self, value):
-    if User.objects.filter(username=value).exists():
-      raise serializers.ValidationError("El nombre de usuario ya está en uso.")
     if not value or len(value.strip()) == 0:
       raise serializers.ValidationError("El nombre de usuario es obligatorio.")
-    if not re.match(r'^[a-zA-Z0-9]+$', value):
-      raise serializers.ValidationError("El usuario solo puede contener letras y números.")
+    if not re.match(r'^[a-zA-Z0-9_\-\.]+$', value):
+      raise serializers.ValidationError(
+        "El usuario solo puede contener letras sin acentos (a-z, A-Z), números, guiones (-), "
+        "puntos (.) y guiones bajos (_). No se permiten espacios ni caracteres especiales."
+      )
+    if len(value) > 150:
+      raise serializers.ValidationError("El usuario no puede tener más de 150 caracteres.")
+    if User.objects.filter(username=value).exists():
+      raise serializers.ValidationError("El nombre de usuario ya está en uso.")
     return value
 
   def validate_contrasena(self, value):
