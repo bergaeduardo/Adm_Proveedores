@@ -717,3 +717,62 @@ class AdministracionComprobantesProveedorFiltradosView(APIView):
                 'success': False,
                 'error': f'Error al obtener comprobantes: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# --- API para Sincronización Manual con Tango ---
+
+class SincronizarTangoView(APIView):
+    """
+    Vista para sincronizar manualmente datos de un proveedor con el sistema Tango (SQL Server).
+    Permite actualizar la información de proveedores que fueron registrados antes de 
+    tener datos disponibles en Tango.
+    """
+    
+    def post(self, request, *args, **kwargs):
+        """Sincronizar datos de proveedor desde Tango por CUIT"""
+        from Proveedores.serializers import query_and_map_proveedor_data_sync
+        
+        proveedor_id = request.data.get('proveedor_id')
+        
+        if not proveedor_id:
+            return Response(
+                {"error": "Se requiere el ID del proveedor."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            proveedor = Proveedor.objects.get(id=proveedor_id)
+        except Proveedor.DoesNotExist:
+            return Response(
+                {"error": "Proveedor no encontrado."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if not proveedor.n_cuit:
+            return Response(
+                {"error": "El proveedor no tiene un CUIT asignado."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Ejecutar la sincronización con Tango
+            query_and_map_proveedor_data_sync(proveedor.n_cuit, proveedor)
+            
+            # Recargar el proveedor actualizado desde la base de datos
+            proveedor.refresh_from_db()
+            
+            # Devolver los datos actualizados
+            serializer = ProveedorSerializer(proveedor, context={'request': request})
+            
+            return Response({
+                "success": True,
+                "message": "Datos sincronizados exitosamente con Tango.",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            traceback.print_exc()
+            return Response(
+                {"error": f"Error al sincronizar con Tango: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

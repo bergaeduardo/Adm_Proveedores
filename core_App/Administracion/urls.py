@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/ingresos-brutos/', api.AdministracionIngresosBrutosListView.as_view(), name='api-ingresos-brutos'),
     path('api/resumen-cuenta/', api.AdministracionResumenCuentaProveedorView.as_view(), name='api-resumen-cuenta'),
     path('api/proveedor-search/', api.AdministracionProveedorSearchView.as_view(), name='api-proveedor-search'), # New search API
+    path('api/sincronizar-tango/', api.SincronizarTangoView.as_view(), name='api-sincronizar-tango'),
     path('api/cambiar-conexion/', api.CambiarConexionAdministracionView.as_view(), name='api-cambiar-conexion'),
     path('api/administrar-usuarios/', api.AdministracionUsuariosView.as_view(), name='api-administrar-usuarios'),
     path('api/proveedores-comprobantes/', api.AdministracionProveedoresConComprobantesView.as_view(), name='api-proveedores-comprobantes'),

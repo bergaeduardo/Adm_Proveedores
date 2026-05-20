@@ -219,6 +219,125 @@ $(document).ready(function() {
         { key: "n_iva", label: "Actividad" },
       ];
 
+  // --- Funciones para Sincronización con Tango ---
+  
+  // Función para sincronizar datos con Tango
+  async function sincronizarConTango() {
+      console.log('Función sincronizarConTango() ejecutada');
+      const proveedorIdLocal = getProveedorId();
+      console.log('Proveedor ID obtenido:', proveedorIdLocal);
+      
+      if (!proveedorIdLocal) {
+          console.error('No se pudo obtener el proveedor ID');
+          mostrarNotificacion('error', 'No se pudo identificar el proveedor.');
+          return;
+      }
+      
+      const btnSync = document.getElementById('btnSincronizarTango');
+      const originalHTML = btnSync.innerHTML;
+      
+      // Deshabilitar botón y mostrar spinner
+      btnSync.disabled = true;
+      btnSync.innerHTML = `
+          <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          Sincronizando...
+      `;
+      
+      try {
+          console.log('Iniciando petición POST a /administracion/api/sincronizar-tango/');
+          const response = await fetch('/administracion/api/sincronizar-tango/', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ proveedor_id: proveedorIdLocal })
+          });
+          
+          console.log('Respuesta recibida. Status:', response.status);
+          const data = await response.json();
+          console.log('Datos parseados:', data);
+          
+          if (response.ok && data.success) {
+              console.log('Sincronización exitosa');
+              mostrarNotificacion('success', data.message || 'Datos sincronizados exitosamente.');
+              
+              // Recargar los datos actualizados en el formulario
+              if (data.data) {
+                  cargarDatosEnFormulario(data.data);
+              } else {
+                  // Recargar toda la página si no vienen los datos
+                  setTimeout(() => window.location.reload(), 1500);
+              }
+          } else {
+              console.error('Error en sincronización:', data.error);
+              mostrarNotificacion('error', data.error || 'Error al sincronizar con Tango.');
+          }
+      } catch (error) {
+          console.error('Error en sincronización:', error);
+          mostrarNotificacion('error', 'Error de conexión. Por favor, intente nuevamente.');
+      } finally {
+          // Restaurar botón
+          btnSync.disabled = false;
+          btnSync.innerHTML = originalHTML;
+      }
+  }
+  
+  // Función auxiliar para mostrar notificaciones
+  function mostrarNotificacion(tipo, mensaje) {
+      const notification = document.getElementById('syncNotification');
+      const messageSpan = document.getElementById('syncNotificationMessage');
+      
+      if (!notification || !messageSpan) return;
+      
+      // Limpiar clases previas
+      notification.className = 'alert alert-dismissible fade show';
+      
+      // Agregar clase según el tipo
+      if (tipo === 'success') {
+          notification.classList.add('alert-success');
+          messageSpan.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill me-2" viewBox="0 0 16 16">
+                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+              </svg>
+              ${mensaje}
+          `;
+      } else if (tipo === 'error') {
+          notification.classList.add('alert-danger');
+          messageSpan.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16">
+                  <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+              </svg>
+              ${mensaje}
+          `;
+      } else {
+          notification.classList.add('alert-info');
+          messageSpan.textContent = mensaje;
+      }
+      
+      // Auto-ocultar después de 5 segundos
+      setTimeout(() => {
+          notification.classList.remove('show');
+          setTimeout(() => notification.classList.add('d-none'), 150);
+      }, 5000);
+  }
+  
+  // Función auxiliar para cargar datos actualizados en el formulario
+  function cargarDatosEnFormulario(data) {
+      // Mapear los campos del servidor al formulario
+      Object.keys(data).forEach(key => {
+          const element = document.getElementById(key);
+          if (element && data[key] !== null && data[key] !== undefined) {
+              element.value = data[key];
+          }
+      });
+      
+      // Actualizar nombre en el título si existe
+      const nombreSpan = document.getElementById('proveedorNombre');
+      if (nombreSpan && data.nom_provee) {
+          nombreSpan.textContent = data.nom_provee;
+      }
+  }
+
   // --- Wizard Logic ---
   const steps = [
       { id: 'step1', name: 'Datos de Empresa y Contacto', panelId: 'home-tab-pane', buttonId: 'home-tab-btn' },
@@ -975,6 +1094,19 @@ cargarContactos();
          .replace(/>/g, ">")
          .replace(/"/g, "''")
          .replace(/'/g, "'");
+  }
+
+  // Event listener para el botón de sincronización con Tango
+  // Debe estar al final para asegurar que todas las funciones estén definidas
+  const btnSincronizar = document.getElementById('btnSincronizarTango');
+  if (btnSincronizar) {
+      console.log('Botón de sincronización encontrado, registrando event listener...');
+      btnSincronizar.addEventListener('click', function() {
+          console.log('Click en botón de sincronización detectado');
+          sincronizarConTango();
+      });
+  } else {
+      console.error('Botón de sincronización NO encontrado. Verificar ID: btnSincronizarTango');
   }
 
   cargarDatos();
