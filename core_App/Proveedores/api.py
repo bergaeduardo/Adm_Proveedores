@@ -5,13 +5,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.parsers import MultiPartParser, FormParser
-from .models import Proveedor, Comprobante, CpaContactosProveedorHabitual 
+from .models import Proveedor, Comprobante, CpaContactosProveedorHabitual, Turno, TurnoItem
 from consultasTango.models import Cpa57 # Asegúrate que esta importación sea correcta para tu proyecto
-from .serializers import ProveedorRegistroSerializer, ProveedorSerializer, ComprobanteSerializer, CpaContactosProveedorHabitualSerializer
+from .serializers import (
+    ProveedorRegistroSerializer, ProveedorSerializer, ComprobanteSerializer, 
+    CpaContactosProveedorHabitualSerializer, TurnoSerializer, TurnoItemSerializer
+)
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.db import connections
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, time as dt_time
 from dateutil.relativedelta import relativedelta
 import json
 
@@ -21,6 +24,7 @@ from django.utils import timezone
 import re # Para validación de CUIT en ProveedorRegistroSerializer
 import traceback # Importar para imprimir el traceback completo si es necesario
 import decimal # Importar para manejar Decimal
+from rest_framework.decorators import action
 
 # No necesitas definir ProveedorViewSet dos veces. Usa la que ya está configurada para el router.
 # class ProveedorViewSet(viewsets.ModelViewSet):
@@ -272,7 +276,7 @@ class OrdenesCompraView(APIView):
       with connections['sqlserver'].cursor() as cursor:
         cursor.execute(
           """
-          SELECT CPA35.N_ORDEN_CO
+          SELECT CPA35.N_ORDEN_CO, CPA35.FEC_GENER
           FROM CPA35
           LEFT JOIN CPA50 ON (CPA35.COD_COMPRA = CPA50.COD_COMPRA)
           INNER JOIN CPA01 ON CPA01.COD_PROVEE = CPA35.COD_PROVEE
@@ -285,14 +289,492 @@ class OrdenesCompraView(APIView):
         )
         rows = cursor.fetchall()
         data = [
-          {'nro_orden_co': str(row[0]).strip()}
+          {
+            'nro_orden_co': str(row[0]).strip(),
+            'fecha_emision': row[1].strftime('%Y-%m-%d') if row[1] else None
+          }
           for row in rows
           if row[0] is not None and str(row[0]).strip()
         ]
       return Response(data, status=status.HTTP_200_OK)
     except Exception as e:
       return Response({'error': f'Error al consultar ordenes de compra: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-  
+
+class OrdenCompraItemsView(APIView):
+  """Devuelve los items de una OC específica, descontando lo ya reservado en otros turnos activos."""
+  permission_classes = [IsAuthenticated]
+
+  def get(self, request, nro_oc):
+    try:
+      oc_list = [oc.strip() for oc in str(nro_oc).split(',')]
+      if not oc_list: return Response([], status=200)
+
+      # 1. Obtener items de Tango (CPA36)
+      with connections['sqlserver'].cursor() as cursor:
+        placeholders = ', '.join(['%s'] * len(oc_list))
+        sql_tango = f"""
+          SELECT COD_ARTICU, DESCRIPCION_ARTICULO, CAN_PEDIDA, CAN_RECIBI, N_ORDEN_CO
+          FROM CPA36
+          WHERE LTRIM(RTRIM(N_ORDEN_CO)) IN ({placeholders})
+        """
+        cursor.execute(sql_tango, oc_list)
+        rows_tango = cursor.fetchall()
+
+        # 2. Obtener turnos activos y completados (Solicitado=2, Agendado=3, Completado=8)
+        # Nota: En este sistema, el estado 8 corresponde a turnos ya finalizados.
+        sql_turnos = """
+            SELECT detalle_items 
+            FROM TurnoReserva 
+            WHERE id_estado IN (2, 3, 8) 
+            AND detalle_items IS NOT NULL
+        """
+        cursor.execute(sql_turnos)
+        active_appointments = cursor.fetchall()
+
+        # Mapa de reservas: (sku, oc) -> cantidad_total_reservada
+        reservas = {}
+        for app_row in active_appointments:
+            items_str = app_row[0]
+            if not items_str: continue
+            # Formato: cod|desc|cant|oc;cod|desc|cant|oc
+            for item_part in items_str.split('|'):
+                parts = item_part.split(':')
+                if len(parts) >= 4:
+                    sku = parts[0].strip()
+                    cant = float(parts[2]) if parts[2] else 0
+                    oc = parts[3].strip()
+                    key = (sku, oc)
+                    reservas[key] = reservas.get(key, 0) + cant
+
+        # 3. Consolidar datos
+        data = []
+        for row in rows_tango:
+          sku = str(row[0]).strip()
+          desc = str(row[1]).strip()
+          cant_pedida = float(row[2]) if row[2] is not None else 0.0
+          cant_recibida_tango = float(row[3]) if row[3] is not None else 0.0
+          oc = str(row[4]).strip()
+
+          cant_reservada = reservas.get((sku, oc), 0)
+          
+          # El pendiente real es: Pedido - (Recibido en Tango + Reservado en Turnos)
+          cant_pendiente = cant_pedida - (cant_recibida_tango + cant_reservada)
+          
+          if cant_pendiente > 0:
+            data.append({
+              'cod_articulo': sku,
+              'descripcion': desc,
+              'cantidad_planificada': cant_pedida,
+              'cantidad_recibida_tango': cant_recibida_tango,
+              'cantidad_reservada': cant_reservada,
+              'cantidad_pendiente': cant_pendiente,
+              'nro_oc': oc
+            })
+            
+      return Response(data, status=200)
+    except Exception as e:
+      print(f"Error en OrdenCompraItemsView: {str(e)}")
+      return Response({'error': str(e)}, status=500)
+
+class TurnoViewSet(viewsets.ModelViewSet):
+    serializer_class = TurnoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Como ahora solo usamos SQL Server, devolvemos un queryset vacío para cumplir con DRF
+        # pero sobreescribimos 'list' y 'retrieve'
+        return Turno.objects.none()
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            proveedor = Proveedor.objects.get(username_django=user)
+            cod_provee = str(proveedor.cod_cpa01).strip()
+            
+            with connections['sqlserver'].cursor() as cursor:
+                cursor.execute("""
+                    SELECT id_turno_reserva, orden_compra, fecha, hora_inicio, hora_fin, 
+                           remitos, cantidad_bultos, observaciones, id_estado
+                    FROM TurnoReserva
+                    WHERE codigo_proveedor = %s
+                    ORDER BY fecha DESC, hora_inicio DESC
+                """, [cod_provee])
+                
+                rows = cursor.fetchall()
+                
+                # Mapeo de estados de SQL Server a los que espera el frontend
+                estado_map = {
+                    2: 'Solicitado',
+                    3: 'Agendado',
+                    8: 'Completado',
+                    9: 'Rechazado',
+                    10: 'Rechazado'
+                }
+                
+                data = []
+                for row in rows:
+                    data.append({
+                        'id': row[0],
+                        'nro_orden_co': str(row[1]).strip(),
+                        'fecha_turno': row[2].strftime('%Y-%m-%d') if row[2] else None,
+                        'hora_turno': str(row[3])[:5] if row[3] else "00:00",
+                        'hora_fin': str(row[4])[:5] if row[4] else "00:00",
+                        'remitos': str(row[5]).strip() if row[5] else "",
+                        'cantidad_bultos': row[6] or 0,
+                        'observaciones': str(row[7]).strip() if row[7] else "",
+                        'estado': estado_map.get(row[8], 'Solicitado')
+                    })
+                
+                return Response(data)
+        except Proveedor.DoesNotExist:
+            return Response([])
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            proveedor = Proveedor.objects.get(username_django=user)
+        except Proveedor.DoesNotExist:
+            return Response({"error": "Proveedor no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            # Los datos vienen de FormData
+            data = request.data
+            import json
+            items_data = json.loads(data.get('items', '[]'))
+            bultos_data = json.loads(data.get('bultos_detalle', '[]'))
+            
+            if not items_data:
+                return Response({"error": "Debe incluir al menos un ítem"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validaciones de Agenda (Bucle, Fines de semana y Breaks)
+            fecha_str = data.get('fecha_turno')
+            hora_ini_str = data.get('hora_turno')
+            hora_fin_str = data.get('hora_fin')
+
+            if not fecha_str or not hora_ini_str or not hora_fin_str:
+                return Response({"error": "Debe definir fecha, hora de inicio y hora de fin."}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                fecha_val = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            except ValueError:
+                fecha_val = datetime.strptime(fecha_str.split('T')[0], '%Y-%m-%d').date()
+
+            h_ini_val = datetime.strptime(hora_ini_str, '%H:%M').time()
+            h_fin_val = datetime.strptime(hora_fin_str, '%H:%M').time()
+            weekday_val = fecha_val.weekday()
+
+            if weekday_val == 6:
+                return Response({"error": "No se pueden solicitar turnos los días Domingo ya que no se trabaja."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if weekday_val == 5:  # Sábado (7:00 a 10:00)
+                if h_ini_val < dt_time(7, 0) or h_fin_val > dt_time(10, 0):
+                    return Response({"error": "Los días Sábado el horario de entrega permitido es únicamente de 07:00 a 10:00 HS."}, status=status.HTTP_400_BAD_REQUEST)
+            else:  # Lunes a Viernes (7:00 a 16:00)
+                if h_ini_val < dt_time(7, 0) or h_fin_val > dt_time(16, 0):
+                    return Response({"error": "El horario permitido de Lunes a Viernes es únicamente de 07:00 a 16:00 HS."}, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Breaks
+                # Break mañana: 10:00 a 10:30
+                if not (h_fin_val <= dt_time(10, 0) or h_ini_val >= dt_time(10, 30)):
+                    return Response({"error": "El horario seleccionado se superpone con el break de la mañana (10:00 a 10:30 HS)."}, status=status.HTTP_400_BAD_REQUEST)
+                # Break comida/almuerzo: 13:00 a 14:00
+                if not (h_fin_val <= dt_time(13, 0) or h_ini_val >= dt_time(14, 0)):
+                    return Response({"error": "El horario seleccionado se superpone con el break de almuerzo (13:00 a 14:00 HS)."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Verificar si está ocupado
+            with connections['sqlserver'].cursor() as cursor:
+                cursor.execute("""
+                    SELECT hora_inicio, hora_fin 
+                    FROM TurnoReserva 
+                    WHERE fecha = %s AND id_estado IN (2, 3)
+                """, [fecha_str])
+                for t_ini_raw, t_fin_raw in cursor.fetchall():
+                    if t_ini_raw and t_fin_raw:
+                        t_ini = t_ini_raw if hasattr(t_ini_raw, 'hour') else datetime.strptime(str(t_ini_raw)[:5], "%H:%M").time()
+                        t_fin = t_fin_raw if hasattr(t_fin_raw, 'hour') else datetime.strptime(str(t_fin_raw)[:5], "%H:%M").time()
+                        if not (h_fin_val <= t_ini or h_ini_val >= t_fin):
+                            return Response({"error": "El horario seleccionado ya no está disponible (está ocupado)."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Calculamos total de unidades para la tabla externa
+            total_unidades = sum(float(item.get('cantidad_a_entregar', 0)) for item in items_data)
+            
+            # Formateamos el detalle de ítems
+            items_str = "|".join([f"{item['cod_articulo']}:{str(item['descripcion']).replace(':', '-').replace('|', '-')}:{item['cantidad_a_entregar']}:{item.get('nro_oc', '')}" for item in items_data])
+            
+            # Formateamos detalle de bultos
+            bultos_str = " | ".join([f"{b['cant']} Bulto/s ({b['alto']}x{b['ancho']}x{b['largo']} cm)" for b in bultos_data])
+            obs_final = f"{data.get('observaciones', '')} [DETALLE LOGÍSTICO: {bultos_str}]".strip()
+
+            # Guardamos en la base externa (sqlserver -> TurnoReserva)
+            with connections['sqlserver'].cursor() as ext_cursor:
+                sql = """
+                    INSERT INTO TurnoReserva 
+                    (codigo_proveedor, nombre_proveedor, fecha, hora_inicio, hora_fin, 
+                     orden_compra, remitos, cantidad_unidades, cantidad_bultos, 
+                     observaciones, detalle_items, id_estado, usuario_creador, fecha_creacion,
+                     fecha_modificacion, estado_actual_desde, usuario_ultima_modificacion_estado)
+                    OUTPUT INSERTED.id_turno_reserva
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                params = [
+                    proveedor.cod_cpa01,
+                    proveedor.nom_provee,
+                    data.get('fecha_turno'),
+                    data.get('hora_turno'),
+                    data.get('hora_fin'),
+                    data.get('nro_orden_co'),
+                    data.get('remitos'),
+                    total_unidades,
+                    data.get('cantidad_bultos'),
+                    obs_final,
+                    items_str, # Guardamos el desglose aquí
+                    2, # ID_ESTADO (SOLICITADO)
+                    request.user.username,
+                    datetime.now(),
+                    datetime.now(),
+                    datetime.now(),
+                    request.user.username
+                ]
+                ext_cursor.execute(sql, params)
+                turno_id = ext_cursor.fetchone()[0]
+
+                # PROCESAR ARCHIVOS ADJUNTOS
+                file_count = int(data.get('file_count', 0))
+                if file_count > 0:
+                    from django.core.files.storage import FileSystemStorage
+                    from django.conf import settings
+                    import os
+                    fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'adjuntos_turnos'))
+                    
+                    for i in range(file_count):
+                        file_obj = request.FILES.get(f'file_{i}')
+                        doc_type = data.get(f'file_type_{i}', 'OTRO')
+                        
+                        if file_obj:
+                            # Formato nombre: <turno_id>_<timestamp>_<nombre_original>
+                            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                            filename = f"{turno_id}/{turno_id}_{timestamp}_{file_obj.name}"
+                            
+                            # Guardar archivo físico
+                            saved_path = fs.save(filename, file_obj)
+                            # Ruta completa relativa para la base: adjuntos_turnos/<turno_id>/...
+                            db_path = f"adjuntos_turnos/{saved_path}"
+                            
+                            # Insertar en AdjuntoTurnoReserva
+                            adj_sql = """
+                                INSERT INTO AdjuntoTurnoReserva 
+                                (archivo, tipo_documento, nombre_original, tipo_archivo, tamaño_bytes, usuario_subio, fecha_subida, id_turno_reserva)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            """
+                            ext_cursor.execute(adj_sql, [
+                                db_path,
+                                doc_type,
+                                file_obj.name,
+                                file_obj.content_type,
+                                file_obj.size,
+                                request.user.username,
+                                datetime.now(),
+                                turno_id
+                            ])
+
+                # INSERTAR EN HISTORIAL (Usando nombres correctos de columnas)
+                hist_sql = """
+                    INSERT INTO HistorialEstadoTurno (id_turno_reserva, id_estado_nuevo, fecha_cambio, usuario, observaciones)
+                    VALUES (%s, %s, %s, %s, %s)
+                """
+                ext_cursor.execute(hist_sql, [
+                    turno_id, 
+                    2, # id_estado_nuevo (SOLICITADO)
+                    datetime.now(), 
+                    request.user.username,
+                    'Turno solicitado desde el Portal de Proveedores'
+                ])
+
+            return Response({'id': turno_id}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            error_detail = str(e)
+            print(f"Error en creación de turno: {error_detail}")
+            return Response({
+                "error": "No se pudo agendar el turno en el servidor de logística.",
+                "details": error_detail
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Elimina un turno de TurnoReserva si está en estado 'Solicitado' (2)
+        """
+        pk = kwargs.get('pk')
+        try:
+            with connections['sqlserver'].cursor() as cursor:
+                # Primero verificamos el estado
+                cursor.execute("SELECT id_estado FROM TurnoReserva WHERE id_turno_reserva = %s", [pk])
+                row = cursor.fetchone()
+                
+                if not row:
+                    return Response({'error': 'Turno no encontrado'}, status=404)
+                
+                if row[0] != 2:
+                    return Response({'error': 'Solo se pueden eliminar turnos en estado Solicitado'}, status=400)
+                
+                # Eliminamos registros relacionados para evitar conflictos de integridad
+                # 1. Adjuntos
+                cursor.execute("DELETE FROM AdjuntoTurnoReserva WHERE id_turno_reserva = %s", [pk])
+                # 2. Historial de estados
+                cursor.execute("DELETE FROM HistorialEstadoTurno WHERE id_turno_reserva = %s", [pk])
+                # 3. Incidencias
+                cursor.execute("DELETE FROM IncidenciasTurno WHERE id_turno_reserva = %s", [pk])
+                
+                # Finalmente eliminamos el turno principal
+                cursor.execute("DELETE FROM TurnoReserva WHERE id_turno_reserva = %s", [pk])
+                
+                return Response({'message': 'Turno eliminado correctamente'})
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+
+    @action(detail=True, methods=['get'])
+    def detalles(self, request, pk=None):
+        """
+        Obtiene los items de un turno consultando tanto detalle_items como observaciones
+        """
+        try:
+            with connections['sqlserver'].cursor() as cursor:
+                cursor.execute("SELECT detalle_items, observaciones FROM TurnoReserva WHERE id_turno_reserva = %s", [pk])
+                row = cursor.fetchone()
+                
+                if not row:
+                    return Response({'error': 'Turno no encontrado'}, status=404)
+                
+                detalle_items = str(row[0]) if row[0] else ""
+                observaciones = str(row[1]) if row[1] else ""
+                items = []
+                
+                items_raw = detalle_items if detalle_items else ""
+                if not items_raw:
+                    import re
+                    match = re.search(r'\[ITEMS: (.*?)\]', observaciones)
+                    if match:
+                        items_raw = match.group(1)
+
+                if items_raw:
+                    for item_str in items_raw.split('|'):
+                        parts = item_str.split(':')
+                        if len(parts) >= 3:
+                            items.append({
+                                'cod_articulo': parts[0],
+                                'descripcion': parts[1],
+                                'cantidad_a_entregar': parts[2],
+                                'nro_oc': parts[3] if len(parts) >= 4 else ""
+                            })
+                return Response(items)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def horarios_disponibles(self, request):
+        """
+        Calcula horarios disponibles para una fecha específica (7:00 a 16:00 cada 30 min)
+        tomando en cuenta fines de semana, breaks de almuerzo/comida y turnos ocupados.
+        """
+        fecha_str = request.query_params.get('fecha')
+        if not fecha_str:
+            return Response({'error': 'Falta el parámetro fecha'}, status=400)
+
+        try:
+            # Parsear la fecha
+            try:
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            except ValueError:
+                # Intentar con otros formatos si es necesario
+                fecha = datetime.strptime(fecha_str.split('T')[0], '%Y-%m-%d').date()
+
+            weekday = fecha.weekday()
+            
+            # Domingo no se trabaja
+            if weekday == 6:
+                return Response([])
+
+            # Definir límites de horario por día
+            if weekday == 5:  # Sábado (7:00 a 10:00)
+                hora_inicio = dt_time(7, 0)
+                hora_fin = dt_time(10, 0)
+            else:  # Lunes a Viernes (7:00 a 16:00)
+                hora_inicio = dt_time(7, 0)
+                hora_fin = dt_time(16, 0)
+
+            # Generar todos los slots posibles de 30 minutos
+            slots_generados = []
+            current_time = datetime.combine(fecha, hora_inicio)
+            end_time = datetime.combine(fecha, hora_fin)
+
+            while current_time < end_time:
+                slot_inicio = current_time.time()
+                slot_fin = (current_time + timedelta(minutes=30)).time()
+
+                # Filtrar breaks de comida para Lunes a Viernes
+                if weekday < 5:  # L-V
+                    # Break mañana: 10:00 a 10:30
+                    if slot_inicio == dt_time(10, 0):
+                        current_time += timedelta(minutes=30)
+                        continue
+                    # Break comida: 13:00 a 14:00 (cubre 13:00-13:30 y 13:30-14:00)
+                    if slot_inicio >= dt_time(13, 0) and slot_fin <= dt_time(14, 0):
+                        current_time += timedelta(minutes=30)
+                        continue
+
+                slots_generados.append((slot_inicio, slot_fin))
+                current_time += timedelta(minutes=30)
+
+            # Consultar turnos ocupados
+            with connections['sqlserver'].cursor() as cursor:
+                cursor.execute("""
+                    SELECT hora_inicio, hora_fin 
+                    FROM TurnoReserva 
+                    WHERE fecha = %s AND id_estado IN (2, 3)
+                """, [fecha_str])
+                
+                rows = cursor.fetchall()
+                turnos_ocupados = []
+                for row in rows:
+                    h_ini = None
+                    h_fin = None
+                    if row[0]:
+                        if hasattr(row[0], 'hour'):
+                            h_ini = row[0]
+                        else:
+                            # Convertir string/datetime
+                            h_ini = datetime.strptime(str(row[0])[:5], "%H:%M").time()
+                    if row[1]:
+                        if hasattr(row[1], 'hour'):
+                            h_fin = row[1]
+                        else:
+                            h_fin = datetime.strptime(str(row[1])[:5], "%H:%M").time()
+                    
+                    if h_ini and h_fin:
+                        turnos_ocupados.append((h_ini, h_fin))
+
+                # Comprobar disponibilidad
+                resultado = []
+                for slot_inicio, slot_fin in slots_generados:
+                    ocupado = False
+                    for t_ini, t_fin in turnos_ocupados:
+                        # Verificar superposición: no es cierto que finaliza antes del inicio o inicia después del fin
+                        if not (slot_fin <= t_ini or slot_inicio >= t_fin):
+                            ocupado = True
+                            break
+
+                    resultado.append({
+                        'hora': slot_inicio.strftime('%H:%M'),
+                        'disponible': not ocupado
+                    })
+
+                return Response(resultado)
+
+        except Exception as e:
+            return Response({'error': f'Error al calcular horarios disponibles: {str(e)}'}, status=500)
+
 # --- Funciones de Formateo ---
 
 def format_date_ddmmyyyy(value):

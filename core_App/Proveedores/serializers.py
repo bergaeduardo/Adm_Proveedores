@@ -3,7 +3,7 @@ import datetime # Importar datetime para isinstance checks
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.db import models # Importar models para isinstance checks
-from .models import Proveedor, Comprobante, CpaContactosProveedorHabitual # Asegúrate que tus modelos estén aquí
+from .models import Proveedor, Comprobante, CpaContactosProveedorHabitual, Turno, TurnoItem # Asegúrate que tus modelos estén aquí
 import re
 from django.utils.text import get_valid_filename # Para limpiar nombres de archivo
 from django.db import connections # Import connections
@@ -509,3 +509,22 @@ class CpaContactosProveedorHabitualSerializer(serializers.ModelSerializer):
         # if 'envia_pdf_op' in validated_data:
         #     validated_data['envia_pdf_op'] = 'S' if validated_data.pop('envia_pdf_op') else 'N'
         return super().update(instance, validated_data)
+
+class TurnoItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TurnoItem
+        fields = ['id', 'cod_articulo', 'descripcion', 'cantidad_a_entregar']
+
+class TurnoSerializer(serializers.ModelSerializer):
+    detalles = TurnoItemSerializer(many=True, read_only=True)
+    proveedor_nombre = serializers.ReadOnlyField(source='proveedor.nom_provee')
+
+    class Meta:
+        model = Turno
+        fields = [
+            'id', 'nro_orden_co', 'fecha_turno', 'hora_turno', 'hora_fin',
+            'cantidad_bultos', 'remitos', 'observaciones',
+            'estado', 'fecha_posicionamiento', 'creado_en', 
+            'actualizado_en', 'detalles', 'proveedor_nombre'
+        ]
+        read_only_fields = ['estado', 'creado_en', 'actualizado_en', 'proveedor_nombre']

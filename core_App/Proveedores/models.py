@@ -249,5 +249,44 @@ class CpaContactosProveedorHabitual(models.Model):
         db_table = 'proveedores_cpacontactosproveedorhabitual_staging'
         unique_together = (('cod_provee', 'nombre'),)
 
+
+class Turno(models.Model):
+    class EstadoTurno(models.TextChoices):
+        SOLICITADO = 'Solicitado', _('Solicitado')
+        AGENDADO = 'Agendado', _('Agendado')
+        RECHAZADO = 'Rechazado', _('Rechazado')
+        COMPLETADO = 'Completado', _('Completado')
+
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, related_name='turnos')
+    nro_orden_co = models.CharField(max_length=20)
+    fecha_turno = models.DateField()
+    hora_turno = models.TimeField()
+    hora_fin = models.TimeField(blank=True, null=True)
+    cantidad_bultos = models.IntegerField(default=0)
+    remitos = models.CharField(max_length=100, blank=True, null=True)
+    observaciones = models.TextField(blank=True, null=True)
+    estado = models.CharField(max_length=20, choices=EstadoTurno.choices, default=EstadoTurno.SOLICITADO)
+    fecha_posicionamiento = models.DateField(blank=True, null=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Turno'
+        verbose_name_plural = 'Turnos'
+        ordering = ['-fecha_turno', '-hora_turno']
+
     def __str__(self):
-      return f"{self.nombre} (Staging ID: {self.id})"
+        return f"Turno {self.id} - OC {self.nro_orden_co} - {self.proveedor.nom_provee}"
+
+class TurnoItem(models.Model):
+    turno = models.ForeignKey(Turno, on_delete=models.CASCADE, related_name='detalles')
+    cod_articulo = models.CharField(max_length=50)
+    descripcion = models.CharField(max_length=255)
+    cantidad_a_entregar = models.DecimalField(max_digits=12, decimal_places=2)
+
+    class Meta:
+        verbose_name = 'Ítem de Turno'
+        verbose_name_plural = 'Ítems de Turno'
+
+    def __str__(self):
+        return f"{self.cod_articulo} - {self.cantidad_a_entregar}"

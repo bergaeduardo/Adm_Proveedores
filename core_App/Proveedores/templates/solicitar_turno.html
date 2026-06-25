@@ -1,0 +1,164 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitar Turno</title>
+    <link rel="stylesheet" href="{% static 'premium_dashboard.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .stepper {
+            background-color: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .step.active { color: #0f172a; }
+        .step.active .step-num { background: #000; color: #fff; border-color: #000; }
+        .step-num {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.625rem;
+        }
+        .form-container {
+            padding: 2rem;
+            max-width: 48rem;
+        }
+        .input-group { margin-bottom: 1.5rem; }
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #000;
+        }
+        .items-table-container {
+            margin-top: 2rem;
+            border: 1px solid #f1f5f9;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .qty-input {
+            width: 5rem;
+            text-align: right;
+            padding: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-7xl p-4 lg:p-8">
+        <header>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button onclick="window.history.back()" style="background: none; border: none; cursor: pointer;">
+                    <i data-lucide="arrow-left"></i>
+                </button>
+                <h1>Solicitar Turno</h1>
+            </div>
+        </header>
+
+        <div class="card" style="padding: 0; min-height: 600px;">
+            <div class="stepper">
+                <div class="step active" id="step-1">
+                    <span class="step-num">1</span> AGENDA
+                </div>
+                <div class="step" id="step-2">
+                    <span class="step-num">2</span> ORDEN DE COMPRA
+                </div>
+                <div class="step" id="step-3">
+                    <span class="step-num">3</span> MERCADERÍA
+                </div>
+            </div>
+
+            <form id="turno-form" class="form-container">
+                <div id="error-msg" style="display: none; background: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; font-size: 0.875rem; font-weight: 500;"></div>
+
+                <div class="grid md:grid-cols-2" style="gap: 1.5rem;">
+                    <div class="input-group">
+                        <label>Fecha del Turno</label>
+                        <input type="date" id="fecha" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Hora de Entrega</label>
+                        <input type="time" id="hora" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Seleccionar Orden de Compra</label>
+                    <select id="oc-select" required>
+                        <option value="">Seleccione una OC...</option>
+                    </select>
+                </div>
+
+                <div id="items-section" style="display: none;">
+                    <h3 style="font-size: 0.875rem; font-weight: 700; margin-top: 2rem;">Planificación de Mercadería</h3>
+                    <div class="items-table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ARTÍCULO</th>
+                                    <th class="text-center">PENDIENTE</th>
+                                    <th class="text-right">A ENTREGAR</th>
+                                </tr>
+                            </thead>
+                            <tbody id="items-list">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="margin-top: 3rem; display: flex; justify-content: space-between; align-items: center;">
+                    <button type="button" onclick="window.history.back()" style="background: none; border: none; font-weight: 700; color: #94a3b8; cursor: pointer; text-transform: uppercase; font-size: 0.75rem;">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="submit-btn" disabled>
+                        <i data-lucide="save" style="width: 18px;"></i>
+                        Confirmar Turno
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{% static 'auth-utils.js' %}"></script>
+    <script src="{% static 'solicitar_turno.js' %}"></script>
+    <script>
+        lucide.createIcons();
+        // Set min date to today
+        document.getElementById('fecha').min = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>

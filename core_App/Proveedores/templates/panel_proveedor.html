@@ -1,0 +1,540 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Proveedor</title>
+    <link rel="stylesheet" href="{% static 'premium_dashboard.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        .nav-link:hover {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .nav-link.active {
+            background-color: #0f172a;
+            color: white;
+        }
+        .nav-link i {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Stepper Styles for Modal */
+        .stepper {
+            background-color: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .step.active { color: #0f172a; }
+        .step.active .step-num { background: #000; color: #fff; border-color: #000; }
+        .step-num {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.625rem;
+        }
+        .form-container-modal {
+            padding: 2rem;
+        }
+        .input-group { margin-bottom: 1.5rem; }
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #000;
+        }
+        .items-table-container {
+            margin-top: 1rem;
+            border: 1px solid #f1f5f9;
+            border-radius: 1rem;
+            overflow: hidden;
+            max-height: 250px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+        .qty-input {
+            width: 5rem;
+            text-align: right;
+            padding: 0.5rem;
+            border: 1px solid #cbd5e1;
+        }
+        .logistics-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .logistics-tag {
+            background: #f8fafc;
+            color: #1e293b;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border: 1px solid #e2e8f0;
+        }
+        .bulto-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .dimension-badge {
+            background: #e2e8f0;
+            color: #475569;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-right: 0.25rem;
+        }
+    </style>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="max-w-7xl p-4 lg:p-8">
+        <header>
+            <div>
+                <h1>
+                    <i data-lucide="layout-dashboard" style="width: 36px; height: 36px;"></i>
+                    PANEL DE PROVEEDOR
+                </h1>
+                <p class="text-gray-500 mt-1 font-medium">Gestiona tus entregas y solicitudes de turnos</p>
+            </div>
+            <button onclick="openSolicitarModal()" class="btn-primary">
+                <i data-lucide="plus" style="width: 20px; height: 20px;"></i>
+                SOLICITAR NUEVO TURNO
+            </button>
+        </header>
+
+        <div class="grid lg:grid-cols-12">
+            <!-- Indicators -->
+            <div class="lg:col-span-12 grid md:grid-cols-3">
+                <div class="card indicator-card">
+                    <div class="icon-box bg-blue-50">
+                        <i data-lucide="calendar"></i>
+                    </div>
+                    <p class="text-4xl" id="count-confirmados">0</p>
+                    <p class="text-sm font-bold text-gray-400 uppercase tracking-widest mt-1">Turnos Confirmados</p>
+                </div>
+
+                <div class="card indicator-card">
+                    <div class="icon-box bg-amber-50">
+                        <i data-lucide="clock"></i>
+                    </div>
+                    <p class="text-4xl" id="count-pendientes">0</p>
+                    <p class="text-sm font-bold text-gray-400 uppercase tracking-widest mt-1">Pendientes de Aprobación</p>
+                </div>
+
+                <div class="card indicator-card">
+                    <div class="icon-box bg-green-50">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                    <p class="text-4xl" id="count-entregas">0</p>
+                    <p class="text-sm font-bold text-gray-400 uppercase tracking-widest mt-1">Entregas Realizadas</p>
+                </div>
+            </div>
+
+            <!-- Sidebar Nav -->
+            <div class="lg:col-span-3">
+                <div class="card" style="padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <a href="{% url 'dashboard' %}" class="nav-link">
+                        <i data-lucide="home"></i>
+                        Menú Principal
+                    </a>
+                    <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 0.25rem 0;">
+                    <a href="{% url 'turnero' %}" class="nav-link active">
+                        <i data-lucide="layout-dashboard"></i>
+                        Panel de Turnos
+                    </a>
+                    <a href="{% url 'mis-datos-proveedor' %}" class="nav-link">
+                        <i data-lucide="user"></i>
+                        Mis Datos
+                    </a>
+                    <a href="{% url 'comprobantes' %}" class="nav-link">
+                        <i data-lucide="file-text"></i>
+                        Comprobantes
+                    </a>
+                    <a href="{% url 'resumen-cuenta' %}" class="nav-link">
+                        <i data-lucide="line-chart"></i>
+                        Resumen de Cuenta
+                    </a>
+                    <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 0.5rem 0;">
+                    <button onclick="logout()" class="nav-link" style="color: #ef4444; border: none; background: none; width: 100%; text-align: left; cursor: pointer;">
+                        <i data-lucide="log-out"></i>
+                        Cerrar Sesión
+                    </button>
+                </div>
+
+                <div class="sidebar-black" style="margin-top: 1.5rem;">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Información Útil</h3>
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div style="display: flex; gap: 1rem; align-items: start;">
+                            <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 50%;"><i data-lucide="clock" style="width: 16px;"></i></div>
+                            <div>
+                                <p class="font-bold text-sm">Estado Solicitado</p>
+                                <p class="text-xs text-gray-400 mt-1">Estamos revisando tu pedido de turno.</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; align-items: start;">
+                            <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 50%;"><i data-lucide="check-circle" style="width: 16px;"></i></div>
+                            <div>
+                                <p class="font-bold text-sm">Turno Agendado</p>
+                                <p class="text-xs text-gray-400 mt-1">El turno ha sido confirmado.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Area -->
+            <div class="lg:col-span-9 grid grid-cols-1" style="gap: 2rem;">
+                <div class="card" style="padding: 0;">
+                    <div class="px-8 py-6 border-b flex items-center justify-between">
+                        <h2 class="text-xl font-black">PRÓXIMAS ENTREGAS</h2>
+                        <span class="status-badge" style="background: #f1f5f9; color: #64748b;" id="total-count">0 TOTAL</span>
+                    </div>
+                    
+                    <div id="turnos-list" style="min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <!-- Carga dinámica -->
+                        <div class="text-center text-gray-400 font-bold">
+                            <i data-lucide="loader-2" class="animate-spin mb-4" style="width: 48px; height: 48px; margin: 0 auto 1rem;"></i>
+                            <p>CARGANDO TUS TURNOS...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalle -->
+    <div id="modal-detalle" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 class="text-xl font-black uppercase tracking-tight">Detalle del Turno</h2>
+                    <p class="text-xs text-slate-500 font-bold" id="modal-subtitle">ORDEN: -</p>
+                </div>
+                <button onclick="closeModal()" style="background: none; border: none; cursor: pointer; padding: 5px;">
+                    <i data-lucide="x" style="width: 20px; color: #94a3b8;"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" style="padding: 2.5rem;">
+                <!-- SECCION 1: ESTADO Y TIEMPO -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-bottom: 2.5rem;">
+                    <div>
+                        <label style="display: block; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Estado Actual</label>
+                        <div id="modal-status" class="status-badge" style="font-size: 11px; padding: 0.4rem 0.8rem;">-</div>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Fecha y Hora</label>
+                        <p id="modal-datetime" style="font-size: 1.125rem; font-weight: 900; color: #1e293b; margin: 0;">-</p>
+                    </div>
+                </div>
+
+                <!-- SECCION 2: LOGISTICA BASE -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-bottom: 2.5rem;">
+                    <div>
+                        <label style="display: block; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Remitos Informados</label>
+                        <p id="modal-remitos" style="font-size: 0.938rem; font-weight: 700; color: #475569; margin: 0; line-height: 1.4;">-</p>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Cantidad de Bultos</label>
+                        <p id="modal-bultos" style="font-size: 1.125rem; font-weight: 900; color: #1e293b; margin: 0;">-</p>
+                    </div>
+                </div>
+
+                <!-- SECCION 3: OBSERVACIONES -->
+                <div style="margin-bottom: 2.5rem;">
+                    <label style="display: block; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.05em;">Observaciones del Proveedor</label>
+                    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; min-height: 80px;">
+                        <p id="modal-obs" style="font-size: 0.875rem; color: #475569; font-style: italic; margin: 0; line-height: 1.6;">-</p>
+                    </div>
+                </div>
+
+                <!-- SECCION 4: DETALLE LOGISTICO (DINAMICO) -->
+                <div id="modal-logistic-detail-container" style="margin-bottom: 2.5rem; display: none;">
+                    <label style="display: block; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.05em;">Especificaciones de Carga</label>
+                    <div style="background: #eff6ff; padding: 1.25rem; border-radius: 1rem; border: 1px solid #dbeafe; display: flex; align-items: center; gap: 0.75rem;">
+                        <i data-lucide="info" style="width: 18px; color: #2563eb;"></i>
+                        <p id="modal-logistic-detail-content" style="font-size: 0.875rem; font-weight: 700; color: #1d4ed8; margin: 0;"></p>
+                    </div>
+                </div>
+
+                <!-- SECCION 5: ITEMS -->
+                <div style="margin-bottom: 2rem;">
+                    <label style="display: block; font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.05em;">Detalle de Mercadería</label>
+                    <div style="border: 1px solid #e2e8f0; border-radius: 1rem; overflow: hidden; background: white;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8fafc;">
+                                    <th style="padding: 1rem 1.5rem; text-align: left; font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">Artículo / Descripción</th>
+                                    <th style="padding: 1rem 1.5rem; text-align: right; font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-items"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="modal-actions" style="margin-top: 3.5rem; display: none; gap: 1rem;">
+                    <button id="btn-eliminar-turno" onclick="eliminarTurno()" class="btn-primary" style="flex: 1; background: #ef4444; height: 50px; border-radius: 0.75rem; font-size: 0.75rem;">
+                        <i data-lucide="trash-2" style="width: 16px; margin-right: 0.5rem;"></i> ELIMINAR TURNO
+                    </button>
+                    <!-- El botón editar lo habilitaremos pronto -->
+                    <!-- <button id="btn-editar-turno" onclick="editarTurno()" class="btn-primary" style="flex: 1; background: #f59e0b; height: 50px; border-radius: 0.75rem; font-size: 0.75rem;">
+                        <i data-lucide="edit" style="width: 16px; margin-right: 0.5rem;"></i> EDITAR TURNO
+                    </button> -->
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <button onclick="closeModal()" class="btn-primary" style="width: 100%; height: 50px; border-radius: 0.75rem; background: #64748b; font-size: 0.75rem;">
+                        CERRAR DETALLE
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Solicitar Turno -->
+    <div id="modal-solicitar" class="modal-overlay">
+        <div class="modal-content" style="max-width: 50rem;">
+            <div class="modal-header">
+                <div>
+                    <h2 class="text-2xl font-black">SOLICITAR TURNO</h2>
+                    <p class="text-sm text-gray-500 mt-1">Sigue los pasos para agendar tu entrega</p>
+                </div>
+                <button onclick="closeSolicitarModal()" style="background: none; border: none; cursor: pointer;">
+                    <i data-lucide="x-circle" style="color: #cbd5e1;"></i>
+                </button>
+            </div>
+            
+            <div class="stepper">
+                <div class="step active" id="step-1">
+                    <span class="step-num">1</span> AGENDA
+                </div>
+                <div class="step" id="step-2">
+                    <span class="step-num">2</span> OC
+                </div>
+                <div class="step" id="step-3">
+                    <span class="step-num">3</span> LOGÍSTICA
+                </div>
+            </div>
+
+            <div class="modal-body">
+                <form id="turno-form" class="form-container-modal">
+                <div id="error-msg" style="display: none; background: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; font-size: 0.875rem; font-weight: 500;"></div>
+
+                <!-- STEP 1: AGENDA -->
+                <div id="section-1">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Paso 1: Definir Agenda</h3>
+                    <div class="grid md:grid-cols-2" style="gap: 1.5rem;">
+                        <div class="input-group">
+                            <label>Fecha de Entrega</label>
+                            <input type="date" id="fecha" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Hora de Inicio</label>
+                            <select id="hora" required disabled>
+                                <option value="">Seleccione una fecha primero...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+                        <button type="button" onclick="nextStep(2)" class="btn-primary" id="btn-next-1" disabled>Siguiente Paso <i data-lucide="chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- STEP 2: MERCADERIA -->
+                <div id="section-2" style="display: none;">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Paso 2: Órdenes de Compra y Artículos</h3>
+                    
+                    <div class="input-group" style="margin-bottom: 2rem;">
+                        <label>Seleccionar Órdenes de Compra (Puede elegir varias)</label>
+                        <div id="oc-multi-select-container" class="multi-select-custom">
+                            <div class="multi-select-search">
+                                <i data-lucide="search" style="width: 14px; color: #94a3b8;"></i>
+                                <input type="text" id="oc-search" placeholder="Buscar por nro de OC..." oninput="filterOCs()">
+                            </div>
+                            <div id="oc-checkbox-list" class="multi-select-list">
+                                <!-- Se puebla por JS -->
+                                <div style="padding: 1rem; text-align: center; color: #94a3b8; font-size: 0.75rem;">Cargando órdenes...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="items-section" style="display: none;">
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Desglose de Productos</label>
+                        <div class="items-table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ARTÍCULO</th>
+                                        <th class="text-center">PLANIFICADO</th>
+                                        <th class="text-center">ENTREGADO</th>
+                                        <th class="text-center" style="width: 100px;">A ENTREGAR</th>
+                                        <th class="text-right">PENDIENTE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="items-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                        <button type="button" onclick="nextStep(1)" class="nav-link" style="border: none; background: none; cursor: pointer;">Volver</button>
+                        <button type="button" onclick="nextStep(3)" class="btn-primary" id="btn-next-2" disabled>Siguiente Paso <i data-lucide="chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- STEP 3: LOGISTICA -->
+                <div id="section-3" style="display: none;">
+                    <div class="input-group" style="margin-bottom: 2rem;">
+                        <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">Remitos a Entregar</label>
+                        <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+                            <input type="text" id="remito-input" placeholder="Ingrese nro de remito..." style="flex: 1; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem;">
+                            <button type="button" onclick="addRemito()" class="btn-primary" style="padding: 0.75rem 1.5rem; border-radius: 0.5rem;">
+                                <i data-lucide="plus"></i>
+                            </button>
+                        </div>
+                        <div id="remitos-list" class="logistics-list" style="padding: 0.5rem 0;"></div>
+                    </div>
+
+                    <div class="input-group" style="margin-bottom: 2.5rem;">
+                        <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">Bultos y Medidas (cm)</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
+                            <div class="input-group" style="margin: 0;">
+                                <label style="font-size: 11px; margin-bottom: 4px;">Cantidad</label>
+                                <input type="number" id="bulto-cant" value="1" min="1" style="padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem;">
+                            </div>
+                            <div class="input-group" style="margin: 0;">
+                                <label style="font-size: 11px; margin-bottom: 4px;">Alto</label>
+                                <input type="number" id="bulto-alto" placeholder="cm" style="padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem;">
+                            </div>
+                            <div class="input-group" style="margin: 0;">
+                                <label style="font-size: 11px; margin-bottom: 4px;">Ancho</label>
+                                <input type="number" id="bulto-ancho" placeholder="cm" style="padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem;">
+                            </div>
+                            <div class="input-group" style="margin: 0;">
+                                <label style="font-size: 11px; margin-bottom: 4px;">Largo</label>
+                                <input type="number" id="bulto-largo" placeholder="cm" style="padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem;">
+                            </div>
+                            <button type="button" onclick="addBulto()" class="btn-primary" style="padding: 0.75rem; border-radius: 0.5rem; height: 45px;">
+                                <i data-lucide="package-plus"></i>
+                            </button>
+                        </div>
+                        <div id="bultos-display-list" style="max-height: 200px; overflow-y: auto;"></div>
+                        <div style="margin-top: 1rem; padding: 1rem; background: #f1f5f9; border-radius: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                            <span class="text-sm font-bold text-slate-600">Total Bultos Agregados:</span>
+                            <span id="total-bultos-count" class="text-xl font-black text-slate-800">0</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group" style="margin-bottom: 2rem;">
+                        <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">Documentación Adjunta</label>
+                        <div style="border: 2px dashed #e2e8f0; border-radius: 1rem; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s;" 
+                             onclick="document.getElementById('file-input').click()"
+                             onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#f8fafc'"
+                             onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='transparent'">
+                            <i data-lucide="upload-cloud" style="width: 32px; height: 32px; color: #94a3b8; margin-bottom: 0.5rem;"></i>
+                            <p style="font-size: 0.875rem; color: #64748b; font-weight: 500; margin: 0;">Haz clic para subir archivos o arrastra y suelta</p>
+                            <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem;">PDF, JPG, PNG o Excel (Máx. 10MB)</p>
+                            <input type="file" id="file-input" multiple style="display: none;" onchange="handleFileSelect(event)">
+                        </div>
+                        <div id="selected-files-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                    </div>
+
+                    <div class="input-group" style="margin-bottom: 2rem;">
+                        <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">Observaciones Logísticas</label>
+                        <textarea id="observaciones" style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; height: 80px;" placeholder="Comentarios o instrucciones adicionales..."></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
+                        <button type="button" onclick="nextStep(2)" class="nav-link" style="border: none; background: none; font-weight: 700; cursor: pointer;">Volver</button>
+                        <button type="submit" class="btn-primary" id="submit-btn" disabled style="padding: 0.75rem 2.5rem;">
+                            Confirmar Solicitud de Turno
+                        </button>
+                    </div>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'auth-utils.js' %}"></script>
+    <script src="{% static 'solicitar_turno.js' %}"></script>
+    <script src="{% static 'panel_proveedor.js' %}"></script>
+    <script>
+        lucide.createIcons();
+        document.getElementById('fecha').min = new Date().toISOString().split('T')[0];
+        
+        function openSolicitarModal() {
+            document.getElementById('modal-solicitar').style.display = 'flex';
+            // Trigger load OC list if needed, but solicitar_turno.js usually does it on load.
+            // If we want it fresh every time:
+            if (typeof loadOrdenesCompra === 'function') loadOrdenesCompra();
+        }
+        function closeSolicitarModal() {
+            document.getElementById('modal-solicitar').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

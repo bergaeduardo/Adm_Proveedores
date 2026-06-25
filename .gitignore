@@ -1,0 +1,5 @@
+__pycache__
+env
+core_App/requirements.txt
+core_App/core_App/settings.py
+core_App/media/adjuntos_turnos/
