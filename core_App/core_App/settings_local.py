@@ -107,8 +107,8 @@ REST_FRAMEWORK = {
     ),
     # Configuración JWT simplificada - solo tokens estándar
     'SIMPLE_JWT': {
-        'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),  # 24 horas
-        'REFRESH_TOKEN_LIFETIME': timedelta(days=7),   # 7 días
+        'ACCESS_TOKEN_LIFETIME': timedelta(days=30),  # 30 días
+        'REFRESH_TOKEN_LIFETIME': timedelta(days=365),   # 365 días
         'ROTATE_REFRESH_TOKENS': False,
         'BLACKLIST_AFTER_ROTATION': False,
         'UPDATE_LAST_LOGIN': False,
@@ -168,3 +168,13 @@ ALLOWED_ADMIN_IPS = [
     '192.168.1.0/24',  # Ejemplo: Rango de IPs de tu red local
     # Agrega aquí todas las IPs o rangos de red permitidos para el acceso a Administración
 ]
+
+# Configuración de Emails
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('HOST_EMAIL_PROVEEDORES', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('PORT_EMAIL_PROVEEDORES', 587))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('USER_EMAIL_PROVEEDORES', '')
+EMAIL_HOST_PASSWORD = os.environ.get('PASS_EMAIL_PROVEEDORES', '')
+DEFAULT_FROM_EMAIL = os.environ.get('USER_EMAIL_PROVEEDORES', '')
+

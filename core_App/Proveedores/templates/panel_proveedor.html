@@ -95,7 +95,7 @@
             border: 1px solid #f1f5f9;
             border-radius: 1rem;
             overflow: hidden;
-            max-height: 250px;
+            max-height: 450px;
             overflow-y: auto;
             background: #f8fafc;
         }
@@ -421,6 +421,10 @@
 
                     <div id="items-section" style="display: none;">
                         <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Desglose de Productos</label>
+                        <div class="input-group" style="margin-bottom: 1rem; position: relative; display: flex; align-items: center;">
+                            <i data-lucide="search" style="position: absolute; left: 1rem; width: 16px; color: #94a3b8; pointer-events: none;"></i>
+                            <input type="text" id="item-search" placeholder="Buscar por código de artículo o descripción..." oninput="filterItems()" style="padding-left: 2.5rem; border: 1px solid #e2e8f0; border-radius: 0.75rem; font-size: 0.875rem; width: 100%;">
+                        </div>
                         <div class="items-table-container">
                             <table>
                                 <thead>
@@ -487,7 +491,7 @@
                     </div>
 
                     <div class="input-group" style="margin-bottom: 2rem;">
-                        <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">Documentación Adjunta</label>
+                        <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">Documentación Adjunta <span style="color: #ef4444;">* (Obligatorio)</span></label>
                         <div style="border: 2px dashed #e2e8f0; border-radius: 1rem; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s;" 
                              onclick="document.getElementById('file-input').click()"
                              onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#f8fafc'"
@@ -520,11 +524,33 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'auth-utils.js' %}"></script>
-    <script src="{% static 'solicitar_turno.js' %}"></script>
+    <script src="{% static 'solicitar_turno.js' %}?v=1.0.7"></script>
     <script src="{% static 'panel_proveedor.js' %}"></script>
     <script>
         lucide.createIcons();
         document.getElementById('fecha').min = new Date().toISOString().split('T')[0];
+        
+        function filterItems() {
+            const termElement = document.getElementById('item-search');
+            if (!termElement) return;
+            const term = termElement.value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#items-list tr');
+            if (typeof ocItems !== 'undefined' && Array.isArray(ocItems)) {
+                ocItems.forEach((item, index) => {
+                    const tr = rows[index];
+                    if (!tr) return;
+                    
+                    const cod = (item.cod_articulo || '').toLowerCase();
+                    const desc = (item.descripcion || '').toLowerCase();
+                    
+                    if (cod.includes(term) || desc.includes(term)) {
+                        tr.style.display = '';
+                    } else {
+                        tr.style.display = 'none';
+                    }
+                });
+            }
+        }
         
         function openSolicitarModal() {
             document.getElementById('modal-solicitar').style.display = 'flex';

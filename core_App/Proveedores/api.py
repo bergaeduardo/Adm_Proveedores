@@ -320,21 +320,23 @@ class OrdenCompraItemsView(APIView):
         cursor.execute(sql_tango, oc_list)
         rows_tango = cursor.fetchall()
 
-        # 2. Obtener turnos activos y completados (Solicitado=2, Agendado=3, Completado=8)
-        # Nota: En este sistema, el estado 8 corresponde a turnos ya finalizados.
+        # 2. Obtener turnos activos (Solicitado=2, Agendado=3, Ingreso CD=4, Recepcionado=5, Auditado=6, Posicionado=7)
+        # y turnos completados (8) para resolver desfases de sincronización con Tango.
         sql_turnos = """
-            SELECT detalle_items 
+            SELECT detalle_items, id_estado 
             FROM TurnoReserva 
-            WHERE id_estado IN (2, 3, 8) 
+            WHERE id_estado IN (2, 3, 4, 5, 6, 7, 8) 
             AND detalle_items IS NOT NULL
         """
         cursor.execute(sql_turnos)
         active_appointments = cursor.fetchall()
 
-        # Mapa de reservas: (sku, oc) -> cantidad_total_reservada
+        # Mapas de reservas y completados: (sku, oc) -> cantidad_total
         reservas = {}
+        completados_turnos = {}
         for app_row in active_appointments:
             items_str = app_row[0]
+            estado = app_row[1]
             if not items_str: continue
             # Formato: cod|desc|cant|oc;cod|desc|cant|oc
             for item_part in items_str.split('|'):
@@ -344,7 +346,10 @@ class OrdenCompraItemsView(APIView):
                     cant = float(parts[2]) if parts[2] else 0
                     oc = parts[3].strip()
                     key = (sku, oc)
-                    reservas[key] = reservas.get(key, 0) + cant
+                    if estado == 8:
+                        completados_turnos[key] = completados_turnos.get(key, 0) + cant
+                    else:
+                        reservas[key] = reservas.get(key, 0) + cant
 
         # 3. Consolidar datos
         data = []
@@ -356,16 +361,20 @@ class OrdenCompraItemsView(APIView):
           oc = str(row[4]).strip()
 
           cant_reservada = reservas.get((sku, oc), 0)
+          cant_completada_turnos = completados_turnos.get((sku, oc), 0)
           
-          # El pendiente real es: Pedido - (Recibido en Tango + Reservado en Turnos)
-          cant_pendiente = cant_pedida - (cant_recibida_tango + cant_reservada)
+          # Lo ya entregado es el máximo entre lo registrado en Tango y lo completado en turnos
+          ya_entregado = max(cant_recibida_tango, cant_completada_turnos)
+          
+          # El pendiente real es: Pedido - (Ya entregado + Reservado activo)
+          cant_pendiente = cant_pedida - (ya_entregado + cant_reservada)
           
           if cant_pendiente > 0:
             data.append({
               'cod_articulo': sku,
               'descripcion': desc,
               'cantidad_planificada': cant_pedida,
-              'cantidad_recibida_tango': cant_recibida_tango,
+              'cantidad_recibida_tango': ya_entregado,
               'cantidad_reservada': cant_reservada,
               'cantidad_pendiente': cant_pendiente,
               'nro_oc': oc
@@ -375,6 +384,178 @@ class OrdenCompraItemsView(APIView):
     except Exception as e:
       print(f"Error en OrdenCompraItemsView: {str(e)}")
       return Response({'error': str(e)}, status=500)
+
+
+def enviar_mail_notificacion_turno(turno_id, proveedor, data, items_data, bultos_data):
+    from django.core.mail import EmailMultiAlternatives
+    
+    destinatarios = [
+        'analia.jarc@xl.com.ar',
+        'lucas.navarro@xl.com.ar',
+        'franco.pertus@xl.com.ar',
+        'natalia.bontempo@xl.com.ar',
+        'ramiro.orozco@xl.com.ar',
+        'julieta.dalmeida@xl.com.ar',
+        'jessica.farias@xl.com.ar',
+        'valeria.villarreal@xl.com.ar',
+        'martin.becker@xl.com.ar'
+    ]
+    
+    subject = f'Nuevo Turno Solicitado - {proveedor.nom_provee}'
+    
+    fecha_turno = data.get('fecha_turno')
+    hora_turno = data.get('hora_turno')
+    remitos = data.get('remitos', 'Sin remitos')
+    bultos_cant = data.get('cantidad_bultos', '0')
+    observaciones = data.get('observaciones', 'Sin observaciones')
+    nro_oc = data.get('nro_orden_co', '')
+    
+    # Construcción de la tabla de items en HTML
+    items_html = ""
+    items_txt = ""
+    for item in items_data:
+        cod = item.get('cod_articulo', '')
+        desc = item.get('descripcion', '')
+        cant = item.get('cantidad_a_entregar', '0')
+        oc = item.get('nro_oc', '')
+        items_html += f"<tr><td style='padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #1e293b;'>{cod}</td><td style='padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #475569;'>{desc}</td><td style='padding: 10px 12px; border-bottom: 1px solid #f1f5f9; text-align: center; color: #1e293b; font-weight: bold;'>{cant}</td><td style='padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #475569;'>{oc}</td></tr>"
+        items_txt += f"- Art: {cod} | Desc: {desc} | Cant: {cant} | OC: {oc}\n"
+
+    # Construcción de la lista de bultos
+    bultos_html = ""
+    bultos_txt = ""
+    for b in bultos_data:
+        cant = b.get('cant', 1)
+        dim = f"{b.get('alto', 0)}x{b.get('ancho', 0)}x{b.get('largo', 0)} cm"
+        bultos_html += f"<li style='margin-bottom: 6px; line-height: 1.5;'>{cant} bulto/s de {dim}</li>"
+        bultos_txt += f"- {cant} bulto/s de {dim}\n"
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; color: #334155; margin: 0; padding: 0; }}
+        </style>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; color: #334155; margin: 0; padding: 40px 20px;">
+        <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden; border-collapse: collapse;">
+            <!-- HEADER -->
+            <tr>
+                <td style="background-color: #0f172a; padding: 32px; text-align: center; border-bottom: 4px solid #2563eb;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">PORTAL DE PROVEEDORES</h1>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 13px; font-weight: 500;">Nueva Solicitud de Turno Registrada</p>
+                </td>
+            </tr>
+            
+            <!-- CONTENT -->
+            <tr>
+                <td style="padding: 32px;">
+                    <h2 style="color: #1e293b; font-size: 16px; font-weight: 700; margin-top: 0; margin-bottom: 24px;">Turno Solicitado #{turno_id}</h2>
+                    
+                    <!-- SECCION 1: DETALLES GENERALES -->
+                    <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Detalles Generales</h3>
+                    
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 8px; margin-bottom: 24px; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 16px; vertical-align: top; width: 50%;">
+                                <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Proveedor</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #1e293b;">{proveedor.nom_provee}</div>
+                                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Cód: {proveedor.cod_cpa01}</div>
+                            </td>
+                            <td style="padding: 16px; vertical-align: top; width: 50%;">
+                                <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Fecha y Hora</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #1e293b;">{fecha_turno}</div>
+                                <div style="font-size: 11px; font-weight: 700; color: #2563eb; margin-top: 2px;">{hora_turno} HS</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0 16px 16px 16px; vertical-align: top;">
+                                <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Órdenes de Compra</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #1e293b;">{nro_oc}</div>
+                            </td>
+                            <td style="padding: 0 16px 16px 16px; vertical-align: top;">
+                                <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Remitos</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #1e293b;">{remitos}</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0 16px 16px 16px; vertical-align: top;">
+                                <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Bultos Informados</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #1e293b;">{bultos_cant}</div>
+                            </td>
+                            <td style="padding: 0 16px 16px 16px; vertical-align: top;">
+                                <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Observaciones</div>
+                                <div style="font-size: 13px; color: #475569; font-style: italic;">{observaciones}</div>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <!-- SECCION 2: DETALLE CARGA -->
+                    <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin: 24px 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Detalle de Carga y Bultos</h3>
+                    <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 13px; line-height: 1.6;">
+                        {bultos_html if bultos_html else "<li style='margin-bottom: 6px; line-height: 1.5;'>No especificados</li>"}
+                    </ul>
+                    
+                    <!-- SECCION 3: DESGLOSE PRODUCTOS -->
+                    <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin: 24px 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Desglose de Productos</h3>
+                    <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; font-size: 12px; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #f8fafc;">
+                                <th style="padding: 10px 12px; font-weight: 700; color: #475569; border-bottom: 1px solid #e2e8f0; text-align: left; font-size: 11px; letter-spacing: 0.05em;">Artículo</th>
+                                <th style="padding: 10px 12px; font-weight: 700; color: #475569; border-bottom: 1px solid #e2e8f0; text-align: left; font-size: 11px; letter-spacing: 0.05em;">Descripción</th>
+                                <th style="padding: 10px 12px; font-weight: 700; color: #475569; border-bottom: 1px solid #e2e8f0; text-align: center; width: 80px; font-size: 11px; letter-spacing: 0.05em;">Cant.</th>
+                                <th style="padding: 10px 12px; font-weight: 700; color: #475569; border-bottom: 1px solid #e2e8f0; text-align: left; width: 100px; font-size: 11px; letter-spacing: 0.05em;">OC</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {items_html}
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            
+            <!-- FOOTER -->
+            <tr>
+                <td style="background-color: #f8fafc; padding: 24px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0;">Este es un mensaje automático generado por el Portal de Proveedores.</p>
+                    <p style="margin: 4px 0 0 0;">Por favor, no respondas a este correo.</p>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+    
+    text_content = f"""
+Nueva Solicitud de Turno Registrada (#{turno_id})
+Se ha registrado un nuevo turno en el Portal de Proveedores:
+
+- Proveedor: {proveedor.nom_provee} ({proveedor.cod_cpa01})
+- Fecha: {fecha_turno}
+- Hora: {hora_turno} HS
+- Órdenes de Compra: {nro_oc}
+- Remitos: {remitos}
+- Cantidad Total Bultos: {bultos_cant}
+- Observaciones: {observaciones}
+
+Detalle de Carga / Bultos:
+{bultos_txt if bultos_txt else "No especificados"}
+
+Detalle de Productos a Entregar:
+{items_txt}
+
+Este es un mensaje automático generado por el Portal de Proveedores.
+    """
+    
+    try:
+        msg = EmailMultiAlternatives(subject, text_content, None, destinatarios)
+        msg.attach_alternative(html_content, "text/html")
+        msg.send(fail_silently=False)
+        print(f"Email enviado correctamente para el turno {turno_id}")
+    except Exception as email_err:
+        print(f"Error al enviar email para el turno {turno_id}: {str(email_err)}")
 
 class TurnoViewSet(viewsets.ModelViewSet):
     serializer_class = TurnoSerializer
@@ -402,13 +583,17 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 
                 rows = cursor.fetchall()
                 
-                # Mapeo de estados de SQL Server a los que espera el frontend
                 estado_map = {
                     2: 'Solicitado',
                     3: 'Agendado',
+                    4: 'Agendado', # INGRESO AL CD
+                    5: 'Agendado', # RECEPCIONADO
+                    6: 'Agendado', # AUDITADO
+                    7: 'Agendado', # POSICIONADO
                     8: 'Completado',
                     9: 'Rechazado',
-                    10: 'Rechazado'
+                    10: 'Rechazado',
+                    11: 'Rechazado' # NO CONFIRMADO
                 }
                 
                 data = []
@@ -447,6 +632,11 @@ class TurnoViewSet(viewsets.ModelViewSet):
             
             if not items_data:
                 return Response({"error": "Debe incluir al menos un ítem"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validar que se haya subido al menos un documento adjunto
+            file_count = int(data.get('file_count', 0))
+            if file_count <= 0:
+                return Response({"error": "Debe adjuntar al menos un documento (remito, consolidado, factura u otro)."}, status=status.HTTP_400_BAD_REQUEST)
 
             # Validaciones de Agenda (Bucle, Fines de semana y Breaks)
             fecha_str = data.get('fecha_turno')
@@ -591,6 +781,9 @@ class TurnoViewSet(viewsets.ModelViewSet):
                     request.user.username,
                     'Turno solicitado desde el Portal de Proveedores'
                 ])
+
+                # Enviar correo de notificación
+                enviar_mail_notificacion_turno(turno_id, proveedor, data, items_data, bultos_data)
 
             return Response({'id': turno_id}, status=status.HTTP_201_CREATED)
 

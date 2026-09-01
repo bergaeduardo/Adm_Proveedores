@@ -3,3 +3,6 @@ env
 core_App/requirements.txt
 core_App/core_App/settings.py
 core_App/media/adjuntos_turnos/
+core_App/media
+core_App/consultasTango/__pycache__
+core_App/.env
