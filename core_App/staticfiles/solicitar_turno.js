@@ -75,29 +75,66 @@ function setupEventListeners() {
     const horaInput = document.getElementById('hora');
     const form = document.getElementById('turno-form');
 
-    fechaInput.addEventListener('change', () => {
-        if (fechaInput.value) {
-            const dateVal = new Date(fechaInput.value + 'T00:00:00');
-            if (dateVal.getDay() === 0) { // 0 es Domingo
-                Swal.fire({
-                    title: 'Día No Laborable',
-                    text: 'Los días Domingo no se trabaja. Por favor, seleccione otro día.',
-                    icon: 'warning',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#0f172a'
-                });
-                fechaInput.value = '';
-                horaInput.innerHTML = '<option value="">Seleccione una fecha primero...</option>';
-                horaInput.disabled = true;
-                checkStep1();
-                return;
+    if (fechaInput) {
+        // Bloquear hoy y mañana (mínimo 48hs de anticipación)
+        const today = new Date();
+        const minDate = new Date(today);
+        minDate.setDate(today.getDate() + 2);
+        const yyyy = minDate.getFullYear();
+        const mm = String(minDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(minDate.getDate()).padStart(2, '0');
+        const minDateStr = `${yyyy}-${mm}-${dd}`;
+        fechaInput.min = minDateStr;
+
+        fechaInput.addEventListener('change', () => {
+            if (fechaInput.value) {
+                // Validar fecha mínima (no hoy ni mañana)
+                if (fechaInput.value < minDateStr) {
+                    Swal.fire({
+                        title: 'Fecha No Permitida',
+                        text: 'No se pueden solicitar turnos para el día de hoy ni para mañana. Debe seleccionar una fecha con al menos 48 hs de anticipación.',
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#0f172a'
+                    });
+                    fechaInput.value = '';
+                    if (horaInput) {
+                        horaInput.innerHTML = '<option value="">Seleccione una fecha primero...</option>';
+                        horaInput.disabled = true;
+                    }
+                    checkStep1();
+                    return;
+                }
+
+                // Validar domingo (no se trabaja)
+                const dateVal = new Date(fechaInput.value + 'T00:00:00');
+                if (dateVal.getDay() === 0) { // 0 es Domingo
+                    Swal.fire({
+                        title: 'Día No Laborable',
+                        text: 'Los días Domingo no se trabaja. Por favor, seleccione otro día (Lunes a Sábado).',
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#0f172a'
+                    });
+                    fechaInput.value = '';
+                    if (horaInput) {
+                        horaInput.innerHTML = '<option value="">Seleccione una fecha primero...</option>';
+                        horaInput.disabled = true;
+                    }
+                    checkStep1();
+                    return;
+                }
             }
-        }
-        loadAvailableSlots();
-        checkStep1();
-    });
-    horaInput.addEventListener('change', checkStep1);
-    form.addEventListener('submit', handleSubmit);
+            loadAvailableSlots();
+            checkStep1();
+        });
+    }
+    if (horaInput) {
+        horaInput.addEventListener('change', checkStep1);
+    }
+    if (form) {
+        form.addEventListener('submit', handleSubmit);
+    }
 }
 
 async function loadAvailableSlots() {

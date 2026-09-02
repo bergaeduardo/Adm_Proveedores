@@ -655,6 +655,11 @@ class TurnoViewSet(viewsets.ModelViewSet):
             h_fin_val = datetime.strptime(hora_fin_str, '%H:%M').time()
             weekday_val = fecha_val.weekday()
 
+            # Validar anticipación mínima (no hoy ni mañana -> mín. 2 días desde hoy)
+            min_fecha_permitida = datetime.now().date() + timedelta(days=2)
+            if fecha_val < min_fecha_permitida:
+                return Response({"error": "No se pueden solicitar turnos para hoy ni para mañana. La fecha de entrega debe programarse con al menos 48 hs de anticipación."}, status=status.HTTP_400_BAD_REQUEST)
+
             if weekday_val == 6:
                 return Response({"error": "No se pueden solicitar turnos los días Domingo ya que no se trabaja."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -882,6 +887,10 @@ class TurnoViewSet(viewsets.ModelViewSet):
             except ValueError:
                 # Intentar con otros formatos si es necesario
                 fecha = datetime.strptime(fecha_str.split('T')[0], '%Y-%m-%d').date()
+
+            min_fecha_permitida = datetime.now().date() + timedelta(days=2)
+            if fecha < min_fecha_permitida:
+                return Response([])
 
             weekday = fecha.weekday()
             

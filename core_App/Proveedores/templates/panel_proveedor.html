@@ -524,11 +524,16 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'auth-utils.js' %}"></script>
-    <script src="{% static 'solicitar_turno.js' %}?v=1.0.7"></script>
+    <script src="{% static 'solicitar_turno.js' %}?v=1.0.8"></script>
     <script src="{% static 'panel_proveedor.js' %}"></script>
     <script>
         lucide.createIcons();
-        document.getElementById('fecha').min = new Date().toISOString().split('T')[0];
+        const minDate = new Date();
+        minDate.setDate(minDate.getDate() + 2);
+        const yyyy = minDate.getFullYear();
+        const mm = String(minDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(minDate.getDate()).padStart(2, '0');
+        document.getElementById('fecha').min = `${yyyy}-${mm}-${dd}`;
         
         function filterItems() {
             const termElement = document.getElementById('item-search');
