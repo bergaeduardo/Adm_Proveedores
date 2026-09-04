@@ -172,6 +172,12 @@
                 </div>
                 <div class="col-md-6 mb-3">
                   <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="certExclIva" name="excl_iva_file">
+                    <label class="form-check-label" for="certExclIva">Cert. Exclusión IVA</label>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" role="switch" id="certNoRetGanancias" name="no_ret_ganancias_file">
                     <label class="form-check-label" for="certNoRetGanancias">Cert. No Ret. Ganancias</label>
                   </div>
@@ -333,6 +339,18 @@
                     <p class="document-status-text">Cargando...</p>
                     <button type="button" class="btn btn-sm action-btn" data-file-input-id="cbuFile"></button>
                     <input type="file" id="cbuFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg,.doc,.docx">
+                  </div>
+                </div>
+              </div>
+              <!-- Tarjeta de Exclusión IVA -->
+              <div class="col">
+                <div class="document-card" id="card-exclIvaFile">
+                  <div class="document-card-body">
+                    <div class="document-icon-area"></div>
+                    <h6 class="document-title">Cert. Exclusión IVA<span class="required-asterisk d-none">*</span></h6>
+                    <p class="document-status-text">Cargando...</p>
+                    <button type="button" class="btn btn-sm action-btn" data-file-input-id="exclIvaFile"></button>
+                    <input type="file" id="exclIvaFile" class="d-none file-input" accept=".pdf,.jpg,.png,.jpeg,.doc,.docx">
                   </div>
                 </div>
               </div>

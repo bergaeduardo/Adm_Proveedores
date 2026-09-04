@@ -177,6 +177,7 @@ class Proveedor(models.Model):
   excl_iibb_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
   no_ret_iibb_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
   cbu_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
+  excl_iva_file = models.FileField(upload_to=documentos_upload_path, blank=True, null=True)
 
   # Fechas de actualización de cada archivo
   cuit_file_updated_at = models.DateTimeField(blank=True, null=True)
@@ -187,6 +188,7 @@ class Proveedor(models.Model):
   excl_iibb_file_updated_at = models.DateTimeField(blank=True, null=True)
   no_ret_iibb_file_updated_at = models.DateTimeField(blank=True, null=True)
   cbu_file_updated_at = models.DateTimeField(blank=True, null=True)
+  excl_iva_file_updated_at = models.DateTimeField(blank=True, null=True)
 
   def __str__(self):
     return self.nom_provee

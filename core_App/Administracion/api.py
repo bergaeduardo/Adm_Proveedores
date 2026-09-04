@@ -50,7 +50,9 @@ class AdministracionProveedorViewSet(viewsets.ModelViewSet):
             'cm05File': 'cm05_file',
             'noRetGananciasFile': 'no_ret_ganancias_file',
             'exclIIBBFile': 'excl_iibb_file',
+            'noRetIIBBFile': 'no_ret_iibb_file',
             'cbuFile': 'cbu_file',
+            'exclIvaFile': 'excl_iva_file',
         }
 
         data_for_serializer = request.data.copy()

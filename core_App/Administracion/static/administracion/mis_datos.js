@@ -5,7 +5,8 @@ let documentosCondicionalesMap = {
     'certExclGanancias': 'exclGananciasFile',
     'certExclIIBB': 'exclIIBBFile',
     'certNoRetGanancias': 'noRetGananciasFile',
-    'certNoRetIIBB': 'noRetIIBBFile'
+    'certNoRetIIBB': 'noRetIIBBFile',
+    'certExclIva': 'exclIvaFile'
 };
 
 // Mapeo de IDs de input de archivo a nombres de campo en el modelo Django
@@ -18,6 +19,7 @@ const fileInputIdToModelFieldName = {
     'exclIIBBFile': 'excl_iibb_file',
     'noRetIIBBFile': 'no_ret_iibb_file',
     'cbuFile': 'cbu_file',
+    'exclIvaFile': 'excl_iva_file',
 };
 
 // This list is used for the FINAL validation on save
@@ -28,7 +30,8 @@ const certificacionSwitches = [
     { id: 'certExclGanancias', name: 'excl_ganancias_file', documentId: 'exclGananciasFile' },
     { id: 'certExclIIBB', name: 'excl_iibb_file', documentId: 'exclIIBBFile' },
     { id: 'certNoRetGanancias', name: 'no_ret_ganancias_file', documentId: 'noRetGananciasFile' },
-    { id: 'certNoRetIIBB', name: 'no_ret_iibb_file', documentId: 'noRetIIBBFile' }
+    { id: 'certNoRetIIBB', name: 'no_ret_iibb_file', documentId: 'noRetIIBBFile' },
+    { id: 'certExclIva', name: 'excl_iva_file', documentId: 'exclIvaFile' }
 ];
 
 

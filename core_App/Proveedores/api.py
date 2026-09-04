@@ -110,6 +110,7 @@ class ProveedorViewSet(viewsets.ModelViewSet): # Esta es la que se registra en e
         'exclIIBBFile': 'excl_iibb_file',
         'noRetIIBBFile': 'no_ret_iibb_file',
         'cbuFile': 'cbu_file',
+        'exclIvaFile': 'excl_iva_file',
     }
 
     data_for_serializer = request.data.copy() # Copiar para poder modificarlo
