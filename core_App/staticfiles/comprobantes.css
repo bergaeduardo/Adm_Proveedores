@@ -1,0 +1,51 @@
+body {
+      background: #f8f9fa;
+      padding: 2rem;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .form-section {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+      margin-bottom: 2rem;
+    }
+    .comprobante-list {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    }
+    .comprobante-item {
+      border-bottom: 1px solid #dee2e6;
+      padding: 0.75rem 0;
+    }
+    .comprobante-item:last-child {
+      border-bottom: none;
+    }
+    .file-label {
+      cursor: pointer;
+    }
+    .btn-upload {
+      margin-top: 0.5rem;
+    }
+
+    /* Status Badge Colors */
+    .badge-recibido {
+        background-color: #6c757d !important; /* Gris */
+    }
+    .badge-aceptado {
+        background-color: #0d6efd !important; /* Azul de Bootstrap primary */
+    }
+    .badge-rechazado {
+        background-color: #dc3545 !important; /* Rojo de Bootstrap danger */
+    }
+    /* Add more states here if needed */
+    .badge-otro {
+        background-color: #ffc107 !important; /* Ejemplo: Amarillo para otros estados */
+    }
+
+    /* Filtering Section Styles */
+    .filter-section {
+        margin-bottom: 1.5rem;
+    }

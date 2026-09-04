@@ -22,6 +22,12 @@ def login_view(request):
 def dashboard_view(request):
   return render(request, 'dashboard.html')
 
+def turnero_view(request):
+  return render(request, 'panel_proveedor.html')
+
+def solicitar_turno_view(request):
+  return render(request, 'solicitar_turno.html')
+
 def mis_datos_view(request):
   # Solo renderiza el template, los datos se obtienen vía JS usando JWT
   return render(request, 'mis_datos.html')
