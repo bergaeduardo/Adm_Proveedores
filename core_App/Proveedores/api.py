@@ -320,36 +320,31 @@ class OrdenCompraItemsView(APIView):
         cursor.execute(sql_tango, oc_list)
         rows_tango = cursor.fetchall()
 
-        # 2. Obtener turnos activos (Solicitado=2, Agendado=3, Ingreso CD=4, Recepcionado=5, Auditado=6, Posicionado=7)
-        # y turnos completados (8) para resolver desfases de sincronización con Tango.
+        # 2. Obtener turnos con estados activos / completados:
+        # 1: RESERVADO, 2: CONFIRMADO, 3: INGRESO AL CD, 4: RECEPCIONADO, 5: AUDITADO, 6: POSICIONADO, 7: COMPLETADO
         sql_turnos = """
             SELECT detalle_items, id_estado 
             FROM TurnoReserva 
-            WHERE id_estado IN (2, 3, 4, 5, 6, 7, 8) 
+            WHERE id_estado IN (1, 2, 3, 4, 5, 6, 7, 8) 
             AND detalle_items IS NOT NULL
         """
         cursor.execute(sql_turnos)
         active_appointments = cursor.fetchall()
 
-        # Mapas de reservas y completados: (sku, oc) -> cantidad_total
-        reservas = {}
-        completados_turnos = {}
+        # Mapa de cantidades acumuladas en turnos: (sku, oc) -> total_unidades_en_turnos
+        cant_en_turnos = {}
         for app_row in active_appointments:
             items_str = app_row[0]
-            estado = app_row[1]
             if not items_str: continue
-            # Formato: cod|desc|cant|oc;cod|desc|cant|oc
+            # Formato: cod:desc:cant:oc|cod:desc:cant:oc o cod|desc|cant|oc
             for item_part in items_str.split('|'):
                 parts = item_part.split(':')
                 if len(parts) >= 4:
                     sku = parts[0].strip()
-                    cant = float(parts[2]) if parts[2] else 0
+                    cant = float(parts[2]) if parts[2] else 0.0
                     oc = parts[3].strip()
                     key = (sku, oc)
-                    if estado == 8:
-                        completados_turnos[key] = completados_turnos.get(key, 0) + cant
-                    else:
-                        reservas[key] = reservas.get(key, 0) + cant
+                    cant_en_turnos[key] = cant_en_turnos.get(key, 0.0) + cant
 
         # 3. Consolidar datos
         data = []
@@ -360,14 +355,13 @@ class OrdenCompraItemsView(APIView):
           cant_recibida_tango = float(row[3]) if row[3] is not None else 0.0
           oc = str(row[4]).strip()
 
-          cant_reservada = reservas.get((sku, oc), 0)
-          cant_completada_turnos = completados_turnos.get((sku, oc), 0)
+          total_turnos = cant_en_turnos.get((sku, oc), 0.0)
           
-          # Lo ya entregado es el máximo entre lo registrado en Tango y lo completado en turnos
-          ya_entregado = max(cant_recibida_tango, cant_completada_turnos)
+          # Lo ya entregado/procesado es el máximo entre lo asentado en Tango y lo programado/recibido en turnos
+          ya_entregado = max(cant_recibida_tango, total_turnos)
           
-          # El pendiente real es: Pedido - (Ya entregado + Reservado activo)
-          cant_pendiente = cant_pedida - (ya_entregado + cant_reservada)
+          # El pendiente real es: Pedido - Ya entregado
+          cant_pendiente = max(0.0, cant_pedida - ya_entregado)
           
           if cant_pendiente > 0:
             data.append({
@@ -375,7 +369,7 @@ class OrdenCompraItemsView(APIView):
               'descripcion': desc,
               'cantidad_planificada': cant_pedida,
               'cantidad_recibida_tango': ya_entregado,
-              'cantidad_reservada': cant_reservada,
+              'cantidad_reservada': 0,
               'cantidad_pendiente': cant_pendiente,
               'nro_oc': oc
             })
@@ -584,16 +578,15 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 rows = cursor.fetchall()
                 
                 estado_map = {
+                    1: 'Solicitado',
                     2: 'Solicitado',
                     3: 'Agendado',
-                    4: 'Agendado', # INGRESO AL CD
-                    5: 'Agendado', # RECEPCIONADO
-                    6: 'Agendado', # AUDITADO
-                    7: 'Agendado', # POSICIONADO
+                    4: 'Recepcionado',
+                    5: 'Auditado',
+                    6: 'Posicionado',
+                    7: 'Completado',
                     8: 'Completado',
-                    9: 'Rechazado',
-                    10: 'Rechazado',
-                    11: 'Rechazado' # NO CONFIRMADO
+                    9: 'Rechazado'
                 }
                 
                 data = []
@@ -683,7 +676,7 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 cursor.execute("""
                     SELECT hora_inicio, hora_fin 
                     FROM TurnoReserva 
-                    WHERE fecha = %s AND id_estado IN (2, 3)
+                    WHERE fecha = %s AND id_estado IN (1, 2, 3, 4, 5, 6, 7)
                 """, [fecha_str])
                 for t_ini_raw, t_fin_raw in cursor.fetchall():
                     if t_ini_raw and t_fin_raw:
@@ -934,7 +927,7 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 cursor.execute("""
                     SELECT hora_inicio, hora_fin 
                     FROM TurnoReserva 
-                    WHERE fecha = %s AND id_estado IN (2, 3)
+                    WHERE fecha = %s AND id_estado IN (1, 2, 3, 4, 5, 6, 7)
                 """, [fecha_str])
                 
                 rows = cursor.fetchall()

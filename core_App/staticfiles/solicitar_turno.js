@@ -209,7 +209,22 @@ async function loadItems(ocs) {
     const itemsSection = document.getElementById('items-section');
     const itemsList = document.getElementById('items-list');
     
-    itemsList.innerHTML = '<tr><td colspan="3" class="text-center">Cargando productos de las OCs...</td></tr>';
+    // Guardar las cantidades que el usuario ya haya ingresado en la tabla actual antes de recargar
+    const currentQuantities = {};
+    const existingInputs = document.querySelectorAll('.qty-input');
+    existingInputs.forEach(input => {
+        const idx = input.getAttribute('data-index');
+        if (ocItems && ocItems[idx]) {
+            const item = ocItems[idx];
+            const key = `${item.cod_articulo}__${item.nro_oc}`;
+            const val = parseFloat(input.value) || 0;
+            if (val > 0) {
+                currentQuantities[key] = val;
+            }
+        }
+    });
+
+    itemsList.innerHTML = '<tr><td colspan="5" class="text-center">Cargando productos de las OCs...</td></tr>';
     itemsSection.style.display = 'block';
 
     try {
@@ -223,16 +238,22 @@ async function loadItems(ocs) {
         }
 
         ocItems = data;
-        const searchInput = document.getElementById('item-search');
-        if (searchInput) {
-            searchInput.value = '';
-        }
         
         ocItems.forEach((item, index) => {
             const tr = document.createElement('tr');
             const yaEntregado = (item.cantidad_recibida_tango || 0) + (item.cantidad_reservada || 0);
-            const aEntregarInicial = 0; // Default to 0 as requested
-            const pendienteInicial = item.cantidad_planificada - yaEntregado;
+            
+            // Si ya teníamos una cantidad ingresada previamente para este artículo y OC, la preservamos
+            const key = `${item.cod_articulo}__${item.nro_oc}`;
+            let aEntregarInicial = currentQuantities[key] !== undefined ? currentQuantities[key] : 0;
+            
+            // Validar que no supere el pendiente actual
+            if (aEntregarInicial > item.cantidad_pendiente) {
+                aEntregarInicial = item.cantidad_pendiente;
+            }
+
+            let pendienteInicial = item.cantidad_planificada - yaEntregado - aEntregarInicial;
+            if (pendienteInicial < 0) pendienteInicial = 0;
             
             tr.innerHTML = `
                 <td style="padding: 1.25rem 1rem; vertical-align: top; border-bottom: 1px solid #f1f5f9;">
@@ -255,6 +276,11 @@ async function loadItems(ocs) {
             `;
             itemsList.appendChild(tr);
         });
+
+        // Reaplicar filtro si había término de búsqueda
+        if (typeof filterItems === 'function') {
+            filterItems();
+        }
         checkStep2();
     } catch (error) {
         console.error(error);
