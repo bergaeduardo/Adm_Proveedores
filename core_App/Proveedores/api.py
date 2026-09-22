@@ -389,7 +389,6 @@ def enviar_mail_notificacion_turno(turno_id, proveedor, data, items_data, bultos
         'lucas.navarro@xl.com.ar',
         'franco.pertus@xl.com.ar',
         'natalia.bontempo@xl.com.ar',
-        'ramiro.orozco@xl.com.ar',
         'julieta.dalmeida@xl.com.ar',
         'jessica.farias@xl.com.ar',
         'valeria.villarreal@xl.com.ar',

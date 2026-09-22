@@ -12,7 +12,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'proveedores_xl',
         'USER': 'postgres',
-        'PASSWORD': 'P3RTU$',
+        'PASSWORD': 'extra,123',
         'HOST': 'localhost',
         'PORT': '5432',
     },
